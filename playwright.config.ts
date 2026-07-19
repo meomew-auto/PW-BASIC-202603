@@ -1,10 +1,13 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const lessonBaseURL = process.env.LESSON_BASE_URL ?? "http://127.0.0.1:5173";
+
 export default defineConfig({
   fullyParallel: true,
   reporter: "html",
   use: {
-    headless: false,
+    baseURL: lessonBaseURL,
+    headless: true,
     trace: "on-first-retry",
   },
 
