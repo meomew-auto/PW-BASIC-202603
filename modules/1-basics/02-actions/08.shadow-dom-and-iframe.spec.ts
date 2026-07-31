@@ -73,37 +73,4 @@ test.describe("08 - Shadow DOM và iFrame", () => {
       "You typed: Billing information",
     );
   });
-
-  test("scope iframe owner trước khi dùng contentFrame1", async ({ page }) => {
-    const panel = await openLesson5Tab(page, "🧩 Shadow DOM & iFrame");
-    const section = panel.getByTestId("iframe-selector-examples");
-
-    const paymentFrame = section
-      .getByTestId("iframe-demo-title")
-      .locator("iframe")
-      .contentFrame();
-    await paymentFrame
-      .getByLabel("Inside iframe input:")
-      .fill("Payment form data");
-    await paymentFrame
-      .getByRole("button", { name: "Submit", exact: true })
-      .click();
-    await expect(paymentFrame.locator("#pf-status")).toHaveText(
-      "You typed: Payment form data",
-    );
-
-    const billingFrame = section
-      .getByTestId("iframe-demo-name")
-      .locator("iframe")
-      .contentFrame();
-    await billingFrame
-      .getByLabel("Inside iframe input:")
-      .fill("Billing information");
-    await billingFrame
-      .getByRole("button", { name: "Submit", exact: true })
-      .click();
-    await expect(billingFrame.locator("#bill-status")).toHaveText(
-      "You typed: Billing information",
-    );
-  });
 });
