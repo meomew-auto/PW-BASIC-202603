@@ -1,0 +1,80 @@
+{
+  "validLogin": {
+    "description": "Đăng nhập thành công; credentials thật được nạp từ environment",
+    "data": {
+      "credentialSource": "env",
+      "expectedResult": "success",
+      "expectedUrl": "/admin/"
+    }
+  },
+  "emptyEmail": {
+    "description": "Bỏ trống email",
+    "data": {
+      "email": "",
+      "password": "123456",
+      "expectedResult": "error",
+      "validationType": "server",
+      "expectedError": "The Email Address field is required"
+    }
+  },
+  "emptyPassword": {
+    "description": "Bỏ trống password",
+    "data": {
+      "email": "admin@example.com",
+      "password": "",
+      "expectedResult": "error",
+      "validationType": "server",
+      "expectedError": "The Password field is required"
+    }
+  },
+  "invalidEmail": {
+    "description": "Email sai định dạng (browser validation)",
+    "data": {
+      "email": "not-an-email",
+      "password": "123456",
+      "expectedResult": "error",
+      "validationType": "browser",
+      "expectedError": "Please include an '@' in the email address"
+    }
+  },
+  "wrongPassword": {
+    "description": "Mật khẩu sai",
+    "data": {
+      "email": "admin@example.com",
+      "password": "wrong-password",
+      "expectedResult": "error",
+      "validationType": "server",
+      "expectedError": "Invalid email or password"
+    }
+  },
+  "nonExistentUser": {
+    "description": "Tài khoản không tồn tại",
+    "data": {
+      "email": "notexist@example.com",
+      "password": "123456",
+      "expectedResult": "error",
+      "validationType": "server",
+      "expectedError": "Invalid email or password"
+    }
+  },
+  "sqlInjection": {
+    "description": "Payload SQL bị browser email validation chặn trước submit",
+    "data": {
+      "email": "admin@example.com' OR '1'='1",
+      "password": "123456",
+      "expectedResult": "error",
+      "validationType": "browser",
+      "expectedError": "A part following '@' should not contain the symbol"
+    }
+  },
+  "xssAttack": {
+    "description": "Payload XSS bị browser email validation chặn trước submit",
+    "data": {
+      "email": "<script>alert('xss')</script>",
+      "password": "123456",
+      "expectedResult": "error",
+      "validationType": "browser",
+      "expectedError": "Please include an '@' in the email address"
+    }
+  }
+}

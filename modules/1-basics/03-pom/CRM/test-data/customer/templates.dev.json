@@ -1,0 +1,32 @@
+{
+  "minimal": {
+    "description": "Customer template tối thiểu dành cho development",
+    "data": {
+      "company": "Auto Dev Minimal Seed",
+      "vat": "",
+      "phone": "",
+      "website": "",
+      "address": "",
+      "city": "",
+      "state": "",
+      "zip": "",
+      "country": "United States",
+      "currency": "USD"
+    }
+  },
+  "full": {
+    "description": "Customer template đầy đủ dành cho development",
+    "data": {
+      "company": "Auto Dev Full Seed",
+      "vat": "VAT00000000",
+      "phone": "+1 202-555-0180",
+      "website": "https://example.com",
+      "address": "123 Main Street",
+      "city": "New York",
+      "state": "NY",
+      "zip": "10001",
+      "country": "United States",
+      "currency": "USD"
+    }
+  }
+}

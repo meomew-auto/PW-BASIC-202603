@@ -76,15 +76,6 @@ export default defineConfig({
     {
       name: "03-pom-crm",
       testDir: "./modules/1-basics/03-pom",
-      testMatch: [],
-      timeout: 90_000,
-      expect: { timeout: 10_000 },
-      fullyParallel: false,
-      use: { ...devices["Desktop Chrome"] },
-    },
-    {
-      name: "03-pom-crm-complete",
-      testDir: "./modules/1-basics/03-pom/CRM/test-cases",
       testMatch: "**/*.spec.ts",
       timeout: 90_000,
       expect: { timeout: 10_000 },

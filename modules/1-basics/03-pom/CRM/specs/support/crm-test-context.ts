@@ -6,19 +6,13 @@ import { CRMLoginPage } from "../../pom/CRMLoginPage";
 import { CRMDashboardPage } from "../../pom/CRMDashboardPage";
 import { CRMCustomerPage } from "../../pom/CRMCustomerPage";
 import { CRMNewCustomerPage } from "../../pom/CRMNewCustomerPage";
+import { loadLoginCredentialsFromEnv } from "../../test-data";
 
 export async function openCRM(page: Page) {
   const loginPage = new CRMLoginPage(page);
   await loginPage.goto();
   await loginPage.expectOnPage();
-  const email = process.env.CRM_ADMIN_EMAIL;
-  const password = process.env.CRM_ADMIN_PASSWORD;
-  if (!email || !password) {
-    throw new Error(
-      "Missing CRM_ADMIN_EMAIL / CRM_ADMIN_PASSWORD. Add them to .env.development.local.",
-    );
-  }
-  await loginPage.login(email, password);
+  await loginPage.login(loadLoginCredentialsFromEnv());
   await loginPage.expectLoggedIn();
   return {
     dashboardPage: new CRMDashboardPage(page),

@@ -5,36 +5,7 @@
 import { BasePage } from "./BasePage";
 import { Page, expect } from "@playwright/test";
 import { selectBootstrapOption } from "../helpers/CommonHelpers";
-
-// CustomerInfo — dữ liệu một customer để điền vào form New Customer.
-// Ba khối: thông tin chính (company/vat/phone...), Billing (billingStreet...) và
-// Shipping (shippingStreet...). Mọi field đều optional — method con tự bỏ qua
-// field không có, nên cùng interface dùng được cho cả "điền tối thiểu" lẫn "điền đủ".
-export interface CustomerInfo {
-  company: string;
-  vat?: string;
-  phone?: string;
-  website?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  country?: string;
-  language?: string;
-  currency?: string;
-  // Địa chỉ thanh toán
-  billingStreet?: string;
-  billingCity?: string;
-  billingState?: string;
-  billingZip?: string;
-  billingCountry?: string;
-  // Địa chỉ giao hàng
-  shippingStreet?: string;
-  shippingCity?: string;
-  shippingState?: string;
-  shippingZip?: string;
-  shippingCountry?: string;
-}
+import type { CustomerInfo } from "../models/customer";
 
 // Phần "Các method bổ sung" phía dưới là các bước được
 // tách từ test thật (TC_CUST_02) — test chỉ còn gọi createCustomer cấp cao.

@@ -1,17 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { CRMDashboardPage } from "../pom/CRMDashboardPage";
 import { CRMLoginPage } from "../pom/CRMLoginPage";
-
-function envCredentials() {
-  const email = process.env.CRM_ADMIN_EMAIL;
-  const password = process.env.CRM_ADMIN_PASSWORD;
-  if (!email || !password) {
-    throw new Error(
-      "Missing CRM_ADMIN_EMAIL / CRM_ADMIN_PASSWORD. Add them to .env.development.local.",
-    );
-  }
-  return { email, password };
-}
+import { loadLoginCredentialsFromEnv } from "../test-data";
+import { assert } from "node:console";
 
 test.describe("Login - Positive Cases", () => {
   test("TC_LOGIN_01 - Đăng nhập bằng raw locator (AAA)", async ({ page }) => {
@@ -20,9 +11,9 @@ test.describe("Login - Positive Cases", () => {
     await expect(page.getByRole("heading", { name: "Login" })).toBeVisible();
 
     // Thực hiện
-    const { email, password } = envCredentials();
-    await page.locator("#email").fill(email);
-    await page.locator("#password").fill(password);
+    const credentials = loadLoginCredentialsFromEnv();
+    await page.locator("#email").fill(credentials.email);
+    await page.locator("#password").fill(credentials.password);
     await page.getByRole("button", { name: "Login" }).click();
 
     // Kiểm tra
@@ -39,10 +30,44 @@ test.describe("Login - Positive Cases", () => {
     await loginPage.expectOnPage();
 
     // Thực hiện
-    const { email, password } = envCredentials();
-    await loginPage.login(email, password);
+    await loginPage.login(loadLoginCredentialsFromEnv());
 
     // Kiểm tra
     await dashboardPage.expectOnPage();
   });
+
+  test("TC_LOGIN_03 - Sai email hoặc password", async ({ page }) => {
+    const loginPage = new CRMLoginPage(page);
+
+    // Chuẩn bị
+    await loginPage.goto();
+    await loginPage.expectOnPage();
+
+    // Thực hiện
+    await loginPage.login({
+      email: "invalid-user@example.invalid",
+      password: "invalid-password",
+    });
+
+    //Kiểm tra
+    await loginPage.expectInvalidCredentialsError();
+  });
 });
+
+// brse/
+// thực ra đây là 2 lớp khác nhau, và cả 2 cùng tòn tại
+/// lớp "WHAT" - nghiệp vụ - vẫn ở file test: Test quyết định kiểm tra điều gì, nằm ngay trong file
+//spec chính là 1 assertion. ý định kiểm thử ko rời đi đâu, Ba/pm đọc spec vẫn thấy expectInvalidCredentialsError
+
+//lớp HOW - cơ chế UI - mới dời vào POM.
+
+//ní ngắng ọn expect() cấp  thấp (selector + matcher) nằm ở POM
+
+//dùng thẳng ở spec khi
+// chỉ dùng 1 lần , riêng testg đó
+//dùng ở pom khi
+// assertion lặp lại nhiều ở spec - copy cùng 1 cụm
+// phụ thuộc slector/cấu rúc DOM - UI đổ chỗ báo lỗi thì sửa 1 method -> 7 8 file tcs dùng ăn the
+// cần cơ chế xử lý nâng cao
+
+//zod validation

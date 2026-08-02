@@ -1,12 +1,5 @@
-// CRMLoginPage — Page Object cho màn hình Login của CRM.
-// Đăng nhập đi qua BasePage pipeline: fillWithLog với mật khẩu (log dạng **** vì
-// isSensitive) rồi clickWithLog. Locator theo locator map mới (createLocatorGetter):
-// ô CHUỖI cho CSS (#email, #password), ô HÀM khi cần getByRole (button Login,
-// heading level 1) — POM đơn giản nhất minh hoạ đủ cả 2 loại ô. Comment cuối file
-// giải thích vì sao POM này KHÔNG dùng "page chaining" (login trả về trang khác
-// tuỳ role) — đọc xong sẽ hiểu cách tổ chức "mỗi trang một Page Object, điều
-// hướng do test quyết định".
 import { expect, type Page } from "@playwright/test";
+import type { LoginCredentials } from "../models/login";
 import { BasePage } from "./BasePage";
 export class CRMLoginPage extends BasePage {
   //khai báo locator
@@ -35,12 +28,16 @@ export class CRMLoginPage extends BasePage {
   // Đăng nhập: fill email + password (log dạng **** — isSensitive) rồi bấm Login.
   // KHÔNG trả về trang khác sau khi login — điều hướng là việc của test
   // (xem comment cuối file về page chaining).
-  async login(email: string, password: string) {
-    await this.fillWithLog(this.element("emailInput"), email);
-    await this.fillWithLog(this.element("passwordInput"), password, {
-      isSensitive: true,
-      fillOptions: { timeout: 10000 },
-    });
+  async login(credentials: LoginCredentials) {
+    await this.fillWithLog(this.element("emailInput"), credentials.email);
+    await this.fillWithLog(
+      this.element("passwordInput"),
+      credentials.password,
+      {
+        isSensitive: true,
+        fillOptions: { timeout: 10000 },
+      },
+    );
     await this.clickWithLog(this.element("loginButton"), { timeout: 10000 });
     // Một số framework cũ viết theo kiểu "page chaining": login() tự điều hướng
     // và TRẢ VỀ trang đích cho test dùng tiếp.

@@ -1,0 +1,23 @@
+{
+  "addressDataset": {
+    "description": "Danh sách customer dùng cho các scenario xử lý địa chỉ",
+    "data": [
+      {
+        "company": "Auto Address One",
+        "address": "10 Sunset Road",
+        "city": "Miami",
+        "state": "FL",
+        "zip": "33101",
+        "country": "United States"
+      },
+      {
+        "company": "Auto Address Two",
+        "address": "22 Pine Street",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98101",
+        "country": "United States"
+      }
+    ]
+  }
+}

@@ -4,7 +4,7 @@
 // (đọc qua getBootstrapSelectText — không bấm mở, chỉ đọc text hiển thị).
 import { expect, Locator, Page } from '@playwright/test';
 import { BasePage } from './BasePage';
-import { CustomerInfo } from './CRMNewCustomerPage';
+import type { CustomerInfo } from '../models/customer';
 import {
   extractCustomerIdFromUrl,
   getBootstrapSelectText,

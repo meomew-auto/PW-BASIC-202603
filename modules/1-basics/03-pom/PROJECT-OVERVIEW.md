@@ -46,6 +46,7 @@ flowchart LR
 
     COMPLETE_SPECS --> DATA
     LESSON_FILES -. minh hoạ .-> DATA
+    DATA["CRM/test-data: catalog JSON + factories"]
     CUSTOMERS --> TABLE_HELPERS["helpers/TableColumnHelpers.ts"]
     NEW_CUSTOMER --> COMMON_HELPERS["helpers/CommonHelpers.ts"]
     PROFILE --> COMMON_HELPERS
@@ -61,14 +62,15 @@ khởi tạo trên **cùng một `Page`**.
 03-pom/
 |-- PROJECT-OVERVIEW.md          # Tài liệu này
 |-- TEST-CASE-CATALOG.md         # Danh sách test case theo source CRM
-|-- utils/
-|   `-- test-data.ts             # Faker, timestamp, CustomerInfo factories
 `-- CRM/
     |-- components/
     |   `-- SidebarMenu.ts        # Component tái sử dụng cho sidebar
     |-- helpers/
     |   |-- CommonHelpers.ts      # Hàm không state cho Bootstrap dropdown và URL parsing
     |   `-- TableColumnHelpers.ts # Hàm không state cho DataTable column/row data
+    |-- models/
+    |   |-- customer.ts           # CustomerInfo cho Customer POM/factory
+    |   `-- login.ts              # LoginCredentials cho Login POM/factory
     |-- pom/
     |   |-- BasePage.ts
     |   |-- CRMLoginPage.ts
@@ -77,18 +79,27 @@ khởi tạo trên **cùng một `Page`**.
     |   |-- CRMNewCustomerPage.ts
     |   `-- CustomerProfilePage.ts
     |-- specs/                    # Ví dụ và nội dung đang dạy
-        |-- support/crm-test-context.ts
-        |-- login.spec.ts
-        |-- customer-creation.spec.ts
-        |-- customer-validation.spec.ts
-        |-- billing-shipping.spec.ts
-        |-- table-search.spec.ts
-        |-- table-data.spec.ts
-        `-- table-negative.spec.ts
-    `-- test-cases/               # Bộ regression hoàn chỉnh, đánh số theo module
-        |-- 01.login.spec.ts
-        |-- 02.customer-creation.spec.ts
-        `-- 03.customers-table.spec.ts
+    |   |-- support/crm-test-context.ts
+    |   |-- login.spec.ts
+    |   |-- table-data.spec.ts
+    |   `-- test-data.spec.ts
+    |-- test-cases/               # Bộ regression hoàn chỉnh, đánh số theo module
+    |   |-- 01.login.spec.ts
+    |   |-- 02.customer-creation.spec.ts
+    |   `-- 03.customers-table.spec.ts
+    `-- test-data/                # Public API cho toàn bộ test data của CRM
+        |-- index.ts              # Catalog loader và các export công khai
+        |-- test-data.types.ts    # TestDataEntry<T> dùng chung cho mọi catalog
+        |-- login/                # Vertical slice của Login test data
+        |   |-- cases.json
+        |   |-- login.types.ts    # Zod schema + discriminated union runtime
+        |   `-- login.factory.ts  # Đọc live credentials từ environment
+        `-- customer/             # Vertical slice của Customer test data
+            |-- templates.base.json
+            |-- templates.dev.json
+            |-- datasets.json
+            |-- customer.types.ts # Zod schema cho template/dataset catalog
+            `-- customer.factory.ts
 ```
 
 ### Vai Trò Từng Vùng
@@ -100,8 +111,150 @@ khởi tạo trên **cùng một `Page`**.
 | `pom/`        | Hành vi của một màn hình và locator map của màn đó          | Assertion nghiệp vụ của từng test case        |
 | `components/` | Một phần UI tái sử dụng giữa các màn hình                   | Logic của một page cụ thể                     |
 | `helpers/`    | Hàm dùng lại, nhận input rõ ràng và không sở hữu page state | State page ngầm, locator toàn cục không scope |
-| `utils/`      | Sinh dữ liệu và utility độc lập UI                          | Thao tác Playwright/DOM                       |
+| `models/`     | Contract dữ liệu nghiệp vụ dùng chung giữa các tầng         | Locator, Faker factory hoặc metadata test case |
+| `test-data/`  | Catalog JSON, chọn dữ liệu theo môi trường và Faker factory | Locator, thao tác Playwright/DOM, credential thật |
 | root config   | Chọn project, base URL, timeout, reporter, TypeScript/lint  | Kịch bản test                                 |
+
+### Quản Lý Test Data
+
+Test chỉ import qua public API `CRM/test-data/index.ts`; không import sâu trực tiếp
+từ `login/` hoặc `customer/`. Cách này giữ đường import ổn định khi file dữ liệu
+được tách hoặc đổi theo môi trường.
+
+Mỗi feature test data là một vertical slice. JSON, test-only type/validator và factory
+của Login nằm trong `test-data/login`; Customer tương tự trong
+`test-data/customer`. `CRM/models/<feature>.ts` vẫn đứng ngoài test-data vì đó là
+contract mà cả POM lẫn factory sử dụng. `CRM/test-data/index.ts` là public API duy
+nhất cho spec.
+
+```text
+models/login.ts -----> CRMLoginPage.login(credentials)
+                  `--> test-data/login/login.factory.ts
+
+models/customer.ts --> CRMNewCustomerPage + CustomerProfilePage
+                  `--> test-data/customer/customer.factory.ts
+
+test-data/login/* -----> test-data/index.ts
+test-data/customer/* --^         |
+                                  `--> specs
+```
+
+Login và Customer hiện là hai feature mẫu. Khi thêm Orders, pattern mở rộng là
+`models/order.ts` nếu POM cần shared input contract và `test-data/order/` cho JSON,
+test-only type/validator hoặc factory thực sự cần thiết. Không bắt buộc feature nào
+cũng phải có đủ mọi file.
+
+Mỗi namespace trong registry chỉ chứa một data shape. `loginCases` trả
+`LoginCaseData`, `customerTemplates` trả `CustomerInfo`, còn `customerDatasets` trả
+`CustomerInfo[]`. Việc tách template khỏi dataset giúp generic API suy ra kiểu ổn
+định mà không cần `LoginDataMap`/`CustomerDataMap` liệt kê từng key.
+
+Spec data-driven không tự đọc raw JSON. Chỉ có hai API tổng quát cho mọi feature:
+`getTestCases(namespace)` trả toàn bộ case để sinh test, còn
+`getTestData(namespace, key)` lấy một dataset cụ thể và hỗ trợ clone, `overrides`
+hoặc `transform`. `transform` nhận đúng kiểu dữ liệu của entry nhưng có thể trả về
+kiểu khác, ví dụ `CustomerInfo[] -> string[]` hoặc `CustomerInfo -> string`;
+TypeScript suy ra kiểu output từ callback. Phân nhánh positive/negative là hành vi của spec dựa trên
+discriminant `expectedResult`, không tạo thêm API riêng cho từng nhóm case.
+
+`data` trong một entry có thể là object, array hoặc JSON shape khác. Quy tắc để
+type không bị phân mảnh là mỗi namespace chỉ giữ một shape ổn định; khi feature có
+cả template object và collection array thì tách thành hai namespace như
+`customerTemplates` và `customerDatasets`. `getTestData()` luôn clone sâu trước khi
+xử lý. `overrides` chỉ dành cho object và chạy trước `transform`; array dùng
+`transform` để `filter`, `map`, `find` hoặc tạo summary. Nếu JSON được nạp động từ
+filesystem/API thay vì static import, feature vẫn phải validate tại catalog boundary.
+Hiện tất cả catalog Login và Customer đều được Zod `parse()` đúng một lần khi
+`test-data/index.ts` load; schema là runtime contract, còn `z.infer` cung cấp
+type cho spec. `strict()` giúp bắt field JSON bị gõ sai thay vì im lặng bỏ qua.
+
+#### Luồng JSON → Zod → Spec
+
+Zod chạy tại **catalog boundary** khi `CRM/test-data/index.ts` được import. Nó
+không parse lại dữ liệu trong từng test. Nhánh JSON sai dừng suite trước khi
+Playwright thao tác UI; nhánh hợp lệ mới được đăng ký vào public catalog.
+
+```mermaid
+flowchart TD
+    LOGIN_JSON["login/cases.json"] --> LOGIN_DEFINE["defineLoginCases()"]
+    TEMPLATE_JSON["customer/templates.base|dev.json"] --> TEMPLATE_DEFINE["defineCustomerTemplates()"]
+    DATASET_JSON["customer/datasets.json"] --> DATASET_DEFINE["defineCustomerDatasets()"]
+
+    LOGIN_DEFINE --> LOGIN_PARSE["loginCasesSchema.parse()"]
+    TEMPLATE_DEFINE --> TEMPLATE_PARSE["customerTemplatesSchema.parse()"]
+    DATASET_DEFINE --> DATASET_PARSE["customerDatasetsSchema.parse()"]
+
+    LOGIN_PARSE --> VALIDATION{Valid?}
+    TEMPLATE_PARSE --> VALIDATION
+    DATASET_PARSE --> VALIDATION
+
+    VALIDATION -->|No| ZOD_ERROR["Throw ZodError with field path"]
+    ZOD_ERROR --> STOP["Module load stops; no test starts"]
+
+    VALIDATION -->|Yes| VALIDATED["Validated feature catalogs"]
+    VALIDATED --> ENV_SELECT["Select environment variant"]
+    ENV_SELECT --> CATALOG["testDataCatalog"]
+
+    CATALOG --> GET_ONE["getTestData(namespace, key)"]
+    CATALOG --> GET_ALL["getTestCases(namespace)"]
+
+    GET_ONE --> CLONE_ONE["Deep clone"]
+    CLONE_ONE --> OVERRIDE["Optional object overrides"]
+    OVERRIDE --> TRANSFORM["Optional transform T to R"]
+
+    GET_ALL --> CLONE_ALL["Clone every entry"]
+    TRANSFORM --> SPEC["Playwright spec"]
+    CLONE_ALL --> SPEC
+```
+
+Luồng compile-time chạy song song nhưng có trách nhiệm khác:
+
+```text
+CustomerInfo model --satisfies--> customer schema output
+Login Zod schemas -----z.infer---> LoginCaseData discriminated union
+testDataCatalog --------typeof---> namespace -> key -> data type
+```
+
+| Tầng | Input | Output | Khi lỗi |
+| ---- | ----- | ------ | ------- |
+| Feature Zod schema | Raw JSON `unknown` | Catalog đã validate | Throw `ZodError` với path field lúc module load |
+| Environment selector | Base catalog + map variants | Một catalog cùng shape | Fallback về base nếu không có variant |
+| `testDataCatalog` | Các catalog đã validate | Registry duy nhất cho spec | Namespace/key được TypeScript suy ra |
+| `getTestData()` | Namespace + key + options | Clone của data hoặc output `R` từ transform | Runtime guard cho key/overrides không hợp lệ |
+| `getTestCases()` | Namespace | Mảng `{ key, description, data }` đã clone | Một JSON entry tương ứng một data-driven case |
+
+`index.ts` không tự quét thư mục. Khi thêm JSON/feature mới vẫn phải import raw
+JSON, parse bằng schema của feature và đăng ký một namespace trong
+`testDataCatalog`. Sau bước đăng ký, hai generic API tự suy ra namespace, key,
+input và output; không tạo getter riêng cho từng file hay từng case.
+
+```ts
+import {
+  createMinimalCustomerInfo,
+  getTestCases,
+  getTestData,
+  testDataCatalog,
+} from "../test-data";
+```
+
+| Loại dữ liệu | Vị trí | Quy ước tên | Khi sử dụng |
+| ------------ | ------ | ------------ | ----------- |
+| Ma trận test case | `test-data/login/cases.json` | `cases.json` trong feature | Mỗi entry sinh một test qua `getTestCases()` |
+| Template mặc định | `test-data/customer/templates.base.json` | `templates.base.json` | Một object dùng làm baseline |
+| Template theo môi trường | `test-data/customer/templates.dev.json` | `templates.<env>.json` | Thay catalog theo environment |
+| Dataset dạng mảng | `test-data/customer/datasets.json` | `datasets.json` | Collection dùng với `transform` |
+| Dữ liệu runtime | `test-data/<feature>/<feature>.factory.ts` | `<feature>.factory.ts` | Faker, timestamp hoặc environment secrets |
+
+Các contract của API test data được kiểm tra offline trong
+`CRM/specs/test-data.spec.ts`: clone độc lập cho object, shallow override cho
+template, filter array, map array sang output type khác, clone sâu array/object lồng
+nhau, thứ tự `overrides -> transform`, factory runtime và discriminated union Login.
+
+`TEST_ENV` được ưu tiên trước `NODE_ENV`; nếu không khai báo thì catalog dùng
+`dev`. Với customer templates, `templates.dev.json` được chọn cho `dev` hoặc
+`development`, còn `templates.base.json` là fallback. Dataset không phụ thuộc môi
+trường nên chỉ có một file. JSON không chứa credential thật; tài khoản CRM live chỉ
+được đọc bởi `login/login.factory.ts` từ `.env.development.local`.
 
 ## 4. Quan Hệ POM, Component Và Helper
 
@@ -248,8 +401,9 @@ customer, kiểm tra profile, search theo company, rồi clear search. Nếu spe
 selector, chi tiết Bootstrap dropdown và index cột thì người đọc không còn nhìn thấy
 nghiệp vụ; khi UI đổi, nhiều test cũng phải sửa cùng lúc.
 
-Vì thế spec chỉ điều phối POM, chuẩn bị `CustomerInfo` và viết assertion thuộc về
-kịch bản. POM nhận phần “làm thế nào để thao tác với màn hình”. `login.spec.ts` giữ
+Vì thế spec chỉ điều phối POM, chuẩn bị `CustomerInfo` theo contract trong
+`CRM/models/customer.ts` và viết assertion thuộc về kịch bản. POM nhận phần “làm
+thế nào để thao tác với màn hình”. `login.spec.ts` giữ
 cả raw locator và bản POM để thể hiện trực tiếp ranh giới giữa test flow và page API.
 
 Spec vẫn được phép có assertion. Điều không nên đặt vào POM là một kết luận chỉ đúng
@@ -393,7 +547,7 @@ sequenceDiagram
     S->>C: openCRM(page)
     C->>L: goto() and expectOnPage()
     L->>R: open /admin/authentication
-    C->>L: login(email, password)
+    C->>L: login(credentials)
     L->>R: fill fields and click Login
     C->>L: expectLoggedIn()
     C-->>S: dashboardPage, customersPage, newCustomerPage
@@ -734,7 +888,10 @@ artifacts/HTML report nằm ngoài source module theo config Playwright.
 | Tái dùng phần UI          | Tạo component trong `CRM/components`                        | Dùng composition như `SidebarMenu`                  |
 | Thêm helper không state   | Export function trong `CRM/helpers`                         | Truyền `Locator`/data rõ ràng                       |
 | Thêm thao tác table       | `CRMCustomerPage` + `TableColumnHelpers`                    | Không hardcode index cột                            |
-| Thêm data fixture         | `utils/test-data.ts`                                        | Thêm suffix gần-unique để giảm trùng trên shared tenant |
+| Thêm feature model        | `CRM/models/<feature>.ts`                                   | Contract input dùng chung cho POM và factory        |
+| Thêm test-data feature    | `CRM/test-data/<feature>/`                                  | Đặt JSON, test-only type và factory cạnh nhau       |
+| Thêm JSON case cùng shape | `CRM/test-data/<feature>/*.json`                            | Không tạo API/type map mới; test sinh qua `getTestCases()` |
+| Thêm data factory         | `CRM/test-data/<feature>/<feature>.factory.ts`              | Chỉ tạo khi cần Faker, timestamp hoặc env data      |
 | Thêm behavior app/POM     | Update complete suite; cập nhật `CRM/specs` nếu bài giảng liên quan | Ít nhất happy path và chạy spec bị ảnh hưởng        |
 | Xem phạm vi test          | Xem `TEST-CASE-CATALOG.md`                                  | Catalog phản ánh `CRM/test-cases`; cập nhật khi thêm hoặc sửa test |
 
