@@ -20,3 +20,23 @@ npm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# AI / agent tooling (local only — do not push)
+.agents/
+.claude/
+.codex/
+.cursor/
+.playwright-cli/
+.mcp.json
+AGENTS.md
+CLAUDE.md
+MEMORY.md
+
+# Retrieval-router / project memory (local only — do not push)
+artifacts/retrieval-router/
+**/retrieval-router/
+**/retrieval_guard.py
+**/project-memory.sqlite
+**/project-memory.sqlite-*
+**/project-memory.sqlite-wal
+**/project-memory.sqlite-shm
