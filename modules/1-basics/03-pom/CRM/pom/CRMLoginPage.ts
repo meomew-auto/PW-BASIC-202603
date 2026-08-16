@@ -16,7 +16,9 @@ export class CRMLoginPage extends BasePage {
   public element = this.createLocatorGetter(this.pageLocators);
 
   async goto() {
-    await this.page.goto("https://crm.anhtester.com/admin/authentication");
+    // URL server do profile env quyết định trong playwright.config.ts.
+    // POM chỉ sở hữu path nghiệp vụ, nên cùng code chạy được ở dev/staging/UAT.
+    await this.page.goto("/admin/authentication");
   }
 
   async expectOnPage(): Promise<void> {

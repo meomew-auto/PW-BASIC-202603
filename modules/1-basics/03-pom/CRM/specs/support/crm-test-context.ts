@@ -20,3 +20,5 @@ export async function openCRM(page: Page) {
     newCustomerPage: new CRMNewCustomerPage(page),
   };
 }
+//sau khji test chạy xong thì làm gì????
+// làm sạch data test sau khi chạy xong, hoặc close connection tới db., đăng xuất tk, cjupj log...

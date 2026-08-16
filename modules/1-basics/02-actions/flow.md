@@ -102,3 +102,48 @@ context windows thường là 250-300k token là đẹp
 đến giới hạn context windows -> compact (sẽ giải phóng context bộ nhớ, memory thông tin cần thiết)
 
 qản lý qa file settings -> mình có thể tùy chỉnh model, endpoint, apikey
+
+hiện tại là nếu như có nhiều bài test -> cần login đầu tiên
+
+context login tạm
+
+- cookie jar
+- context.storageState() => snapshot => mang sử dụng vào context khác
+  -> 2 cách ghi snapshot -> 1 dạng file (project dependencies)
+  => lưu trên RAM thông qua worker fixture
+
+  trong playwright 1 bài test() block -> sẽ tạohr a 1 context hoàn toàn mới
+
+Test A: browser,newContext({storageState: ''})
+
+Test B: browser,newContext({storageState: ''})
+
+worker là gì: 1 tiến trình chạy test -> 1 worker sẽ đại diệncho 1 browser instawnce mới;
+khi 1 worker fixture đc chạy -> nó sẽ lưu thông tin trên RAM -> và cung cấp hết cho các bài test
+cùng thuộc 1 worker -> thì khi đó nó sẽ chia sẻ chung file thong tin lưu trên ram
+chỉ cần 1 bài test gọi tới fixture có scope là worker (hoặc fixture có dependencies phụ thuộc vào fixture worker scope )
+
+để kihcs hoạt worker state fixture có nhiều cách
+1 là gọi trực tiếp
+2 là thông qua fixture chianing
+
+worker fixture có 1 cơ chế gọi là lazy activation
+
+Running 3 tests using 1 worker
+[03-pom-crm] › modules\1-basics\03-pom\CRM\specs\scope-basic.spec.ts:345:1 › 00 - không phụ thuộc nên chưa kích hoạt workerState
+[test không phụ thuộc] browser=chromium; workerState chưa được kích hoạt
+[03-pom-crm] › modules\1-basics\03-pom\CRM\specs\scope-basic.spec.ts:356:1 › 01 - test đầu tiên tạo worker state
+[worker setup] tạo worker-0
+[test setup] tạo test-state-1 từ worker-0 cho "01 - test đầu tiên tạo worker state"
+[test teardown] bỏ test-state-1
+[03-pom-crm] › modules\1-basics\03-pom\CRM\specs\scope-basic.spec.ts:373:1 › 02 - không xin trực tiếp workerState vẫn dùng được
+[test setup] tạo test-state-2 từ worker-0 cho "02 - không xin trực tiếp workerState vẫn dùng được"
+[test 02] chỉ nhận testState nhưng testState được tạo từ worker-0
+[test teardown] bỏ test-state-2
+[worker teardown] đóng worker-0; đã phục vụ 2 test
+3 passed (323ms)
+ngoaif login sẽ phục vụ tât cả các yêu cầu về teiefn điều kiện
+tạo data test
+kết nối db
+clear connect db
+kết nối kafka

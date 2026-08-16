@@ -24,7 +24,6 @@ test.describe("Login - Positive Cases", () => {
   test("TC_LOGIN_02 - Đăng nhập bằng Page Object Model", async ({ page }) => {
     const loginPage = new CRMLoginPage(page);
     const dashboardPage = new CRMDashboardPage(page);
-
     // Chuẩn bị
     await loginPage.goto();
     await loginPage.expectOnPage();
@@ -51,6 +50,26 @@ test.describe("Login - Positive Cases", () => {
 
     //Kiểm tra
     await loginPage.expectInvalidCredentialsError();
+  });
+
+  test("TC_LOGIN_02_Context - Đăng nhập bằng Page Object Model", async ({
+    browser,
+  }) => {
+    const screenA = await browser.newContext({
+      viewport: { width: 1280, height: 720 },
+    });
+    const screenB = await browser.newContext({
+      viewport: { width: 1024, height: 640 },
+    });
+
+    const [pageA, pageB] = await Promise.all([
+      screenA.newPage(),
+      screenB.newPage(),
+    ]);
+
+    await pageA.goto("https://crm.anhtester.com/admin/authentication");
+
+    await pageB.goto("https://crm.anhtester.com/admin/authentication");
   });
 });
 
