@@ -1,14 +1,27 @@
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import dotenvFlow from "dotenv-flow";
 import { defineConfig, devices } from "@playwright/test";
 
-const localEnvFile = resolve(__dirname, ".env.development.local");
-if (existsSync(localEnvFile)) {
-  process.loadEnvFile(localEnvFile);
-}
+// ════════════════════════════════════════════════════════════════════════════
+// BÀI 16: NẠP BIẾN MÔI TRƯỜNG VỚI DOTENV-FLOW
+// ════════════════════════════════════════════════════════════════════════════
+// 1. Xác định Profile: ưu tiên ENV_PROFILE > NODE_ENV > "development"
+const profile =
+  process.env.ENV_PROFILE ?? process.env.NODE_ENV ?? "development";
 
+// 2. Nạp cascade các file .env theo profile:
+//    .env -> .env.local (trừ test) -> .env.<profile> -> .env.<profile>.local
+dotenvFlow.config({
+  node_env: profile,
+  default_node_env: "development",
+  path: __dirname,
+  silent: true,
+});
+
+// 3. Đọc baseURL cho toàn bộ suite từ biến môi trường:
 const lessonBaseURL =
-  process.env.LESSON_BASE_URL ?? "https://crm.anhtester.com";
+  process.env.CRM_BASE_URL ??
+  process.env.LESSON_BASE_URL ??
+  "https://crm.anhtester.com";
 
 // ════════════════════════════════════════════════════════════════════════════
 //  5 LOẠI TIMEOUT ĐẶT ĐƯỢC Ở TẦNG CONFIG (Playwright)
@@ -40,6 +53,10 @@ export default defineConfig({
 
   fullyParallel: true,
   reporter: "html",
+  metadata: {
+    envProfile: profile,
+    baseURL: lessonBaseURL,
+  },
 
   use: {
     baseURL: lessonBaseURL, // BẮT BUỘC: để page.goto('/lesson2') và '/static/...' dùng đường dẫn tương đối.

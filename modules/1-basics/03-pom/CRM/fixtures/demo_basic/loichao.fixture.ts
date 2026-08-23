@@ -1,6 +1,6 @@
 import { test as base } from "@playwright/test";
-import { CRMDashboardPage } from "../pom/CRMDashboardPage";
-import { CRMLoginPage } from "../pom/CRMLoginPage";
+import { CRMDashboardPage } from "../../pom/CRMDashboardPage";
+import { CRMLoginPage } from "../../pom/CRMLoginPage";
 import { mergeTests } from "@playwright/test";
 export const test = base.extend<{ loiChao: string }>({
   loiChao: async ({}, use) => {

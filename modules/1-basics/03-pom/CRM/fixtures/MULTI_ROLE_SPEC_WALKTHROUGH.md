@@ -1,6 +1,6 @@
 # Multi-Role Spec Execution Flow
 
-Chi tiết luồng thực thi khi Playwright chạy test spec [`gate-multi.spec.ts`](file:///E:/playwright-pro/202603-PW_BASIC/modules/1-basics/03-pom/CRM/specs/gate-multi.spec.ts).
+Chi tiết luồng thực thi khi Playwright chạy test spec `gate-multi.spec.ts` (`modules/1-basics/03-pom/CRM/specs/gate-multi.spec.ts`).
 
 ---
 
