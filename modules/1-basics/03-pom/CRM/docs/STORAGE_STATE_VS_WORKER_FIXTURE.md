@@ -55,7 +55,7 @@
 | **1. Vị trí lưu trữ Session** | **File JSON trên ổ cứng** (`admin-benchmark.json`) | **RAM của tiến trình Worker** (`ramMemoryStore`) |
 | **2. Số lần Login UI thực tế** | **Đúng 1 lần duy nhất** cho toàn bộ Test Suite (dù có 50 workers) | **$N$ lần** ($N$ = số lượng Workers, mỗi worker login 1 lần) |
 | **3. Tác động Ổ Cứng (Disk I/O)**| Tạo file JSON (phải đưa vào `.gitignore`) | ❌ **Tuyệt đối 0 file rác trên đĩa** (Zero Disk I/O) |
-| **4. Cơ chế Nhân Bản Context** | Đọc file JSON từ đĩa $\rightarrow$ Nạp vào Context mới | Đọc trực tiếp Object từ RAM $\rightarrow$ Bơm vào Context mới |
+| **4. Cơ chế Nhân Bản Context** | Đọc file JSON từ đĩa ➔ Nạp vào Context mới | Đọc trực tiếp Object từ RAM ➔ Bơm vào Context mới |
 | **5. Cơ chế Dọn dẹp (Teardown)** | **Project Teardown**: Chạy trên 1 Worker độc lập sau cùng | **Fixture Teardown**: Chạy sau `await use()` trong Worker |
 | **6. Khả năng Cứu Hộ khi Crash** | 🛡️ **Tuyệt đối an toàn**: Worker test chết, Teardown vẫn chạy | ⚠️ Nếu Worker bị `process.exit(1)`, fixture teardown bị hủy |
 | **7. Rủi ro Nhiễm Độc (Pollution)**| ⚠️ **Cao hơn**: Test 1 bấm Logout làm chết session của Test 2, 3 | 🛡️ **Thấp hơn**: Mỗi Worker có RAM riêng, dễ cô lập |
@@ -259,7 +259,7 @@ Running 5 tests using 1 worker
    * Khi step này báo `ok 1`, Playwright mở khóa cho toàn bộ các bài test chính phụ thuộc vào nó.
 3. **Dòng 10-12 (`🔵 [BENCHMARK TEST 01] ... (1.4s)`)**:
    * Worker đọc file `admin-benchmark.json` từ đĩa, nạp vào Context mới và mở thẳng `/admin`.
-   * Thời gian load trang chỉ mất **1102ms** mà **hoàn toàn không tốn 1 mili-giây nào cho thao tác Login UI** ($0\text{ms}$ Login!).
+   * Thời gian load trang chỉ mất **1102ms** mà **hoàn toàn không tốn 1 mili-giây nào cho thao tác Login UI** (0ms Login!).
 4. **Dòng 14-16 (`🔵 [BENCHMARK TEST 02] ... (17ms)`)**:
    * Kiểm chứng Cookie trong Context đã được nạp sẵn. Thời gian chạy siêu tốc chỉ **17 mili-giây**!
 5. **Dòng 18-20 (`🔵 [BENCHMARK TEST 03] ... (1.5s)`)**:
@@ -435,16 +435,16 @@ Running 3 tests using 1 worker
 1. **Dòng 3 (`🧠 Khởi tạo Bộ Nhớ RAM cho Worker 0 (PID: 40300)`)**:
    * Khi tiến trình con Worker 0 (PID 40300) vừa sinh ra, Fixture phạm vi `worker` được kích hoạt ngay lập tức để tạo `Map` rỗng lưu session trong RAM Heap.
 2. **Dòng 4-8 (`🚀 MISS CACHE RAM ... ✅ Đã lưu snapshot "admin" vào RAM ... (3.1s)`)**:
-   * Ở **Test 01**, hàm tra cứu phát hiện Map chưa có key `"admin"` ($\rightarrow$ **MISS CACHE**).
+   * Ở **Test 01**, hàm tra cứu phát hiện Map chưa có key `"admin"` (➔ **MISS CACHE**).
    * Worker 0 tự động mở Browser Context tạm, thực hiện điền form đăng nhập, chụp ảnh Cookies/LocalStorage lưu thẳng vào RAM Object mà **không sinh ra bất kỳ file .json nào trên ổ cứng (Zero Disk I/O)**.
    * Hoàn tất Test 01 trong **3.1 giây** (bao gồm cả thời gian Login UI).
 3. **Dòng 10-13 (`⚡ HIT CACHE RAM ... Vào Dashboard trong 943ms ... (1.2s)`)**:
-   * Ở **Test 02**, khi `authedPage` yêu cầu quyền Admin, hàm tra cứu tìm thấy key `"admin"` trong Map ($\rightarrow$ **HIT CACHE** với độ phức tạp $O(1)$).
-   * Context mới được nhân bản sạch sẽ từ RAM trong $0\text{ms}$ và mở thẳng Dashboard chỉ mất **943ms**.
+   * Ở **Test 02**, khi `authedPage` yêu cầu quyền Admin, hàm tra cứu tìm thấy key `"admin"` trong Map (➔ **HIT CACHE** với độ phức tạp $O(1)$).
+   * Context mới được nhân bản sạch sẽ từ RAM trong 0ms và mở thẳng Dashboard chỉ mất **943ms**.
 4. **Dòng 15-18 (`⚡ HIT CACHE RAM ... Cookies trong RAM hợp lệ ... (160ms)`)**:
    * Ở **Test 03**, tiếp tục **HIT CACHE RAM**, xác thực 2 Cookies có sẵn từ bộ nhớ chỉ mất **160 mili-giây**.
 5. **Dòng 20 (`🗑️ Giải phóng toàn bộ bộ nhớ RAM của Worker 0`)**:
-   * Khi toàn bộ test trong Worker 0 chạy xong, hàm Teardown của Worker Fixture (`after use()`) gọi `ramMemoryStore.clear()` để giải phóng $100\%$ dung lượng RAM đã cấp phát.
+   * Khi toàn bộ test trong Worker 0 chạy xong, hàm Teardown của Worker Fixture (`after use()`) gọi `ramMemoryStore.clear()` để giải phóng 100% dung lượng RAM đã cấp phát.
    * Toàn bộ suite 3 tests hoàn tất gọn gàng trong **5.6 giây**.
 
 ---
@@ -494,9 +494,9 @@ Dưới đây là phần giải phẫu kỹ thuật và phân tích định lư�
 Gọi:
 * $N$: Tổng số lượng bài test trong hệ thống.
 * $W$: Số lượng Worker chạy song song (Parallel Workers).
-* $T_{login}$: Thời gian thực hiện 1 lần Login UI ($\approx 2.5\text{s}$).
-* $T_{test}$: Thời gian trung bình thực thi 1 bài test nghiệp vụ ($\approx 1\text{s}$).
-* $T_{teardown}$: Thời gian dọn dẹp Teardown ($\approx 0.1\text{s}$).
+* $T_{login}$: Thời gian thực hiện 1 lần Login UI (≈ 2.5s).
+* $T_{test}$: Thời gian trung bình thực thi 1 bài test nghiệp vụ (≈ 1s).
+* $T_{teardown}$: Thời gian dọn dẹp Teardown (≈ 0.1s).
 
 #### 1. Công thức tổng thời gian của Storage State (Disk):
 $$T_{\text{disk}} = T_{\text{login}} + \frac{N \times T_{\text{test}}}{W} + T_{\text{teardown}}$$
@@ -510,12 +510,12 @@ $$T_{\text{ram}} = \frac{N \times T_{\text{test}}}{W} + T_{\text{login}}$$
 * **Khi $W = 1$ (Chạy tuần tự 1 luồng)**:
   * $T_{\text{disk}} \approx 2.5 + N + 0.1$
   * $T_{\text{ram}} \approx N + 2.5$
-  * $\rightarrow$ **Cả hai trường phái có tốc độ tương đương nhau** (như kết quả thực nghiệm $6.0\text{s}$ vs $4.8\text{s}$).
+  * ➔ **Cả hai trường phái có tốc độ tương đương nhau** (như kết quả thực nghiệm 6.0s vs 4.8s).
 * **Khi $W = 16$ (Chạy song song 16 Workers trên máy chủ CI lớn)**:
   * **Storage State (Disk)**: Máy chủ chỉ gửi **1 request Login duy nhất** tới Backend. Sau đó 16 worker đồng loạt chạy test. Backend hoàn toàn êm ái!
   * **Worker Fixture (RAM)**: Cả 16 Worker **đồng loạt gửi 16 request Login UI cùng 1 giây** tới Backend. Nếu Backend có cơ chế Rate Limiting hoặc Database Connection Pool nhỏ, 16 request này sẽ gây nghẽn cổ chai (Throttling) hoặc sập Auth Server!
 * **Khi Chạy CI Sharding ($S = 4$ máy ảo độc lập)**:
-  * **Storage State (Disk)**: Có thể cấu hình Shard 1 Login $\rightarrow$ Upload artifact `admin.json` $\rightarrow$ Shard 2, 3, 4 chỉ việc tải về dùng mà không cần login lại.
+  * **Storage State (Disk)**: Có thể cấu hình Shard 1 Login ➔ Upload artifact `admin.json` ➔ Shard 2, 3, 4 chỉ việc tải về dùng mà không cần login lại.
   * **Worker Fixture (RAM)**: Mỗi máy ảo Shard bắt buộc phải tự login lại trong các worker của mình.
 
 ---
@@ -595,7 +595,7 @@ Khi một Worker tiến trình (Child Process) gặp lỗi nghiêm trọng (Fata
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-* **Điểm yếu của Worker Fixture Teardown**: Đoạn code nằm sau `await use()` trong Worker Fixture **vẫn sống trong bộ nhớ RAM của chính Worker đó**. Khi tiến trình con bị sập, Call Stack bị hủy $\rightarrow$ Code sau `await use()` **chết theo Worker 100%**!
+* **Điểm yếu của Worker Fixture Teardown**: Đoạn code nằm sau `await use()` trong Worker Fixture **vẫn sống trong bộ nhớ RAM của chính Worker đó**. Khi tiến trình con bị sập, Call Stack bị hủy ➔ Code sau `await use()` **chết theo Worker 100%**!
 * **Sức mạnh của Project Teardown**: Project Teardown được Main Dispatcher điều phối trên **MỘT TIẾN TRÌNH WORKER HOÀN TOÀN MỚI**. Dù Worker chạy test chính có bị nổ tung hay chết đột tử, Project Teardown vẫn được triệu hồi để dọn dẹp sạch sẽ dữ liệu mồ côi (Orphan Data).
 
 ---
@@ -711,8 +711,8 @@ Khi mở rộng quy mô kiểm thử tự động từ máy cục bộ (Local De
 
 #### 1️⃣ Triệt Tiêu Hoàn Toàn "Cơn Lũ Quét Đồng Thời" (Thundering Herd Problem)
 * **Thực trạng**: Mỗi thao tác Login UI đòi hỏi Backend phải giải mã Token, truy vấn DB người dùng, và đặc biệt là chạy hàm **Băm mật khẩu (Bcrypt / Argon2 / PBKDF2)** — một thuật toán ngốn CPU rất nặng được thiết kế để chống Brute Force.
-* **Hậu quả**: Khi 16 Workers cùng đăng nhập vào giây đầu tiên, CPU của Backend Staging Server lập tức chạm ngưỡng $100\%$, làm nghẽn toàn bộ luồng xử lý và khiến các bài test bị timeout tập thể.
-* **Storage State giải quyết**: Chỉ cho phép **Đúng 1 Worker chạy Setup** gửi 1 request login duy nhất. 15 Workers còn lại chỉ việc đọc file JSON tĩnh từ đĩa cứng vào bộ nhớ trong $0\text{ms}$ mà không tạo ra bất kỳ áp lực nào lên Backend.
+* **Hậu quả**: Khi 16 Workers cùng đăng nhập vào giây đầu tiên, CPU của Backend Staging Server lập tức chạm ngưỡng 100%, làm nghẽn toàn bộ luồng xử lý và khiến các bài test bị timeout tập thể.
+* **Storage State giải quyết**: Chỉ cho phép **Đúng 1 Worker chạy Setup** gửi 1 request login duy nhất. 15 Workers còn lại chỉ việc đọc file JSON tĩnh từ đĩa cứng vào bộ nhớ trong 0ms mà không tạo ra bất kỳ áp lực nào lên Backend.
 
 ---
 
@@ -739,22 +739,22 @@ Khi bộ test lên tới hàng ngàn test case, CI bắt buộc phải chia nh�
                      └──────────────┘└──────────────┘└──────────────┘└──────────────┘
 ```
 
-* **Storage State**: Tách riêng Job `Setup` tạo session 1 lần $\rightarrow$ Các Shard tải Artifact về và chạy song song mà **hoàn toàn không cần login lại bất kỳ lần nào**!
-* **Worker Fixture**: Mỗi máy Shard phải tự chạy lại các hàm login cho từng Worker trên máy đó $\rightarrow$ Nhân bản số lần login lên gấp $S \times W$ lần ($4 \text{ shards} \times 8 \text{ workers} = 32\text{ lần login}$)!
+* **Storage State**: Tách riêng Job `Setup` tạo session 1 lần ➔ Các Shard tải Artifact về và chạy song song mà **hoàn toàn không cần login lại bất kỳ lần nào**!
+* **Worker Fixture**: Mỗi máy Shard phải tự chạy lại các hàm login cho từng Worker trên máy đó ➔ Nhân bản số lần login lên gấp $S \times W$ lần ($4 \text{ shards} \times 8 \text{ workers} = 32\text{ lần login}$)!
 
 ---
 
 #### 3️⃣ Tránh Bị WAF, Rate Limiter & DDoS Protection Khóa IP Runner
 * Các hệ thống bảo mật hiện đại (Cloudflare WAF, AWS Shield, Nginx `limit_req`) sẽ tự động kích hoạt chế độ phòng vệ khi phát hiện **từ 1 IP gửi liên tiếp hàng chục request POST Login trong vòng vài trăm mili-giây**.
-* Kết quả: IP của máy ảo CI Runner bị đưa vào Blacklist hoặc bị trả về trang Captcha Challenge $\rightarrow$ Toàn bộ Pipeline CI bị đỏ rực.
+* Kết quả: IP của máy ảo CI Runner bị đưa vào Blacklist hoặc bị trả về trang Captcha Challenge ➔ Toàn bộ Pipeline CI bị đỏ rực.
 * Storage State chỉ gửi 1 request login duy nhất nên **hoàn toàn tàng hình trước các hệ thống WAF/Rate Limiting**.
 
 ---
 
 #### 4️⃣ Loại Bỏ Nguy Cơ Tranh Chấp Phiên (Single Active Session Conflict)
 * Nhiều ứng dụng doanh nghiệp (Fintech, Banking, CRM bảo mật cao) áp dụng cơ chế: **Một tài khoản chỉ được phép có 1 phiên đăng nhập hoạt động duy nhất (Single Active Session)**. Khi tài khoản đăng nhập ở nơi mới, phiên cũ trên server sẽ bị hủy (Revoked).
-* **Với Worker Fixture**: Khi Worker 2 đăng nhập tài khoản `admin@example.com`, Backend sẽ vô hiệu hóa session của Worker 1 $\rightarrow$ Worker 1 đang chạy test giữa chừng lập tức bị văng ra trang Login và FAILED!
-* **Với Storage State**: Tất cả 16 Worker cùng dùng chung 1 Session Token duy nhất được sinh ra từ Setup Project $\rightarrow$ Không bao giờ bị xung đột đá phiên lẫn nhau!
+* **Với Worker Fixture**: Khi Worker 2 đăng nhập tài khoản `admin@example.com`, Backend sẽ vô hiệu hóa session của Worker 1 ➔ Worker 1 đang chạy test giữa chừng lập tức bị văng ra trang Login và FAILED!
+* **Với Storage State**: Tất cả 16 Worker cùng dùng chung 1 Session Token duy nhất được sinh ra từ Setup Project ➔ Không bao giờ bị xung đột đá phiên lẫn nhau!
 
 ---
 

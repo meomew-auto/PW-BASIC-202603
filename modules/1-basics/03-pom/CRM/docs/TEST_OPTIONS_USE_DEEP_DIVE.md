@@ -2,7 +2,7 @@
 
 Trong kiến trúc kiểm thử tự động của Playwright, nếu **Worker Process** là những người lính ra trận thì thuộc tính **`use` (TestOptions)** chính là **"Chiếc Balo Hành Trang"** trang bị đầy đủ vũ khí, đạn dược và quân tư trang (URL máy chủ, chế độ hiển thị màn hình, chứng chỉ bảo mật, thông số mạng, thiết bị giả lập, chiến lược quay phim chụp ảnh...).
 
-Việc làm chủ toàn diện thuộc tính `use` giúp bạn kiểm soát $100\%$ hành vi của trình duyệt từ lúc khởi động cho đến khi kết thúc ca kiểm thử, tối ưu hóa hiệu năng trên CI/CD và giải quyết các bài toán hóc búa về giả lập thiết bị đa nền tảng.
+Việc làm chủ toàn diện thuộc tính `use` giúp bạn kiểm soát 100% hành vi của trình duyệt từ lúc khởi động cho đến khi kết thúc ca kiểm thử, tối ưu hóa hiệu năng trên CI/CD và giải quyết các bài toán hóc búa về giả lập thiết bị đa nền tảng.
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -313,7 +313,7 @@ Dưới đây là bảng tra cứu tổng quan và phần phân tích chuyên s�
   ```
 
 * **🔍 Phân Tích Chuyên Sâu**:
-  1. `actionTimeout: 5000` đảm bảo nếu một nút bấm bị disabled hoặc che khuất (Overlay), Playwright sẽ fail ngay sau $5\text{s}$ thay vì treo vô tận đến hết $30\text{s}$ của bài test.
+  1. `actionTimeout: 5000` đảm bảo nếu một nút bấm bị disabled hoặc che khuất (Overlay), Playwright sẽ fail ngay sau 5s thay vì treo vô tận đến hết 30s của bài test.
   2. `navigationTimeout: 10000` cấp hạn mức riêng biệt cho việc tải mạng, tách biệt hoàn toàn với logic tương tác trên trang.
 
 ---
@@ -427,7 +427,7 @@ Dưới đây là bảng tra cứu tổng quan và phần phân tích chuyên s�
 
 * **🔍 Phân Tích Chuyên Sâu**:
   1. Kỹ thuật `mask: [locator]` tự động vẽ một hộp màu hồng che phủ ô `#password`, ngăn chặn rò rỉ thông tin mật vào báo cáo test hoặc hệ thống CI công khai.
-  2. `animations: 'disabled'` đóng băng các hiệu ứng CSS chuyển động trước khi chụp, loại bỏ $100\%$ hiện tượng ảnh bị nhòe hoặc lệch pixel trong Visual Regression Testing.
+  2. `animations: 'disabled'` đóng băng các hiệu ứng CSS chuyển động trước khi chụp, loại bỏ 100% hiện tượng ảnh bị nhòe hoặc lệch pixel trong Visual Regression Testing.
 
 ---
 
@@ -563,12 +563,12 @@ test.use({
 
 | Thuộc Tính | 🏢 Tầng 3 (Root) | 🥈 Tầng 2 (Project) | 👑 Tầng 1 (`test.use`) | 🏆 TẦNG THẮNG CUỘC | 🔍 GIẢI THÍCH NGUYÊN DO |
 |---|---|---|---|:---:|---|
-| **`actionTimeout`** | `15000ms` | `10000ms` | `5000ms` | 👑 **Tầng 1 (`5000ms`)** | Cả 3 tầng cùng khai báo $\rightarrow$ Tầng 1 nằm sát mã test nhất nên **đè bẹp** Tầng 2 và Tầng 3. |
+| **`actionTimeout`** | `15000ms` | `10000ms` | `5000ms` | 👑 **Tầng 1 (`5000ms`)** | Cả 3 tầng cùng khai báo ➔ Tầng 1 nằm sát mã test nhất nên **đè bẹp** Tầng 2 và Tầng 3. |
 | **`screenshot`** | `'off'` | `'only-on-failure'` | `'on'` | 👑 **Tầng 1 (`'on'`)** | Tầng 1 ghi đè chính sách chụp ảnh của Project và Root. |
-| **`baseURL`** | `'https://default...'` | `'https://crm.anhtester.com'` | *(Không khai báo)* | 🥈 **Tầng 2 (`anhtester.com`)** | Tầng 1 không ghi $\rightarrow$ Kế thừa Tầng 2 (Project ghi đè Root). |
-| **`viewport`** | `1280x720` | *(Không khai báo)* | *(Không khai báo)* | 🏢 **Tầng 3 (`1280x720`)** | Tầng 1 và 2 đều bỏ trống $\rightarrow$ Kế thừa trực tiếp từ Root Config. |
+| **`baseURL`** | `'https://default...'` | `'https://crm.anhtester.com'` | *(Không khai báo)* | 🥈 **Tầng 2 (`anhtester.com`)** | Tầng 1 không ghi ➔ Kế thừa Tầng 2 (Project ghi đè Root). |
+| **`viewport`** | `1280x720` | *(Không khai báo)* | *(Không khai báo)* | 🏢 **Tầng 3 (`1280x720`)** | Tầng 1 và 2 đều bỏ trống ➔ Kế thừa trực tiếp từ Root Config. |
 | **`headless`** | `true` | *(Không khai báo)* | *(Không khai báo)* | 🏢 **Tầng 3 (`true`)** | Kế thừa trực tiếp từ Root Config. |
-| **`navigationTimeout`**| *(Không khai báo)* | *(Không khai báo)* | *(Không khai báo)* | 🏅 **Tầng 4 (`0` / Default)** | Cả 3 tầng không khai báo $\rightarrow$ Playwright Engine tự áp dụng giá trị mặc định của hệ thống. |
+| **`navigationTimeout`**| *(Không khai báo)* | *(Không khai báo)* | *(Không khai báo)* | 🏅 **Tầng 4 (`0` / Default)** | Cả 3 tầng không khai báo ➔ Playwright Engine tự áp dụng giá trị mặc định của hệ thống. |
 
 ---
 
@@ -641,7 +641,7 @@ test.describe("Khối 2: Ghi đè cục bộ cho riêng nhóm này", () => {
 |---|---|---|:---:|---|
 | **`ignoreHTTPSErrors`** | `false` | `true` | 🥈 **`true` (Trong Describe)** | `test.use()` trong Describe ghi đè giá trị ngoài file. |
 | **`actionTimeout`** | `10000ms` | `3000ms` | 🥈 **`3000ms` (Trong Describe)**| Giá trị cục bộ gần bài test hơn nên giành quyền kiểm soát. |
-| **`baseURL`** | `'https://crm...'` | *(Không khai báo)* | 🥉 **`'https://crm...'` (Ngoài File)** | Describe không khai báo $\rightarrow$ Tự động kế thừa từ ngoài file. |
+| **`baseURL`** | `'https://crm...'` | *(Không khai báo)* | 🥉 **`'https://crm...'` (Ngoài File)** | Describe không khai báo ➔ Tự động kế thừa từ ngoài file. |
 
 > 💡 **Ý Nghĩa Thực Chiến**:
 > * Giúp bạn dễ dàng gom nhóm các bài test đặc thù vào chung một file spec mà không làm ảnh hưởng lẫn nhau (ví dụ: nhóm test cần SSL Bypass, nhóm test cần màn hình Mobile Viewport, nhóm test cần chạy chậm `slowMo`).
@@ -766,10 +766,10 @@ Khi trình duyệt (Chrome/Edge/Firefox) truy cập các trang này, cơ chế a
 
 | Loại Lỗi SSL Thực Tế | Tên Miền Live Test Chuẩn | Mã Lỗi Trình Duyệt Bị Chặn | Hành Vi Khi `ignoreHTTPSErrors: true` |
 |---|---|---|:---:|
-| **1. SSL Tự ký (Self-signed)** | `https://self-signed.badssl.com/` | `NET::ERR_CERT_AUTHORITY_INVALID` | 🛡️ **Bỏ qua $\rightarrow$ Status 200** |
-| **2. SSL Hết hạn (Expired)** | `https://expired.badssl.com/` | `NET::ERR_CERT_DATE_INVALID` | 🛡️ **Bỏ qua $\rightarrow$ Status 200** |
-| **3. SSL Sai tên miền (Wrong Host)**| `https://wrong.host.badssl.com/` | `NET::ERR_CERT_COMMON_NAME_INVALID`| 🛡️ **Bỏ qua $\rightarrow$ Status 200** |
-| **4. CA không xác thực (Untrusted Root)**| `https://untrusted-root.badssl.com/`| `NET::ERR_CERT_AUTHORITY_INVALID` | 🛡️ **Bỏ qua $\rightarrow$ Status 200** |
+| **1. SSL Tự ký (Self-signed)** | `https://self-signed.badssl.com/` | `NET::ERR_CERT_AUTHORITY_INVALID` | 🛡️ **Bỏ qua ➔ Status 200** |
+| **2. SSL Hết hạn (Expired)** | `https://expired.badssl.com/` | `NET::ERR_CERT_DATE_INVALID` | 🛡️ **Bỏ qua ➔ Status 200** |
+| **3. SSL Sai tên miền (Wrong Host)**| `https://wrong.host.badssl.com/` | `NET::ERR_CERT_COMMON_NAME_INVALID`| 🛡️ **Bỏ qua ➔ Status 200** |
+| **4. CA không xác thực (Untrusted Root)**| `https://untrusted-root.badssl.com/`| `NET::ERR_CERT_AUTHORITY_INVALID` | 🛡️ **Bỏ qua ➔ Status 200** |
 
 ---
 
@@ -898,7 +898,7 @@ Một trong những quyết định cấu hình quan trọng nhất ảnh hưở
 |---|---|---|
 | **Cửa sổ hiển thị OS** | ❌ Không có (Ẩn hoàn toàn trong background) | ✅ Có cửa sổ đồ họa Desktop xuất hiện |
 | **Cơ chế dựng hình** | 🧠 Render trực tiếp vào Off-screen RAM Buffer | 🎨 Render qua GPU / OS Window Manager |
-| **Mức tiêu thụ RAM & CPU**| 🟢 Tiết kiệm $50\%$ RAM, giảm tải $40\%$ CPU | 🔴 Tốn nhiều tài nguyên máy tính hơn |
+| **Mức tiêu thụ RAM & CPU**| 🟢 Tiết kiệm 50% RAM, giảm tải 40% CPU | 🔴 Tốn nhiều tài nguyên máy tính hơn |
 | **Tốc độ thực thi** | 🚀 Rất nhanh (Nhanh hơn $30\% - 40\%$) | 🐢 Chậm hơn do phải đồng bộ khung hình 60fps |
 | **Môi trường phù hợp** | ☁️ CI/CD Pipelines (GitHub Actions, GitLab CI, Docker) | 💻 Máy tính cá nhân khi viết test & Debug |
 | **Cách kích hoạt** | Mặc định (`headless: true`) hoặc bỏ cờ | Thêm cờ `--headed` hoặc `headless: false` |
@@ -1065,7 +1065,7 @@ Nếu như các thuộc tính khác trong `use` (như `viewport`, `baseURL`, `ex
 | **`--disable-web-security`** | Tắt chính sách bảo mật CORS và Same-Origin Policy. | Test API chéo domain trên môi trường thử nghiệm. |
 | **`--no-sandbox`** | Tắt sandbox an ninh của Linux. | **Bắt buộc** khi chạy test bên trong Docker Container / CI Linux root. |
 | **`--disable-gpu`** | Tắt tăng tốc đồ họa phần cứng GPU. | Tối ưu hóa hiệu năng trên máy chủ CI không có card đồ họa. |
-| **`--start-maximized`** | Mở bung toàn màn hình cửa sổ Desktop OS. | Kết hợp với `viewport: null` để Maximize giao diện chuẩn $100\%$. |
+| **`--start-maximized`** | Mở bung toàn màn hình cửa sổ Desktop OS. | Kết hợp với `viewport: null` để Maximize giao diện chuẩn 100%. |
 | **`--auto-open-devtools-for-tabs`**| Tự động mở bảng F12 Console khi mở tab mới. | Gỡ lỗi chuyên sâu bằng Chrome DevTools. |
 
 ---
@@ -1155,7 +1155,7 @@ Running 2 tests using 1 worker
 ```
 
 > 🔍 **Phân tích chuyên sâu**:
-> 1. `slowMo: 50` làm chậm mỗi action $50\text{ms}$, giúp mắt thường quan sát kịp từng thao tác điền form khi demo trực tiếp.
+> 1. `slowMo: 50` làm chậm mỗi action 50ms, giúp mắt thường quan sát kịp từng thao tác điền form khi demo trực tiếp.
 > 2. `downloadsPath` xác lập vị trí lưu trữ file tải về độc lập và an toàn, ngăn chặn việc file tải về bị thất lạc trong thư mục `Temp` của hệ điều hành.
 
 
@@ -1189,8 +1189,8 @@ Trong các công cụ tự động hóa cũ (như Selenium), tester thường d�
 
 * Khi `viewport` mang giá trị mặc định `{ width: 1280, height: 720 }`, Playwright sẽ vẽ một khung hình ảo 1280x720 bên trong trình duyệt.
 * **CÔNG THỨC VÀNG ĐỂ MAXIMIZE THẬT SỰ**: Bạn **BẮT BUỘC** phải khai báo đồng thời 2 yếu tố:
-  1. `viewport: null` $\rightarrow$ Ra lệnh cho Playwright: *"Hãy giải phóng khung nhìn cố định, trao toàn quyền cho kích thước cửa sổ hệ điều hành!"*
-  2. `launchOptions: { args: ['--start-maximized'] }` $\rightarrow$ Ra lệnh cho Chrome: *"Hãy mở bung toàn màn hình Desktop!"*
+  1. `viewport: null` ➔ Ra lệnh cho Playwright: *"Hãy giải phóng khung nhìn cố định, trao toàn quyền cho kích thước cửa sổ hệ điều hành!"*
+  2. `launchOptions: { args: ['--start-maximized'] }` ➔ Ra lệnh cho Chrome: *"Hãy mở bung toàn màn hình Desktop!"*
 
 ---
 
@@ -1199,7 +1199,7 @@ Trong các công cụ tự động hóa cũ (như Selenium), tester thường d�
 | Chiến Lược | Cấu Hình Khai Báo | Kết Quả Thực Tế | Trường Hợp Ứng Dụng |
 |---|---|---|---|
 | **1. Cạm bẫy kinh điển** | `--start-maximized` + `viewport: { 1280, 720 }` | ❌ Cửa sổ to nhưng website bị co cụm trong khung 1280x720. | **Không nên dùng** (Lỗi hiển thị). |
-| **2. Công thức Vàng Maximize**| `--start-maximized` + `viewport: null` | 👑 Website bung tràn $100\%$ toàn bộ màn hình máy tính. | Test thủ công Local, Demo trực tiếp cho khách hàng. |
+| **2. Công thức Vàng Maximize**| `--start-maximized` + `viewport: null` | 👑 Website bung tràn 100% toàn bộ màn hình máy tính. | Test thủ công Local, Demo trực tiếp cho khách hàng. |
 | **3. Chuẩn CI/CD Cố Định** | `viewport: { width: 1920, height: 1080 }` | 🏢 Trang web luôn đạt chuẩn Full HD trên mọi máy chủ CI. | **Khuyến nghị số 1** cho CI/CD Pipelines & Visual Testing. |
 
 ---
@@ -1455,7 +1455,7 @@ Một trong những bài toán hóc búa nhất của Visual Testing là: *Tại
 
 * **Bản Chất**:
   - `deviceScaleFactor` (DPR): Tỷ lệ giữa pixel vật lý của màn hình và pixel logic trong CSS (Màn hình thường = $1$, Màn hình Retina/MacBook/iPhone = $2$ hoặc $3$).
-  - **`scale: 'css'` (MẶC ĐỊNH)**: Playwright chụp ảnh chuẩn $1\text{px CSS} = 1\text{px Image}$. Dù chạy trên màn hình nào, kích thước file ảnh đầu ra luôn **nhất quán $100\%$ và dung lượng nhẹ**.
+  - **`scale: 'css'` (MẶC ĐỊNH)**: Playwright chụp ảnh chuẩn $1\text{px CSS} = 1\text{px Image}$. Dù chạy trên màn hình nào, kích thước file ảnh đầu ra luôn **nhất quán 100% và dung lượng nhẹ**.
   - **`scale: 'device'`**: Chụp ảnh theo đúng số lượng pixel phần cứng thật. Với Viewport $1280 \times 720$ trên màn hình Retina ($DPR = 2$), ảnh xuất ra sẽ có kích thước $2560 \times 1440$ (siêu nét nhưng nặng gấp 4 lần dung lượng).
 
 ```typescript
@@ -1495,7 +1495,7 @@ await page.screenshot({
 
 #### 🗜️ 7.4.3. Định Dạng Ảnh & Nén Dung Lượng (`type: 'png' | 'jpeg'` & `quality: 0 - 100`)
 
-Mặc định Playwright xuất định dạng `.png` (Lossless, giữ nguyên chất lượng từng pixel nhưng dung lượng từ $500\text{KB} - 2\text{MB}$/ảnh). Nếu dự án chạy hàng ngàn bài test, việc đổi sang `.jpeg` với `quality: 80` sẽ **giảm đến $80\%$ dung lượng ổ đĩa CI/CD**:
+Mặc định Playwright xuất định dạng `.png` (Lossless, giữ nguyên chất lượng từng pixel nhưng dung lượng từ $500\text{KB} - 2\text{MB}$/ảnh). Nếu dự án chạy hàng ngàn bài test, việc đổi sang `.jpeg` với `quality: 80` sẽ **giảm đến 80% dung lượng ổ đĩa CI/CD**:
 
 ```typescript
 // 🗜️ Nén ảnh định dạng JPEG chất lượng 80% (Giảm 80% dung lượng file):
@@ -1808,10 +1808,10 @@ Bên cạnh ảnh chụp tĩnh (Screenshot), Playwright cung cấp tính năng *
 ### 💡 8.1. Tại Sao Tên Là `retain-on-failure` Mà Không Phải `only-on-failure` Như Screenshot?
 
 Một điểm tinh tế trong triết lý thiết kế của Playwright:
-* **Ảnh chụp (Screenshot)**: Là hành động chụp tức thời tại một thời điểm $\rightarrow$ Playwright có thể đợi đến khi assert thất bại mới bấm máy chụp $\rightarrow$ Đặt tên là **`only-on-failure`** (*Chỉ chụp khi lỗi*).
+* **Ảnh chụp (Screenshot)**: Là hành động chụp tức thời tại một thời điểm ➔ Playwright có thể đợi đến khi assert thất bại mới bấm máy chụp ➔ Đặt tên là **`only-on-failure`** (*Chỉ chụp khi lỗi*).
 * **Video (Ghi hình)**: Video là một chuỗi dòng thời gian liên tục từ quá khứ đến hiện tại. Playwright **KHÔNG THỂ** "chờ đến lúc fail mới quay ngược về quá khứ để quay lại". Vì vậy, Playwright **buộc phải quay ngầm liên tục từ đầu bài test**:
-  - Khi test **PASS**: Playwright tự động xóa bỏ (discard) tệp video tạm $\rightarrow$ $0$ byte rác.
-  - Khi test **FAILED**: Playwright quyết định **GIỮ LẠI (Retain)** tệp video $\rightarrow$ Vì vậy được đặt tên chuẩn xác là **`retain-on-failure`** (*Giữ lại khi lỗi*)!
+  - Khi test **PASS**: Playwright tự động xóa bỏ (discard) tệp video tạm ➔ $0$ byte rác.
+  - Khi test **FAILED**: Playwright quyết định **GIỮ LẠI (Retain)** tệp video ➔ Vì vậy được đặt tên chuẩn xác là **`retain-on-failure`** (*Giữ lại khi lỗi*)!
 
 ---
 
@@ -1819,7 +1819,7 @@ Một điểm tinh tế trong triết lý thiết kế của Playwright:
 
 | Chế Độ `video` | Khi Test PASS | Lần Đầu (Tab "Run") FAIL | Lần Thử Lại (Tab "Retry #1") FAIL | Tác Động Tài Nguyên CI | Khuyến Nghị Ứng Dụng |
 |---|:---:|:---:|:---:|---|---|
-| **`'off'` (Mặc định)** | ❌ Không quay | ❌ Không quay | ❌ Không quay | 🟢 $0\%$ CPU, $0\text{ MB}$ đĩa | Test API, Suite hàng chục ngàn test. |
+| **`'off'` (Mặc định)** | ❌ Không quay | ❌ Không quay | ❌ Không quay | 🟢 0% CPU, $0\text{ MB}$ đĩa | Test API, Suite hàng chục ngàn test. |
 | **`'on'`** | 🎥 Lưu video | 🎥 Lưu video | 🎥 Lưu video | 🔴 Rất tốn CPU & hàng GB đĩa | Báo cáo nghiệm thu bàn giao khách hàng. |
 | **`'retain-on-failure'`** | 🗑️ Tự động XÓA | 🎥 **GIỮ LẠI video** | 🎥 **GIỮ LẠI video** | 🟢 Cân bằng vàng | **Khuyến nghị mặc định cho mọi dự án UI!** |
 | **`'on-first-retry'`** | ❌ Không quay | ❌ Không quay | 🎥 **BẮT ĐẦU QUAY** | 🟢 Siêu tối ưu tốc độ | Pipeline CI/CD có cấu hình `retries > 0`. |
@@ -2421,7 +2421,7 @@ test-results/
 ```
 
 > 🛡️ **Tính Năng Cô Lập Song Song Tuyệt Đối (Parallel Isolation)**:
-> Ngay cả khi bạn chạy $10$ Workers song song và các bài test đều cùng lưu một tệp tên là `report.txt`, Playwright vẫn lưu vào $10$ thư mục con hash riêng biệt $\rightarrow$ **$100\%$ không bao giờ xảy ra tình trạng ghi đè hay xung đột tệp tin giữa các tiến trình!**
+> Ngay cả khi bạn chạy $10$ Workers song song và các bài test đều cùng lưu một tệp tên là `report.txt`, Playwright vẫn lưu vào $10$ thư mục con hash riêng biệt ➔ **100% không bao giờ xảy ra tình trạng ghi đè hay xung đột tệp tin giữa các tiến trình!**
 
 ---
 

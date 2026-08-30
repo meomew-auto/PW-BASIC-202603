@@ -1,0 +1,13 @@
+{
+  "ROOT": "E:\\Projects\\retrieval-router",
+  "RETRIEVAL_STACK_ROOT": "E:\\Projects\\retrieval-router",
+  "RETRIEVAL_PROJECT_ROOT": "E:\\playwright-pro\\202603-PW_BASIC",
+  "RETRIEVAL_REPO_NAME": "202603-PW_BASIC",
+  "RETRIEVAL_GROUP_ID": "pw-basic",
+  "RETRIEVAL_PROFILE_PATH": "E:\\Projects\\retrieval-router\\configs\\retrieval-profiles\\202603-PW_BASIC.json",
+  "RETRIEVAL_PROJECT_MEMORY_DB": "E:\\Projects\\retrieval-router\\artifacts\\retrieval-router\\project-memory.sqlite",
+  "RETRIEVAL_ROUTER_ULTRA_PROFILE": "E:\\Projects\\retrieval-router\\configs\\retrieval-profiles\\202603-PW_BASIC.json",
+  "RETRIEVAL_SOURCE_ROOTS": ".",
+  "RETRIEVAL_SERENA_PROJECT_ROOT": "E:\\playwright-pro\\202603-PW_BASIC",
+  "RETRIEVAL_WORKSPACE_ROOT": "E:\\playwright-pro"
+}

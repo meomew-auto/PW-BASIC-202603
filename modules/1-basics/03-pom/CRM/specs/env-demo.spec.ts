@@ -173,6 +173,7 @@ test.describe("Minh họa Quản lý Đa Môi Trường (dotenv-flow) & Tháp Qu
 
     // Không cần gõ lại toàn bộ URL, chỉ cần gọi loginPage.goto() dùng đường dẫn tương đối "/admin/authentication":
     await loginPage.goto();
+    // await page.goto("/admin/authentication");
     await loginPage.expectOnPage();
 
     // Kiểm tra URL hiện tại bắt đầu bằng baseURL đã nạp từ file .env:

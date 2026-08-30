@@ -50,19 +50,17 @@ export default defineConfig({
   // expect: {
   //   timeout: 5_000,
   // },
-
   fullyParallel: true,
   reporter: "html",
   metadata: {
     envProfile: profile,
     baseURL: lessonBaseURL,
   },
-
+  timeout: 40000,
   use: {
     baseURL: lessonBaseURL, // BẮT BUỘC: để page.goto('/lesson2') và '/static/...' dùng đường dẫn tương đối.
     headless: false,
     trace: "on-first-retry", // Lưu ý: chỉ chụp trace khi có retry; chưa set `retries` (mặc định 0) nên trace hầu như không lưu. Muốn xem trace ca đỏ → đổi "on" hoặc "retain-on-failure".
-
     // ── 4) ACTION TIMEOUT — trần cho click / fill / hover / check / selectOption…
     //    Default docs: 0 = KHÔNG trần riêng → action rơi về test timeout bao ngoài.
     // actionTimeout: 0,

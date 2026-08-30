@@ -1,17 +1,31 @@
 # Dependencies
 node_modules/
 
-# Playwright
+# Playwright & Automation Test Reports
 /test-results/
 /playwright-report/
+/playwright-report*/
 /blob-report/
+/allure-results/
+/allure-report/
+/history-runs/
+/traces/
 /playwright/.cache/
 /playwright/.auth/
+/.auth/
+test-history.json
+playwright-report-*.html
+smart-report.html
+.smart-quarantine.json
 
 # Env & secrets
-.env
-.env.*
-!.env.example
+.env.local
+.env.*.local
+
+# Bài 16 dùng credential GIẢ để minh họa đủ dotenv-flow cascade.
+# Chỉ unignore ba file nằm đúng trong env-cascade; file local thật vẫn bị ignore.
+!modules/1-basics/03-pom/CRM/lesson-16/env-cascade/.env.local
+!modules/1-basics/03-pom/CRM/lesson-16/env-cascade/.env.*.local
 
 # Logs
 *.log

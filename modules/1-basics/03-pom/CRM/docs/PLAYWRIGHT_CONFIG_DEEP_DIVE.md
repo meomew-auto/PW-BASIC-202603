@@ -79,9 +79,9 @@ Mặc định khi bạn gõ `npx playwright test`, Playwright sẽ tự động 
 ```
 
 1. **Cờ `--config=<path>`**: Dùng để chỉ định một file cấu hình riêng biệt trong thư mục `configs/` thay vì dùng config mặc định ở Root.
-   * *Ví dụ*: `--config=configs/playwright.worker-fixture.config.ts` $\rightarrow$ Nạp cấu hình chuyên dụng cho kiểm thử In-Memory RAM Fixture.
+   * *Ví dụ*: `--config=configs/playwright.worker-fixture.config.ts` ➔ Nạp cấu hình chuyên dụng cho kiểm thử In-Memory RAM Fixture.
 2. **Cờ `--project=<name>`**: Dùng để chọn lọc đúng 1 Project trong mảng `projects: [...]` của file config đó.
-   * *Ví dụ*: `--project=chrome-visual-debug` $\rightarrow$ Chỉ chạy Project mở giao diện trình duyệt trực quan (`headless: false`) và quay video.
+   * *Ví dụ*: `--project=chrome-visual-debug` ➔ Chỉ chạy Project mở giao diện trình duyệt trực quan (`headless: false`) và quay video.
 3. **Cờ chỉ định đường dẫn Test Spec (`[path/to/spec]`)**: Dùng khi chỉ muốn chạy 1 file test cụ thể mà không quét toàn bộ thư mục `testDir`.
 4. **Alias trong `package.json` (`npm run test:...`)**: Đóng gói các câu lệnh CLI dài dòng thành các script 1 dòng ngắn gọn để lập trình viên và hệ thống CI/CD gõ nhanh, chuẩn xác và không bị nhầm lẫn cú pháp.
 
@@ -91,7 +91,7 @@ Mặc định khi bạn gõ `npx playwright test`, Playwright sẽ tự động 
 
 | Lệnh npm Script | Lệnh CLI Playwright Gốc Tương Đương | Ý Nghĩa Kỹ Thuật & Mục Đích Thực Nghiệm |
 |---|---|---|
-| **`npm run test:worker-fixture-demo`** | `npx playwright test --config=configs/playwright.worker-fixture.config.ts` | 🧠 **Đo hiệu năng Worker Fixture (RAM)**: Đăng nhập 1 lần vào RAM, nhân bản context mới trong $0\text{ms}$ (Zero Disk I/O, không sinh file rác). |
+| **`npm run test:worker-fixture-demo`** | `npx playwright test --config=configs/playwright.worker-fixture.config.ts` | 🧠 **Đo hiệu năng Worker Fixture (RAM)**: Đăng nhập 1 lần vào RAM, nhân bản context mới trong 0ms (Zero Disk I/O, không sinh file rác). |
 | **`npm run test:storage-state-demo`** | `npx playwright test --config=configs/playwright.storage-state.config.ts` | 📁 **Đo hiệu năng Storage State (Disk)**: Chạy trọn vẹn chuỗi 3 giai đoạn `Setup (ghi JSON) ➔ Test chính (0s login) ➔ Teardown (dọn rác)`. |
 | **`npm run test:lesson17-cascading`** | `npx playwright test --config=configs/playwright.cascading.config.ts` | 🌊 **Kiểm chứng Thác Đổ 4 Cấp Độ & Ghi Đè**: Chứng minh cơ chế ghi đè options (Root ➔ Project ➔ File ➔ Test) và cạm bẫy Shallow Merge. |
 | **`npm run test:lesson17-matrix`** | `npx playwright test --config=configs/playwright.debug.config.ts` | 🧊 **Ma Trận Tích Descartes (Test Matrix)**: Chạy song song đa thiết bị (Desktop Chrome, Mobile Safari, Visual Debug) với cùng 1 bộ test. |
@@ -100,7 +100,7 @@ Mặc định khi bạn gõ `npx playwright test`, Playwright sẽ tự động 
 | **`npm run test:lesson17-global-setup`** | `npx playwright test --config=configs/playwright.global-setup.config.ts` | 👴 **Di Sản Global Setup (Legacy)**: Chạy cơ chế hook toàn cục ở cấp Root (Node.js Main Process) để phân tích cơ chế cũ trước v1.31. |
 | **npm run test:lesson17-global-setup-fail** | `npx playwright test --config=configs/playwright.global-setup-failing.config.ts` | 💥 **Chứng Minh Lỗi Black Box Crash**: Mô phỏng lỗi login trong Global Setup khiến hệ thống văng lỗi thô thiển, bỏ qua `retries: 2`, mất sạch Trace/Video/Screenshot. |
 | **npm run test:lesson17-global-setup-bypass** | `npx playwright test --config=configs/playwright.global-setup-bypass.config.ts` | 🚧 **Chứng Minh Bị Cách Ly Khỏi Project**: Mô phỏng lỗi gọi URL tương đối trong Global Setup do không kế thừa được `use.baseURL` từ Project. |
-| **`npm run test:lesson17-project-setup-fail`** | `npx playwright test --config=configs/playwright.project-setup-failing.config.ts` | 🛡️ **Kiểm Chứng Retry & Circuit Breaker**: Mô phỏng lỗi trong Project Setup $\rightarrow$ Tự động Retry 2 lần (3 workers), ngắt mạch 3 test con (`3 did not run`), lưu Trace/Video/HTML Report đầy đủ! |
+| **`npm run test:lesson17-project-setup-fail`** | `npx playwright test --config=configs/playwright.project-setup-failing.config.ts` | 🛡️ **Kiểm Chứng Retry & Circuit Breaker**: Mô phỏng lỗi trong Project Setup ➔ Tự động Retry 2 lần (3 workers), ngắt mạch 3 test con (`3 did not run`), lưu Trace/Video/HTML Report đầy đủ! |
 | **`npm run test:lesson17-lifecycle`** | `npx playwright test --config=configs/playwright.lifecycle.config.ts` | ⏱️ **Thứ Bậc Vòng Đời 4 Tầng**: Chứng minh thứ tự thực thi từ PID mẹ đến PID con: `Global Setup ➔ Worker Fixture ➔ beforeAll ➔ Test Fixture`. |
 
 ---
@@ -110,7 +110,7 @@ Mặc định khi bạn gõ `npx playwright test`, Playwright sẽ tự động 
 ### 🔹 1.1. Tại sao `testDir` là tấm khiên bảo vệ hiệu năng?
 Trong một repository lớn (Next.js, React, Node.js), có hàng chục nghìn file trong `node_modules`, `src/components/*.test.tsx` (Unit test của Jest/Vitest).
 Nếu không có `testDir`:
-* Playwright Runner phải lùng sục hơn 50.000 file rác $\rightarrow$ Mất từ 5–15 giây trước mỗi lần chạy.
+* Playwright Runner phải lùng sục hơn 50.000 file rác ➔ Mất từ 5–15 giây trước mỗi lần chạy.
 * Có thể chạy nhầm file Unit Test dẫn đến lỗi crash DOM.
 
 ```text
@@ -311,7 +311,7 @@ const finalUse = {
 ```
 
 **Diễn biến khi gộp:**
-1. **Với thuộc tính đơn (`screenshot`)**: Root có `'only-on-failure'`, Project có `'on'` $\rightarrow$ `finalUse.screenshot` nhận giá trị mới `'on'` *(an toàn)*.
+1. **Với thuộc tính đơn (`screenshot`)**: Root có `'only-on-failure'`, Project có `'on'` ➔ `finalUse.screenshot` nhận giá trị mới `'on'` *(an toàn)*.
 2. **Với Nested Object (`launchOptions`)**: 
    * Root (Tầng 3) có: `launchOptions: { slowMo: 500, downloadsPath: "./downloads" }`
    * Project (Tầng 2) ghi: `launchOptions: { slowMo: 100 }`
@@ -698,8 +698,8 @@ Playwright nhúng sẵn engine chuyển mã siêu tốc **`esbuild`**. Khi nhậ
 * Phân tích tĩnh (Static Evaluation) các khối `test.describe()`, `test.use()` để lập nên **Test Suite Manifest** (Cây cấu trúc bài test).
 
 #### 4️⃣ Giai đoạn 4: Planning, Descartes Matrix & DAG Topological Sorting
-* **Nhân ma trận**: Lấy toàn bộ Test Manifest $\times$ Danh sách Projects để tính toán tổng số Test Jobs.
-* **Giải đồ thị phụ thuộc (DAG)**: Nếu Project có `dependencies: ['setup']` và `teardown: 'cleanup'`, Playwright áp dụng thuật toán **Topological Sort** để xếp lịch: `Setup` chạy trước $\rightarrow$ Test chính chạy song song $\rightarrow$ `Teardown` chạy sau cùng.
+* **Nhân ma trận**: Lấy toàn bộ Test Manifest × Danh sách Projects để tính toán tổng số Test Jobs.
+* **Giải đồ thị phụ thuộc (DAG)**: Nếu Project có `dependencies: ['setup']` và `teardown: 'cleanup'`, Playwright áp dụng thuật toán **Topological Sort** để xếp lịch: `Setup` chạy trước ➔ Test chính chạy song song ➔ `Teardown` chạy sau cùng.
 
 #### 5️⃣ Giai đoạn 5: Worker Process Forking & IPC Execution (Tiến Trình Cô Lập)
 * **Main Process (Tổng đài)**: Gọi hàm `child_process.fork()` để sinh ra các **Worker Process** độc lập (số lượng worker dựa vào `workers: N`). Main Process **không bao giờ mở browser**, nó chỉ điều phối.
@@ -983,7 +983,7 @@ File `playwright/.auth/admin.json` được sinh ra sau bước Setup có 2 mả
 
 #### 🚀 Cơ chế nạp siêu tốc ở tầng Browser Engine (0s Login):
 * Khi Worker khởi tạo `BrowserContext` mới với `storageState: "admin.json"`, Playwright **bơm thẳng mảng Cookies và LocalStorage vào nhân C++ của trình duyệt trước khi nạp trang web đầu tiên**.
-* Khi gọi `page.goto('/admin')`, máy chủ CRM nhận diện ngay Cookie phiên hợp lệ $\rightarrow$ **Trang Dashboard mở ra tức thì trong ~1s mà không cần render form Đăng nhập, không cần gõ phím, không cần click nút Đăng nhập!**
+* Khi gọi `page.goto('/admin')`, máy chủ CRM nhận diện ngay Cookie phiên hợp lệ ➔ **Trang Dashboard mở ra tức thì trong ~1s mà không cần render form Đăng nhập, không cần gõ phím, không cần click nút Đăng nhập!**
 
 ---
 
@@ -2157,7 +2157,7 @@ Mặc dù không còn phù hợp cho việc Đăng nhập UI (UI Authentication)
 
 > [!WARNING]
 > **QUY TẮC BẤT DI BẤT DỊCH TRONG PLAYWRIGHT HIỆN ĐẠI**:
-> * Cứ tác vụ nào **cần mở trình duyệt (Browser), cần điền form, cần gọi API lấy Token người dùng** $\rightarrow$ **100% PHẢI DÙNG PROJECT DEPENDENCIES!**
+> * Cứ tác vụ nào **cần mở trình duyệt (Browser), cần điền form, cần gọi API lấy Token người dùng** ➔ **100% PHẢI DÙNG PROJECT DEPENDENCIES!**
 > * Tuyệt đối không dùng `globalSetup` để mở browser login.
 
 ---
@@ -2311,7 +2311,7 @@ Running 2 tests using 1 worker
 |---|---|---|
 | **Báo cáo HTML Report** | ✅ **Gom chung vào 1 HTML Report duy nhất** (rất đẹp và trực quan). | ❌ Bị ghi đè báo cáo nếu không đổi `outputDir` / `reporter`. |
 | **Project Dependencies (Setup/Teardown)** | ✅ **Hỗ trợ hoàn hảo** (`dependencies: ['setup']`). | ❌ Không thể chia sẻ dependency giữa 2 file config độc lập. |
-| **Phù hợp cho tình huống nào?** | • Chạy đa trình duyệt (Chrome, Firefox, Safari).<br/>• Chạy phân quyền Multi-Role.<br/>• Chạy chuỗi Setup $\rightarrow$ Test $\rightarrow$ Teardown. | • Phân tách hoàn toàn **E2E UI Test vs API Test**.<br/>• Bộ test Smoke chạy 1 phút sau commit vs Bộ Regression chạy đêm 2 tiếng.<br/>• Cấu hình `webServer` khởi động server backend riêng biệt. |
+| **Phù hợp cho tình huống nào?** | • Chạy đa trình duyệt (Chrome, Firefox, Safari).<br/>• Chạy phân quyền Multi-Role.<br/>• Chạy chuỗi Setup ➔ Test ➔ Teardown. | • Phân tách hoàn toàn **E2E UI Test vs API Test**.<br/>• Bộ test Smoke chạy 1 phút sau commit vs Bộ Regression chạy đêm 2 tiếng.<br/>• Cấu hình `webServer` khởi động server backend riêng biệt. |
 | **Cách kích hoạt** | `npx playwright test --project=chrome` | `npx playwright test --config=configs/playwright.smoke.config.ts` |
 
 ---

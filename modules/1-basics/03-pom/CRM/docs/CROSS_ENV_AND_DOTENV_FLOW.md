@@ -66,8 +66,8 @@ Trong quá trình phát triển hệ thống kiểm thử tự động quy mô l
 
 ### 🎯 Nguyên Lý Chọn Lệnh & Cấu Hình:
 Khi thực thi test, ta có 3 cách điều khiển chính:
-1. **Chạy trực tiếp từ VS Code Playwright Extension (Nút Play ▶️)**: Playwright khởi động không có biến dòng lệnh $\rightarrow$ Hệ thống tự động fallback về môi trường `development`.
-2. **Chạy qua npm scripts (`npm run env:...`)**: Dùng công cụ `cross-env` để inject biến `NODE_ENV` tương thích $100\%$ trên mọi OS (Windows, macOS, Linux).
+1. **Chạy trực tiếp từ VS Code Playwright Extension (Nút Play ▶️)**: Playwright khởi động không có biến dòng lệnh ➔ Hệ thống tự động fallback về môi trường `development`.
+2. **Chạy qua npm scripts (`npm run env:...`)**: Dùng công cụ `cross-env` để inject biến `NODE_ENV` tương thích 100% trên mọi OS (Windows, macOS, Linux).
 3. **Chạy Override trực tiếp từ Shell (`cross-env CRM_BASE_URL=...`)**: Ép buộc toàn bộ suite trỏ sang URL mới mà không cần sửa file `.env`.
 
 ---
@@ -735,8 +735,8 @@ Running 1 test using 1 worker
 
 #### 🔍 Mổ Xẻ Chi Tiết Log Kịch Bản 5:
 * Lệnh `cross-env CRM_BASE_URL=https://ci-custom-server.example.com` đã inject trực tiếp URL tùy chỉnh vào `process.env`.
-* Khi `dotenvFlow.config()` chạy, nó thấy biến `CRM_BASE_URL` đã có sẵn $\rightarrow$ Bỏ qua không nạp từ file `.env`.
-* Kết quả: Test 05 nhận đúng URL `https://ci-custom-server.example.com` $\rightarrow$ **Chứng minh Shell/CI luôn thắng tuyệt đối!**
+* Khi `dotenvFlow.config()` chạy, nó thấy biến `CRM_BASE_URL` đã có sẵn ➔ Bỏ qua không nạp từ file `.env`.
+* Kết quả: Test 05 nhận đúng URL `https://ci-custom-server.example.com` ➔ **Chứng minh Shell/CI luôn thắng tuyệt đối!**
 
 ---
 
@@ -904,7 +904,7 @@ jobs:
 | Tiêu Chí Kỹ Thuật | `.env` (`dotenv-flow`) 📁 | Pure TypeScript (`.ts`) 💻 | File JSON / YAML 📄 |
 |---|---|---|---|
 | **Bảo mật Passwords / Tokens cá nhân** | 👑 **VÔ ĐỊCH** (Nhờ `.local` bị `.gitignore` chặn) | ❌ Nguy hiểm (Dễ commit pass lên Git) | ❌ Dễ lộ pass lên Git |
-| **Gợi ý Code & Type Checking** | ❌ Chỉ là string (`process.env.KEY`) | 👑 **VÔ ĐỊCH** (Autocomplete $100\%$) | ❌ Cần tự viết Interface ép kiểu |
+| **Gợi ý Code & Type Checking** | ❌ Chỉ là string (`process.env.KEY`) | 👑 **VÔ ĐỊCH** (Autocomplete 100%) | ❌ Cần tự viết Interface ép kiểu |
 | **Cấu trúc Dữ liệu Phức tạp (Nested / Arrays)**| ❌ Chỉ có chuỗi phẳng 1 chiều |  Hỗ trợ mảng, object, hàm logic |  Hỗ trợ cây phân cấp |
 | **Tích hợp Tự Động Với Shell / CI CLI** | 👑 Tương thích tự nhiên với `cross-env` | ⚠️ Phải tự viết logic `process.env ?? config` | ⚠️ Phải tự code logic ghi đè |
 
@@ -1090,7 +1090,7 @@ Running 2 tests using 1 worker
 
 Khi dùng `dotenv-flow`, biến môi trường mặc định trong Node.js chỉ có kiểu `string | undefined`, khiến lập trình viên phải **gõ tay từng ký tự** và rất dễ gõ sai chính tả (`process.env.CRM_BASEURL` thay vì `CRM_BASE_URL`).
 
-Dưới đây là **2 giải pháp chuẩn mực nhất** để VS Code tự động bật cửa sổ gợi ý (Autocomplete) $100\%$:
+Dưới đây là **2 giải pháp chuẩn mực nhất** để VS Code tự động bật cửa sổ gợi ý (Autocomplete) 100%:
 
 ---
 

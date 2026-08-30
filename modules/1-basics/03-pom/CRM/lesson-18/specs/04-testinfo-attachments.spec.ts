@@ -1,7 +1,8 @@
 import { test, expect } from "@playwright/test";
+import fs from "fs";
 
 test.describe("Bài 18 - Phần 4: Đính Kèm Đa Phương Tiện & Metadata Báo Cáo HTML", () => {
-  test("01 - Nhúng ảnh chụp, JSON payload và văn bản vào HTML Report", async ({ page }, testInfo) => {
+  test("01 - Nhúng ảnh chụp, JSON payload, văn bản và file đĩa vào HTML Report", async ({ page }, testInfo) => {
     console.log("\n📑 [ATTACHMENTS] Đang chuẩn bị các bằng chứng hiện trường...");
 
     // 1. Đính kèm log văn bản thuần túy (Text/plain)
@@ -36,7 +37,19 @@ test.describe("Bài 18 - Phần 4: Đính Kèm Đa Phương Tiện & Metadata B�
       contentType: "text/html",
     });
 
-    console.log("   ✅ Đã đính kèm thành công 3 loại artifact vào HTML Report!");
+    // 4. Đính kèm tệp có sẵn từ ổ đĩa (path option)
+    const diskAuditPath = testInfo.outputPath("security-audit.json");
+    fs.writeFileSync(diskAuditPath, JSON.stringify({ auditCheck: "PASSED", score: 100 }, null, 2), "utf-8");
+
+    await testInfo.attach("🛡️ Tệp Security Audit đính kèm từ đĩa", {
+      path: diskAuditPath,
+      contentType: "application/json",
+    });
+
+    // 5. Kiểm tra danh sách attachments đã được đăng ký:
+    console.log(`   • Tổng số attachments đã đính kèm: ${testInfo.attachments.length}`);
+    expect(testInfo.attachments.length).toBe(4);
+    console.log("   ✅ Đã đính kèm thành công 4 loại artifact vào HTML Report!");
   });
 
   test("02 - Gắn nhãn liên kết Jira, Tác giả và Quy tắc nghiệp vụ (Annotations)", async ({ page }, testInfo) => {
