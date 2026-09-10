@@ -2,22 +2,21 @@ import { test, expect } from "@playwright/test";
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════
- * 🧪 [CASE 04] KIỂM THỬ KHÓI THỰC TẾ TRÊN HỆ THỐNG NEKO COFFEE
+ * ☕ [CASE 10] KIỂM THỬ KHÓI THỰC TẾ TRÊN HỆ THỐNG NEKO COFFEE (LIVE SMOKE)
  * ══════════════════════════════════════════════════════════════════════════════
  *
- * 🎯 Mục tiêu kiểm chứng Option file YML:
- * 1. `npx playwright install --with-deps chromium`: Xác nhận trình duyệt Chromium
- *    trên máy ảo Ubuntu Linux đã có đủ các thư viện C++ để render website thật.
- * 2. Mạng & SSL: Kiểm tra máy ảo kết nối thành công đến domain HTTPS thực tế
- *    `https://coffee.autoneko.com`.
- * 3. Tốc độ nạp trang: Đảm bảo không bị quá tải timeout (dưới 15s).
+ * 🎯 Mục tiêu kiểm chứng:
+ * 1. Linux OS Libraries: Lệnh `npx playwright install --with-deps chromium` đã
+ *    cài đặt đủ các thư viện C++ để render website Next.js thực tế.
+ * 2. Kết nối HTTPS, phân giải DNS từ Cloud Runner về server Neko Coffee.
+ * 3. Thẩm định và tương tác form đăng nhập qua các `data-testid` chính thức.
  */
 
-test.describe("🧪 [CASE 04] Live Neko Coffee Smoke Verification", () => {
-  test("01 - [LIVE SMOKE] Truy cập trang đăng nhập Neko Coffee và xác thực giao diện", async ({
+test.describe("☕ [CASE 10] Live Neko Coffee Smoke Verification", () => {
+  test("01 - [LIVE SMOKE] Truy cập và tương tác form đăng nhập Neko Coffee", async ({
     page,
   }) => {
-    console.log("🌐 [Live Test] Đang điều hướng tới hệ sinh thái Neko Coffee...");
+    console.log("\n🌐 [Live Test] Đang điều hướng tới hệ sinh thái Neko Coffee...");
 
     const targetUrl = "/login";
     const response = await page.goto(targetUrl, {
@@ -28,7 +27,7 @@ test.describe("🧪 [CASE 04] Live Neko Coffee Smoke Verification", () => {
     console.log(`   - HTTP Status: ${response?.status()}`);
     expect(response?.status()).toBeLessThan(400);
 
-    // Kiểm tra các phần tử cốt lõi của trang Login theo data-testid chính thức
+    // Thẩm định các phần tử giao diện theo data-testid chính thức
     const usernameInput = page.getByTestId("login-input-username");
     const passwordInput = page.getByTestId("login-input-password");
     const submitBtn = page.getByTestId("login-button-submit");
@@ -37,6 +36,10 @@ test.describe("🧪 [CASE 04] Live Neko Coffee Smoke Verification", () => {
     await expect(passwordInput).toBeVisible({ timeout: 10_000 });
     await expect(submitBtn).toBeVisible({ timeout: 10_000 });
 
-    console.log("✅ Kết nối và hiển thị website Neko Coffee trên máy ảo Ubuntu thành công 100%!");
+    // Tương tác gõ phím nhẹ để kiểm tra event loop trên máy ảo Linux
+    await usernameInput.fill("ci_runner_test@autoneko.com");
+    await passwordInput.fill("SafePassword123!");
+
+    console.log("✅ Kết nối, nạp DOM và tương tác form Neko Coffee trên máy ảo Ubuntu thành công 100%!");
   });
 });
