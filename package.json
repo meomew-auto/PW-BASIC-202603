@@ -98,7 +98,10 @@
     "test:lesson24-full-e2e": "npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/06-hybrid-full-e2e-workflow.spec.ts --config=configs/playwright.lesson24-network.config.ts",
     "test:lesson24-har": "npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/07-har-recording-and-replay.spec.ts --config=configs/playwright.lesson24-network.config.ts",
     "test:lesson24-ecommerce": "npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/08-hybrid-real-world-ecommerce-workflows.spec.ts --config=configs/playwright.lesson24-network.config.ts",
-    "test:lesson24-showroom": "npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/09-nextjs-route-mock-showroom.spec.ts --config=configs/playwright.lesson24-network.config.ts"
+    "test:lesson24-showroom": "npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/09-nextjs-route-mock-showroom.spec.ts --config=configs/playwright.lesson24-network.config.ts",
+    "test:lesson25-tabs": "npx playwright test --config=configs/playwright.lesson25-tabs.config.ts",
+    "test:lesson26-cicd": "npx playwright test --config=configs/playwright.lesson26-cicd.config.ts",
+    "test:lesson26-fail": "cross-env SIMULATE_FAILURE=true npx playwright test --config=configs/playwright.lesson26-cicd.config.ts"
   },
   "keywords": [],
   "author": "",

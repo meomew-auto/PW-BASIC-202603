@@ -54,3 +54,4 @@ artifacts/retrieval-router/
 **/project-memory.sqlite-*
 **/project-memory.sqlite-wal
 **/project-memory.sqlite-shm
+.har/

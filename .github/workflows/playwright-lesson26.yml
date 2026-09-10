@@ -1,0 +1,88 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# 🚀 BÀI 26: PLAYWRIGHT CI/CD GITHUB ACTIONS WORKFLOW (SANDBOX PIPELINE)
+# ══════════════════════════════════════════════════════════════════════════════
+# Mục tiêu: Pipeline độc lập chỉ nhắm vào Bài 26 để kiểm chứng từng option YML.
+# Không ảnh hưởng và không bị ảnh hưởng bởi các bài học khác trong repository.
+# ══════════════════════════════════════════════════════════════════════════════
+
+name: 🚀 Lesson 26 - Playwright CI/CD Sandbox
+
+# ── 1. CƠ CHẾ KÍCH HOẠT (TRIGGERS) ───────────────────────────────────────────
+on:
+  # Kích hoạt tự động khi push vào nhánh main/master
+  push:
+    branches: [ main, master ]
+    # ⚡ QUAN TRỌNG: Chỉ chạy khi có thay đổi trong Bài 26 hoặc chính file YML này
+    paths:
+      - 'modules/2-api/NekoCoffee/lesson-26/**'
+      - 'configs/playwright.lesson26-cicd.config.ts'
+      - '.github/workflows/playwright-lesson26.yml'
+
+  # Kích hoạt tự động khi có Pull Request nhắm vào nhánh main/master
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'modules/2-api/NekoCoffee/lesson-26/**'
+      - 'configs/playwright.lesson26-cicd.config.ts'
+      - '.github/workflows/playwright-lesson26.yml'
+
+  # Kích hoạt thủ công bằng nút bấm trên giao diện Web của GitHub Actions
+  workflow_dispatch:
+    inputs:
+      simulate_failure:
+        description: '🔥 Cố tình kích hoạt Test Fail để kiểm tra if: always() và Artifact Upload'
+        required: false
+        type: boolean
+        default: false
+
+# ── 2. QUẢN LÝ ĐỒNG THỜI (CONCURRENCY) ───────────────────────────────────────
+# Tự động hủy các lần chạy cũ của cùng một branch khi có commit mới đẩy lên
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ── 3. KHỐI CÔNG VIỆC THỰC THI (JOBS) ────────────────────────────────────────
+jobs:
+  playwright-sandbox:
+    name: 🧪 Run Playwright Lesson 26 Suite
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+
+    steps:
+      # Bước 1: Kéo toàn bộ mã nguồn repository về máy ảo Ubuntu
+      - name: 📥 Checkout Repository Code
+        uses: actions/checkout@v4
+
+      # Bước 2: Cài đặt Node.js phiên bản 20 và bật cache cho thư mục ~/.npm
+      - name: 🟢 Setup Node.js v20 with NPM Cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      # Bước 3: Cài đặt dependencies sạch sẽ từ package-lock.json
+      - name: 📦 Install NPM Dependencies (Clean Install)
+        run: npm ci
+
+      # Bước 4: Tải trình duyệt Chromium cùng toàn bộ thư viện hệ điều hành Linux còn thiếu
+      - name: 🌐 Install Playwright Chromium & OS Dependencies
+        run: npx playwright install --with-deps chromium
+
+      # Bước 5: Chạy kiểm thử tự động chuyên biệt cho Bài 26
+      - name: 🎭 Execute Lesson 26 Test Suite
+        run: npx playwright test --config=configs/playwright.lesson26-cicd.config.ts
+        env:
+          CI: true
+          NODE_ENV: test
+          BASE_URL: https://coffee.autoneko.com
+          SIMULATE_FAILURE: ${{ github.event.inputs.simulate_failure || 'false' }}
+
+      # Bước 6: Đóng gói và Upload HTML Report làm Artifact
+      # ⚡ if: always() đảm bảo bước này LUÔN LUÔN chạy kể cả khi Bước 5 có test bị fail!
+      - name: 📊 Upload Playwright HTML Report & Traces
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-lesson26-${{ github.run_id }}
+          path: playwright-report-lesson26/
+          retention-days: 7
