@@ -94,9 +94,6 @@ jobs:
     timeout-minutes: 15
     runs-on: ubuntu-latest
 
-    # ── TẦNG 3: GITHUB ENVIRONMENTS (STAGING VS PRODUCTION) ─────────────────
-    environment: ${{ github.event.inputs.target_env || 'production' }}
-
     # ── TẦNG 5: JOB-LEVEL ENV (CỤC BỘ JOB) ───────────────────────────────────
     env:
       JOB_SCOPE: "Job-Scope-Runner-Value"
