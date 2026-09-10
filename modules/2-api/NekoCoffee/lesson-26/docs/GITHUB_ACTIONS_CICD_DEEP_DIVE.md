@@ -816,13 +816,13 @@ jobs:
           NEKO_API_KEY: ${{ secrets.NEKO_API_KEY || 'neko_sec_live_998877665544' }}
 
       # ── ĐIỀU KIỆN IF-ELSE: CHẨN ĐOÁN LỖI KHI PIPELINE GÃY (IF: FAILURE()) ────
-      - name: 🚨 Incident Diagnostics (if: failure())
+      - name: "🚨 Incident Diagnostics [if: failure()]"
         if: failure()
         run: |
           echo "❌ [INCIDENT ALERT] Test suite phát hiện lỗi! Run ID: ${{ github.run_id }}"
 
       # ── ĐIỀU KIỆN IF-ELSE: CỨU HỘ BÁO CÁO TOÀN DIỆN (IF: ALWAYS()) ────────────
-      - name: 📊 Upload Playwright HTML Report & Traces (if: always())
+      - name: "📊 Upload Playwright HTML Report & Traces [if: always()]"
         uses: actions/upload-artifact@v4
         if: always() # ⚡ LUÔN LUÔN CHẠY KỂ CẢ KHI TEST BỊ FAIL
         with:
