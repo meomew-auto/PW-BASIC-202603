@@ -1,0 +1,312 @@
+{
+  "runId": "run-1789770856794",
+  "timestamp": "2026-09-18T22:34:16.794Z",
+  "tests": {
+    "[chromium] 02-secrets-masking-and-security.spec.ts::01 - [SECRETS MASKING] Xác nhận dữ liệu nhạy cảm được bảo vệ nghiêm ngặt": {
+      "testId": "[chromium] 02-secrets-masking-and-security.spec.ts::01 - [SECRETS MASKING] Xác nhận dữ liệu nhạy cảm được bảo vệ nghiêm ngặt",
+      "title": "01 - [SECRETS MASKING] Xác nhận dữ liệu nhạy cảm được bảo vệ nghiêm ngặt",
+      "file": "02-secrets-masking-and-security.spec.ts",
+      "status": "passed",
+      "duration": 17,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [EXTRACT] Nạp bí mật từ GitHub Secrets / Runner Env",
+          "duration": 2,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [AUDIT MASKING] Kiểm chứng cơ chế GitHub Masking Engine che chắn dữ liệu nhạy cảm",
+          "duration": 0,
+          "category": "test.step"
+        },
+        {
+          "title": "3. [ASSERT] Đối soát giá trị thực sự của Secret nguyên vẹn trong RAM",
+          "duration": 8,
+          "category": "test.step"
+        }
+      ]
+    },
+    "[chromium] 01-env-hierarchy-and-precedence.spec.ts::01 - [HIERARCHY PRECEDENCE] Thẩm định quy tắc ghi đè biến môi trường": {
+      "testId": "[chromium] 01-env-hierarchy-and-precedence.spec.ts::01 - [HIERARCHY PRECEDENCE] Thẩm định quy tắc ghi đè biến môi trường",
+      "title": "01 - [HIERARCHY PRECEDENCE] Thẩm định quy tắc ghi đè biến môi trường",
+      "file": "01-env-hierarchy-and-precedence.spec.ts",
+      "status": "passed",
+      "duration": 19,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [AUDIT] Trích xuất và đối soát các phân tầng biến môi trường",
+          "duration": 3,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [ASSERT] Thẩm định tính toàn vẹn và quy tắc ghi đè trên Runner",
+          "duration": 6,
+          "category": "test.step"
+        }
+      ]
+    },
+    "[chromium] 03-dynamic-runtime-env-injection.spec.ts::01 - [RUNTIME INJECTION] Thẩm định biến động sinh ra từ Step tiền xử lý": {
+      "testId": "[chromium] 03-dynamic-runtime-env-injection.spec.ts::01 - [RUNTIME INJECTION] Thẩm định biến động sinh ra từ Step tiền xử lý",
+      "title": "01 - [RUNTIME INJECTION] Thẩm định biến động sinh ra từ Step tiền xử lý",
+      "file": "03-dynamic-runtime-env-injection.spec.ts",
+      "status": "passed",
+      "duration": 19,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [EXTRACT DYNAMIC] Kiểm tra các biến môi trường nạp động qua $GITHUB_ENV",
+          "duration": 1,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [ASSERT] Thẩm định tính khả dụng trong RAM và tính bảo mật của Dynamic Secret",
+          "duration": 5,
+          "category": "test.step"
+        }
+      ]
+    },
+    "[chromium] 01-env-hierarchy-and-precedence.spec.ts::02 - [GITHUB CONTEXT] Trích xuất siêu dữ liệu (Metadata) máy ảo GitHub": {
+      "testId": "[chromium] 01-env-hierarchy-and-precedence.spec.ts::02 - [GITHUB CONTEXT] Trích xuất siêu dữ liệu (Metadata) máy ảo GitHub",
+      "title": "02 - [GITHUB CONTEXT] Trích xuất siêu dữ liệu (Metadata) máy ảo GitHub",
+      "file": "01-env-hierarchy-and-precedence.spec.ts",
+      "status": "passed",
+      "duration": 18,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [AUDIT] Trích xuất siêu dữ liệu (GitHub Context) từ máy ảo CI",
+          "duration": 3,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [ASSERT] Đối soát Run ID, Actor và quyền thực thi pipeline",
+          "duration": 4,
+          "category": "test.step"
+        }
+      ]
+    },
+    "[chromium] 04-environment-staging-vs-prod.spec.ts::01 - [ENV SWITCHING] Phân giải chính xác domain theo môi trường mục tiêu": {
+      "testId": "[chromium] 04-environment-staging-vs-prod.spec.ts::01 - [ENV SWITCHING] Phân giải chính xác domain theo môi trường mục tiêu",
+      "title": "01 - [ENV SWITCHING] Phân giải chính xác domain theo môi trường mục tiêu",
+      "file": "04-environment-staging-vs-prod.spec.ts",
+      "status": "passed",
+      "duration": 394,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [API & DOMAIN RESOLVE] Phân giải cấu hình domain theo TARGET_ENV",
+          "duration": 4,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [NAVIGATE & RENDER UI] Nạp giao diện điều phối bảng môi trường Neko Coffee",
+          "duration": 31,
+          "category": "test.step"
+        },
+        {
+          "title": "3. [ASSERT] Đối soát hiển thị đúng TARGET_ENV và Cổng kết nối API",
+          "duration": 56,
+          "category": "test.step"
+        }
+      ]
+    },
+    "[chromium] 05-flaky-retry-self-healing.spec.ts::01 - [SELF-HEALING] Hồi phục thành công ở lần Retry đầu tiên": {
+      "testId": "[chromium] 05-flaky-retry-self-healing.spec.ts::01 - [SELF-HEALING] Hồi phục thành công ở lần Retry đầu tiên",
+      "title": "01 - [SELF-HEALING] Hồi phục thành công ở lần Retry đầu tiên",
+      "file": "05-flaky-retry-self-healing.spec.ts",
+      "status": "passed",
+      "duration": 311,
+      "retry": 1,
+      "steps": [
+        {
+          "title": "1. [MOCK UI] Khởi tạo giao diện thăm dò dịch vụ Neko Coffee",
+          "duration": 24,
+          "category": "test.step"
+        },
+        {
+          "title": "3. [RETRY RECOVERY] Mạng thông suốt trở lại sau khi Retry tự phục hồi",
+          "duration": 67,
+          "category": "test.step"
+        },
+        {
+          "title": "4. [ASSERTION] Đối soát trạng thái hiển thị 'KẾT NỐI THÔNG SUỐT'",
+          "duration": 19,
+          "category": "test.step"
+        }
+      ],
+      "attachments": {
+        "screenshots": [],
+        "videos": [],
+        "traces": [
+          "./traces/[chromium] 05-flaky-retry-self-healing.spec.ts____01 - [SELF-HEALING] Hồi phục thành công ở lần Retry đầu tiên-trace-0.zip"
+        ],
+        "custom": []
+      }
+    },
+    "[chromium] 07-failure-artifacts-postmortem.spec.ts::01 - [ARTIFACT RESCUE] Thu thập ảnh chụp màn hình và video sự cố": {
+      "testId": "[chromium] 07-failure-artifacts-postmortem.spec.ts::01 - [ARTIFACT RESCUE] Thu thập ảnh chụp màn hình và video sự cố",
+      "title": "01 - [ARTIFACT RESCUE] Thu thập ảnh chụp màn hình và video sự cố",
+      "file": "07-failure-artifacts-postmortem.spec.ts",
+      "status": "passed",
+      "duration": 187,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [RENDER UI] Nạp giao diện màn hình thu thập bằng chứng sự cố",
+          "duration": 15,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [ASSERT & POST-MORTEM] Kiểm chứng nút đơn hàng hoặc kích hoạt cứu hộ Artifacts",
+          "duration": 27,
+          "category": "test.step"
+        }
+      ]
+    },
+    "[chromium] 08-headless-and-viewport-matrix.spec.ts::01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt": {
+      "testId": "[chromium] 08-headless-and-viewport-matrix.spec.ts::01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt",
+      "title": "01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt",
+      "file": "08-headless-and-viewport-matrix.spec.ts",
+      "status": "passed",
+      "duration": 198,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [AUDIT & ASSERT] Trích xuất User-Agent và dấu vân tay trình duyệt",
+          "duration": 7,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [VIEWPORT CHECK] Thẩm định kích thước Viewport máy ảo CI (1280x720)",
+          "duration": 2,
+          "category": "test.step"
+        },
+        {
+          "title": "3. [RENDER CSS GRID & ASSERT] Bơm HTML và đối soát layout hiển thị",
+          "duration": 40,
+          "category": "test.step"
+        }
+      ]
+    },
+    "[chromium] 06-timeout-and-deadlock-guard.spec.ts::01 - [TIMEOUT BUDGET] Quản lý ngân sách thời gian an toàn cho kịch bản nặng": {
+      "testId": "[chromium] 06-timeout-and-deadlock-guard.spec.ts::01 - [TIMEOUT BUDGET] Quản lý ngân sách thời gian an toàn cho kịch bản nặng",
+      "title": "01 - [TIMEOUT BUDGET] Quản lý ngân sách thời gian an toàn cho kịch bản nặng",
+      "file": "06-timeout-and-deadlock-guard.spec.ts",
+      "status": "passed",
+      "duration": 1554,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [TIMEOUT CONFIG] Thiết lập ngân sách thời gian tùy biến test.setTimeout(15,000ms)",
+          "duration": 1,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [ASYNC SIMULATION] Bơm HTML mô phỏng tải tài nguyên bất đồng bộ (1,200ms)",
+          "duration": 16,
+          "category": "test.step"
+        },
+        {
+          "title": "3. [ASSERT] Chờ phần tử xuất hiện và thẩm định thời gian thực thi an toàn",
+          "duration": 1337,
+          "category": "test.step",
+          "isSlowest": true
+        }
+      ]
+    },
+    "[chromium] 09-api-mock-network-isolation.spec.ts::01 - [API INTERCEPT] Chặn request đơn hàng và mock phản hồi thành công": {
+      "testId": "[chromium] 09-api-mock-network-isolation.spec.ts::01 - [API INTERCEPT] Chặn request đơn hàng và mock phản hồi thành công",
+      "title": "01 - [API INTERCEPT] Chặn request đơn hàng và mock phản hồi thành công",
+      "file": "09-api-mock-network-isolation.spec.ts",
+      "status": "passed",
+      "duration": 297,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [API ROUTE INTERCEPT] Thiết lập page.route() chặn /api/v1/checkout và trả về Mock JSON",
+          "duration": 4,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [RENDER UI] Nạp giao diện cổng thanh toán đơn hàng Neko Coffee",
+          "duration": 14,
+          "category": "test.step"
+        },
+        {
+          "title": "3. [ACTION CLICK] Click nút 'Thanh Toán Đơn Hàng'",
+          "duration": 71,
+          "category": "test.step"
+        },
+        {
+          "title": "4. [ASSERT] Đối soát kết quả thanh toán hiển thị đúng từ Mock Payload",
+          "duration": 7,
+          "category": "test.step"
+        }
+      ]
+    },
+    "[chromium] 10-neko-live-smoke-e2e.spec.ts::01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit": {
+      "testId": "[chromium] 10-neko-live-smoke-e2e.spec.ts::01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit",
+      "title": "01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit",
+      "file": "10-neko-live-smoke-e2e.spec.ts",
+      "status": "passed",
+      "duration": 1919,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "⚡ Pha 1: API Fast Data Retrieval (AOM Client)",
+          "duration": 85,
+          "category": "test.step"
+        },
+        {
+          "title": "🖥️ Pha 2: Live UI Admin Table Navigate & Audit (TableColumnHelpers)",
+          "duration": 1330,
+          "category": "test.step",
+          "isSlowest": true
+        },
+        {
+          "title": "📊 Pha 3: Quét và Check toàn bộ bảng sản phẩm qua TableColumnHelpers",
+          "duration": 265,
+          "category": "test.step"
+        },
+        {
+          "title": "🩺 Pha 4: API Database Deep Audit qua Zod Schema Contract Assert",
+          "duration": 55,
+          "category": "test.step"
+        }
+      ]
+    },
+    "[chromium] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất": {
+      "testId": "[chromium] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất",
+      "title": "02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất",
+      "file": "10-neko-live-smoke-e2e.spec.ts",
+      "status": "passed",
+      "duration": 1897,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "📍 Bước 1: Navigate mở trang Chi tiết đơn hàng #103 trên hệ thống live",
+          "duration": 1022,
+          "category": "test.step",
+          "isSlowest": true
+        },
+        {
+          "title": "🌟 Bước 2: Click 'In hóa đơn' và đón bắt tab mới (context.waitForEvent)",
+          "duration": 333,
+          "category": "test.step"
+        },
+        {
+          "title": "🧾 Bước 3: Đối soát Assert mã đơn hàng trên tab Hóa đơn qua POM NekoInvoicePage",
+          "duration": 284,
+          "category": "test.step"
+        },
+        {
+          "title": "❌ Bước 4: Đóng Tab Hóa đơn và Check an toàn hoàn trả tiêu điểm về tab gốc",
+          "duration": 101,
+          "category": "test.step"
+        }
+      ]
+    }
+  }
+}

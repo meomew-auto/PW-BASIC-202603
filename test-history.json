@@ -35,6 +35,10 @@
     {
       "runId": "run-1789768351642",
       "timestamp": "2026-09-18T21:52:31.642Z"
+    },
+    {
+      "runId": "run-1789770856794",
+      "timestamp": "2026-09-18T22:34:16.794Z"
     }
   ],
   "tests": {
@@ -92,6 +96,14 @@
         "duration": 17,
         "timestamp": "2026-09-18T21:52:40.936Z",
         "runId": "run-1789768351642",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 19,
+        "timestamp": "2026-09-18T22:34:25.411Z",
+        "runId": "run-1789770856794",
         "skipped": false,
         "retry": 0
       }
@@ -152,6 +164,14 @@
         "runId": "run-1789768351642",
         "skipped": false,
         "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 17,
+        "timestamp": "2026-09-18T22:34:25.411Z",
+        "runId": "run-1789770856794",
+        "skipped": false,
+        "retry": 0
       }
     ],
     "[chromium] 01-env-hierarchy-and-precedence.spec.ts::02 - [GITHUB CONTEXT] Trích xuất siêu dữ liệu (Metadata) máy ảo GitHub": [
@@ -208,6 +228,14 @@
         "duration": 11,
         "timestamp": "2026-09-18T21:52:40.936Z",
         "runId": "run-1789768351642",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 18,
+        "timestamp": "2026-09-18T22:34:25.411Z",
+        "runId": "run-1789770856794",
         "skipped": false,
         "retry": 0
       }
@@ -268,6 +296,14 @@
         "runId": "run-1789768351642",
         "skipped": false,
         "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 19,
+        "timestamp": "2026-09-18T22:34:25.411Z",
+        "runId": "run-1789770856794",
+        "skipped": false,
+        "retry": 0
       }
     ],
     "[chromium] 04-environment-staging-vs-prod.spec.ts::01 - [ENV SWITCHING] Phân giải chính xác domain theo môi trường mục tiêu": [
@@ -324,6 +360,14 @@
         "duration": 353,
         "timestamp": "2026-09-18T21:52:40.936Z",
         "runId": "run-1789768351642",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 394,
+        "timestamp": "2026-09-18T22:34:25.411Z",
+        "runId": "run-1789770856794",
         "skipped": false,
         "retry": 0
       }
@@ -384,6 +428,14 @@
         "runId": "run-1789768351642",
         "skipped": false,
         "retry": 1
+      },
+      {
+        "passed": true,
+        "duration": 311,
+        "timestamp": "2026-09-18T22:34:25.411Z",
+        "runId": "run-1789770856794",
+        "skipped": false,
+        "retry": 1
       }
     ],
     "[chromium] 07-failure-artifacts-postmortem.spec.ts::01 - [ARTIFACT RESCUE] Thu thập ảnh chụp màn hình và video sự cố": [
@@ -440,6 +492,14 @@
         "duration": 204,
         "timestamp": "2026-09-18T21:52:40.936Z",
         "runId": "run-1789768351642",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 187,
+        "timestamp": "2026-09-18T22:34:25.411Z",
+        "runId": "run-1789770856794",
         "skipped": false,
         "retry": 0
       }
@@ -508,6 +568,14 @@
         "runId": "run-1789768351642",
         "skipped": false,
         "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 198,
+        "timestamp": "2026-09-18T22:34:25.411Z",
+        "runId": "run-1789770856794",
+        "skipped": false,
+        "retry": 0
       }
     ],
     "[chromium] 06-timeout-and-deadlock-guard.spec.ts::01 - [TIMEOUT BUDGET] Quản lý ngân sách thời gian an toàn cho kịch bản nặng": [
@@ -566,6 +634,14 @@
         "runId": "run-1789768351642",
         "skipped": false,
         "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 1554,
+        "timestamp": "2026-09-18T22:34:25.411Z",
+        "runId": "run-1789770856794",
+        "skipped": false,
+        "retry": 0
       }
     ],
     "[chromium] 09-api-mock-network-isolation.spec.ts::01 - [API INTERCEPT] Chặn request đơn hàng và mock phản hồi thành công": [
@@ -622,6 +698,14 @@
         "duration": 295,
         "timestamp": "2026-09-18T21:52:40.936Z",
         "runId": "run-1789768351642",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 297,
+        "timestamp": "2026-09-18T22:34:25.411Z",
+        "runId": "run-1789770856794",
         "skipped": false,
         "retry": 0
       }
@@ -690,6 +774,14 @@
         "runId": "run-1789768351642",
         "skipped": false,
         "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 1919,
+        "timestamp": "2026-09-18T22:34:25.411Z",
+        "runId": "run-1789770856794",
+        "skipped": false,
+        "retry": 0
       }
     ],
     "[chromium] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất": [
@@ -754,6 +846,14 @@
         "duration": 1878,
         "timestamp": "2026-09-18T21:52:40.936Z",
         "runId": "run-1789768351642",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 1897,
+        "timestamp": "2026-09-18T22:34:25.411Z",
+        "runId": "run-1789770856794",
         "skipped": false,
         "retry": 0
       }
@@ -927,6 +1027,18 @@
       "slow": 2,
       "duration": 9294,
       "passRate": 100
+    },
+    {
+      "runId": "run-1789770856794",
+      "timestamp": "2026-09-18T22:34:16.794Z",
+      "total": 12,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 1,
+      "slow": 3,
+      "duration": 8617,
+      "passRate": 100
     }
   ],
   "runFiles": {
@@ -938,6 +1050,7 @@
     "run-1789746845921": "./history-runs/run-1789746845921.json",
     "run-1789746921693": "./history-runs/run-1789746921693.json",
     "run-1789747042183": "./history-runs/run-1789747042183.json",
-    "run-1789768351642": "./history-runs/run-1789768351642.json"
+    "run-1789768351642": "./history-runs/run-1789768351642.json",
+    "run-1789770856794": "./history-runs/run-1789770856794.json"
   }
 }
