@@ -94,6 +94,9 @@ jobs:
     timeout-minutes: 15
     runs-on: ubuntu-latest
 
+    # ── TẦNG 3: GITHUB ENVIRONMENTS (PROFILE MÔI TRƯỜNG ĐỘNG) ────────────────
+    environment: ${{ github.event.inputs.target_env || 'production' }}
+
     # ── TẦNG 5: JOB-LEVEL ENV (CỤC BỘ JOB) ───────────────────────────────────
     env:
       JOB_SCOPE: "Job-Scope-Runner-Value"
@@ -178,6 +181,7 @@ jobs:
 
           npx playwright test $TARGET_SPEC \
             --config=configs/playwright.lesson26-cicd.config.ts \
+            --project=chromium \
             --workers=${{ github.event.inputs.workers || '2' }} \
             --retries=${{ github.event.inputs.retries || '2' }}
         # ── TẦNG 6: STEP-LEVEL ENV (ƯU TIÊN CAO NHẤT GHI ĐÈ LÊN JOB VÀ WORKFLOW) ────

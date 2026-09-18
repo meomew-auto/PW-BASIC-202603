@@ -1,0 +1,150 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# 🌐 BÀI 26: PLAYWRIGHT CROSS-BROWSER MATRIX PIPELINE (ENTERPRISE GRID)
+# ══════════════════════════════════════════════════════════════════════════════
+# Mô phỏng kiểm thử song song đa trình duyệt: Chromium (Blink) + Firefox (Gecko) + WebKit (Safari)
+# ══════════════════════════════════════════════════════════════════════════════
+
+name: 🌐 Lesson 26 - Cross-Browser Matrix Simulation
+
+# ── 1. ĐIỀU KIỆN KÍCH HOẠT (TRIGGERS) ────────────────────────────────────────
+on:
+  workflow_dispatch:
+    inputs:
+      test_case:
+        description: '🎯 Chọn Kịch Bản Muốn Chạy Matrix'
+        required: true
+        default: 'case-08-headless-viewport'
+        type: choice
+        options:
+          - 'case-08-headless-viewport'
+          - 'case-10-live-smoke'
+          - 'all'
+
+      target_env:
+        description: '🌐 Chọn Tầng Môi Trường (GitHub Environments)'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - 'production'
+          - 'staging'
+
+# ── 2. TỐI ƯU CHI PHÍ VÀ HÀNG ĐỢI (CONCURRENCY) ──────────────────────────────
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ── 3. KHỐI CÔNG VIỆC THỰC THI (JOBS) ────────────────────────────────────────
+jobs:
+  # ════════════════════════════════════════════════════════════════════════════
+  # 🧪 JOB 1: CHẠY MA TRẬN 3 TRÌNH DUYỆT TRÊN 3 MÁY ẢO LINUX ĐỘC LẬP
+  # ════════════════════════════════════════════════════════════════════════════
+  matrix-cross-browser:
+    name: 🧪 Run on [${{ matrix.browser }}]
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+
+    # ── TẦNG 3: GITHUB ENVIRONMENTS ─────────────────────────────────────────
+    environment: ${{ github.event.inputs.target_env || 'production' }}
+
+    # ── CHIẾN LƯỢC MA TRẬN (MATRIX STRATEGY) ─────────────────────────────────
+    strategy:
+      fail-fast: false      # ⚡ SỐNG CÒN: 1 browser fail thì 2 browser kia vẫn chạy tiếp
+      max-parallel: 3       # Khởi tạo tối đa 3 máy ảo chạy đồng thời
+      matrix:
+        browser: [chromium, firefox, webkit] # 👈 3 trình duyệt đại diện 3 engine
+
+    steps:
+      - name: 📥 Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js v20 with NPM Cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Install NPM Dependencies (Clean Install)
+        run: npm ci
+
+      # ⚡ TIẾT KIỆM TÀI NGUYÊN: Mỗi máy ảo chỉ tải đúng trình duyệt của nó!
+      - name: 🌐 Install Browser [${{ matrix.browser }}] & OS Dependencies
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      # ── NẠP BIẾN ĐỘNG RUNTIME CHO TỪNG MÁY ẢO ─────────────────────────────
+      - name: ⚙️ Dynamic Runtime Env Injection
+        id: dynamic_env_builder
+        run: |
+          echo "DYNAMIC_PIPELINE_ID=matrix-${{ matrix.browser }}-$(date +%s)" >> $GITHUB_ENV
+          echo "RUNNER_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_ENV
+          echo "runner_cpu_cores=$(nproc)" >> $GITHUB_OUTPUT
+          echo "✅ Đã nạp thành công biến động trên máy ảo [${{ matrix.browser }}]!"
+
+      # ── THỰC THI PLAYWRIGHT THEO ĐÚNG PROJECT MATRIX ───────────────────────
+      - name: 🎭 Execute Playwright Suite on [${{ matrix.browser }}]
+        run: |
+          TARGET_SPEC=""
+          case "${{ github.event.inputs.test_case }}" in
+            "case-08-headless-viewport")
+              TARGET_SPEC="modules/2-api/NekoCoffee/lesson-26/specs/08-headless-and-viewport-matrix.spec.ts"
+              ;;
+            "case-10-live-smoke")
+              TARGET_SPEC="modules/2-api/NekoCoffee/lesson-26/specs/10-neko-live-smoke-e2e.spec.ts"
+              ;;
+            *)
+              TARGET_SPEC="modules/2-api/NekoCoffee/lesson-26/specs"
+              ;;
+          esac
+
+          echo "════════════════════════════════════════════════════════════════"
+          echo "🌐 MATRIX BROWSER: ${{ matrix.browser }}"
+          echo "🚀 TARGET SPEC   : $TARGET_SPEC"
+          echo "🌐 TARGET ENV    : ${{ github.event.inputs.target_env || 'production' }}"
+          echo "💻 CPU CORES     : ${{ steps.dynamic_env_builder.outputs.runner_cpu_cores }}"
+          echo "════════════════════════════════════════════════════════════════"
+
+          npx playwright test $TARGET_SPEC \
+            --config=configs/playwright.lesson26-cicd.config.ts \
+            --project=${{ matrix.browser }} \
+            --workers=1 \
+            --retries=1
+        env:
+          CI: true
+          NODE_ENV: ${{ github.event.inputs.target_env || 'production' }}
+          TARGET_ENV: ${{ github.event.inputs.target_env || 'production' }}
+          BASE_URL: ${{ (github.event.inputs.target_env == 'staging') && 'https://staging-coffee.autoneko.com' || 'https://coffee.autoneko.com' }}
+          STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD || 'NekoStaffVaultPass2026!' }}
+          NEKO_API_KEY: ${{ secrets.NEKO_API_KEY || 'neko_sec_live_998877665544' }}
+
+      # ── ĐÓNG GÓI ARTIFACTS THEO TÊN TRÌNH DUYỆT (CHỐNG GHI ĐÈ) ─────────────
+      - name: "📊 Upload HTML Report for [${{ matrix.browser }}] [if: always()]"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.browser }}-${{ github.run_id }}
+          path: playwright-report-lesson26/
+          retention-days: 7
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # 📊 JOB 2: HỘI TỤ (FAN-IN) — DÙNG 'needs' ĐỂ TỔNG KẾT VÀ BÁO CÁO TOÀN CỤC
+  # ════════════════════════════════════════════════════════════════════════════
+  matrix-summary:
+    name: 📊 Matrix Quality Gate Summary
+    needs: [matrix-cross-browser] # 👈 BẮT BUỘC ĐỢI CẢ 3 TRÌNH DUYỆT CHẠY XONG
+    runs-on: ubuntu-latest
+    if: always() # ⚡ Đảm bảo luôn chạy dù có trình duyệt nào bị fail
+    steps:
+      - name: 📢 Tổng Kết Trạng Thái Kiểm Thử Đa Trình Duyệt
+        run: |
+          echo "════════════════════════════════════════════════════════════════"
+          echo "🏁 BÁO CÁO TỔNG KẾT MATRIX CROSS-BROWSER QUALITY GATE"
+          echo "📌 Matrix Result : ${{ needs.matrix-cross-browser.result }}"
+          echo "🌐 Trình duyệt   : Chromium (Blink), Firefox (Gecko), WebKit (Safari)"
+          echo "📦 Artifacts     : 3 gói báo cáo độc lập đã được lưu trữ thành công!"
+          echo "════════════════════════════════════════════════════════════════"
+          if [ "${{ needs.matrix-cross-browser.result }}" != "success" ]; then
+            echo "⚠️ CẢNH BÁO: Phát hiện có ít nhất 1 trình duyệt kiểm thử không đạt!"
+            exit 1
+          else
+            echo "🎉 CHÚC MỪNG: Cả 3 trình duyệt đã vượt qua Quality Gate xuất sắc 100%!"
+          fi

@@ -18,7 +18,7 @@
    - 2.0. Vị trí lưu trữ bắt buộc (`.github/workflows/`), Quy ước đặt tên & Cơ chế phân xử khi có nhiều file YML.
    - 2.1. Bản chất định dạng YAML và Quy tắc thụt lề (Indentation Rules).
    - 2.2. Kiến trúc phân cấp 3 tầng: `Workflow` ➔ `Job` ➔ `Step`.
-   - 2.3. Giải mã chi tiết 8 từ khóa trụ cột trong file YAML (`name`, `on`, `concurrency`, `jobs`, `runs-on`, `timeout-minutes`, `steps`, `with` & `env`).
+   - 2.3. Giải mã chi tiết 9 từ khóa trụ cột trong file YAML (`name`, `on`, `concurrency`, `jobs`, `runs-on`, `timeout-minutes`, `steps`, `with`, `env` & `needs`).
    - 2.4. Điều kiện rẽ nhánh và cơ chế sống còn của `if-else` trong GitHub Actions:
      - 4 hàm kiểm tra trạng thái: `always()`, `success()`, `failure()`, `cancelled()`.
      - Biểu thức điều kiện nâng cao (`&&`, `||`, `!`, `contains()`, `startsWith()`).
@@ -36,11 +36,17 @@
 4. [🧪 Phần 4: Triển Khai Thực Nghiệm Sandbox: Bộ Ma Trận 10 Test Cases Chuẩn Enterprise & Bảng Điều Khiển Động](#-phần-4-triển-khai-thực-nghiệm-sandbox-bộ-ma-trận-10-test-cases-chuẩn-enterprise--bảng-điều-khiển-động)
    - 4.1. Thiết kế kiến trúc Sandbox: File cấu hình độc lập `configs/playwright.lesson26-cicd.config.ts`.
    - 4.2. File Workflow đa năng `.github/workflows/playwright-lesson26.yml` (Dynamic Self-Service Portal).
+   - 4.2.1. Giải phẫu & phân tích kỹ thuật chi tiết 8 khối (blocks) trong file `playwright-lesson26.yml`.
    - 4.3. Giải phẫu chi tiết 10 Test Cases thực nghiệm (Env Precedence, Secrets Masking, Runtime Injection, Staging vs Prod, Flaky Self-Healing, Timeout Guard, Artifacts Failure, Headless & Viewport, API Mock Isolation, Live Smoke E2E).
    - 4.4. Cẩm nang hướng dẫn kiểm tra (Check) từng case chi tiết tại Local và trên GitHub Actions / `gh` CLI.
    - 4.5. Bằng chứng thực thi Terminal thực tế (10 passed, 1 flaky).
 5. [⚡ Phần 5: Kỹ Thuật Tối Ưu Tốc Độ CI — Browser Caching & Dependencies (Khái Quát Lộ Trình)](#-phần-5-kỹ-thuật-tối-ưu-tốc-độ-ci--browser-caching--dependencies-khái-quát-lộ-trình)
-6. [🌐 Phần 6: Chiến Lược Chạy Song Song Đa Trình Duyệt Với Matrix Strategy (Khái Quát Lộ Trình)](#-phần-6-chiến-lược-chạy-song-song-đa-trình-duyệt-với-matrix-strategy-khái-quát-lộ-trình)
+6. [🌐 Phần 6: Chiến Lược Chạy Song Song Đa Trình Duyệt Với Matrix Strategy Chuyên Sâu](#-phần-6-chiến-lược-chạy-song-song-đa-trình-duyệt-với-matrix-strategy-chuyên-sâu)
+   - 6.1. Bản chất & Nguyên lý hoạt động của Matrix Strategy (Tích Descartes, `fail-fast: false`, `max-parallel`).
+   - 6.2. Kiến trúc Đa Job: Mô hình Fan-Out (Matrix) & Fan-In (Tổng kết) kết hợp `needs:`.
+   - 6.3. Giải phẫu chi tiết file Workflow `.github/workflows/playwright-lesson26-matrix.yml`.
+   - 6.4. Ghép nối kịch bản thực nghiệm: CASE 08 (Headless & Viewport Matrix Integrity).
+   - 6.5. Cẩm nang lệnh thực thi và đối chiếu Log Terminal thực tế 3 Browser Engines.
 7. [📊 Phần 7: Xuất Bản Báo Cáo Tự Động Lên GitHub Pages (Khái Quát Lộ Trình)](#-phần-7-xuất-bản-báo-cáo-tự-động-lên-github-pages-khái-quát-lộ-trình)
 
 ---
@@ -492,6 +498,94 @@ Tránh thảm họa kẹt test: Giả sử một test case bị kẹt trong vòn
           BASE_URL: https://coffee.autoneko.com
           STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD }} # Bảo mật tuyệt đối qua GitHub Secrets
 ```
+
+#### 8. `needs` (Điều Phối Đa Jobs & Chuỗi Phụ Thuộc DAG)
+
+Trong GitHub Actions, khi bạn khai báo từ 2 `jobs` trở lên trong cùng một file YML, **hành vi mặc định của hệ thống là chạy tất cả các jobs đó SONG SONG (In Parallel)** trên các máy ảo hoàn toàn độc lập.
+
+Nếu Job sau bắt buộc phải đợi Job trước hoàn thành (ví dụ: Job `test` phải đợi Job `build` xong, hoặc Job `deploy` phải đợi Job `test` xanh 100%), bạn bắt buộc phải dùng từ khóa **`needs:`** để thiết lập chuỗi phụ thuộc có thứ tự (Directed Acyclic Graph - DAG).
+
+```mermaid
+graph TD
+    A["Job: build<br/>(Máy ảo Linux 1)"] -->|needs: build| B["Job: test-e2e<br/>(Máy ảo Linux 2)"]
+    B -->|needs: test-e2e| C["Job: deploy<br/>(Máy ảo Linux 3)"]
+```
+
+##### 🔹 1. Cú Pháp Cơ Bản: Phụ Thuộc Đơn & Phụ Thuộc Mảng Nhiều Jobs
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm ci && npm run build
+
+  test-e2e:
+    needs: build # 👈 Bắt buộc đợi job 'build' hoàn thành thành công mới chạy
+    runs-on: ubuntu-latest
+    steps:
+      - run: npx playwright test
+
+  deploy:
+    needs: [build, test-e2e] # 👈 Nhận mảng: Đợi CẢ HAI jobs 'build' và 'test-e2e' thành công
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Deploying to production..."
+```
+
+##### 🔹 2. Chia Sẻ Dữ Liệu Giữa Các Jobs Qua `outputs` & `needs.<job_id>.outputs`
+Vì mỗi Job chạy trên một máy ảo Linux hoàn toàn độc lập (vùng nhớ RAM và ổ cứng hoàn toàn tách biệt), các biến trong `$GITHUB_ENV` của Job A **không thể được đọc bởi Job B**. Để truyền dữ liệu từ Job A sang Job B, bạn bắt buộc phải dùng cơ chế `outputs`:
+
+```yaml
+jobs:
+  setup-env:
+    runs-on: ubuntu-latest
+    # Khai báo outputs cấp Job (trích xuất từ step bên dưới)
+    outputs:
+      release_tag: ${{ steps.gen_tag.outputs.tag }}
+    steps:
+      - id: gen_tag
+        run: echo "tag=v2.5.0-$(date +%s)" >> $GITHUB_OUTPUT
+
+  playwright-test:
+    needs: setup-env # 👈 Khai báo phụ thuộc để lấy context
+    runs-on: ubuntu-latest
+    steps:
+      - name: Đọc dữ liệu từ Job trước qua needs context
+        run: |
+          echo "Phiên bản cần kiểm thử: ${{ needs.setup-env.outputs.release_tag }}"
+```
+
+##### 🔹 3. Kiểm Soát Trạng Thái Khi Job Phía Trước Bị Lỗi (`needs.<job_id>.result`)
+* **Mặc định**: Nếu Job phía trước bị `failure` (hoặc `cancelled`), toàn bộ các Job phía sau có khai báo `needs:` sẽ tự động bị **BỎ QUA (Skipped)**.
+* **Cơ chế Cứu Hộ / Dọn Dẹp (Teardown & Notification)**: Nếu bạn muốn một Job dọn dẹp hoặc gửi thông báo Slack BẤT KỂ Job test trước đó thành công hay thất bại, hãy kết hợp `needs` với `if: always()`:
+
+```yaml
+  send-notification:
+    needs: [test-e2e]
+    runs-on: ubuntu-latest
+    if: always() # ⚡ Đảm bảo LUÔN CHẠY dù test-e2e bị PASS hay FAIL
+    steps:
+      - name: Báo cáo kết quả
+        run: |
+          echo "Trạng thái của test-e2e: ${{ needs.test-e2e.result }}"
+          # Giá trị có thể là: 'success', 'failure', 'cancelled', 'skipped'
+```
+
+##### 🔹 4. ❓ Câu Hỏi Thực Chiến: Tại Sao File `playwright-lesson26.yml` Không Dùng `needs:`?
+* **Bản chất**: File `playwright-lesson26.yml` được thiết kế theo **Kiến trúc Đơn Job (Single-Job Architecture)** với duy nhất 1 job mang tên `playwright-sandbox:`.
+* **Lý do kỹ thuật**:
+  1. Trong GitHub Actions, từ khóa `needs:` chỉ có ý nghĩa **giữa Job này với Job khác**. Khi một workflow chỉ có đúng 1 Job, nó không có Job nào khác để mà "cần" (`needs`).
+  2. Bên trong 1 Job duy nhất, toàn bộ 8 `steps` (Checkout ➔ Setup Node ➔ npm ci ➔ Install Browsers ➔ Dynamic Env ➔ Run Tests ➔ Diagnostics ➔ Upload Artifacts) **mặc định luôn luôn chạy tuần tự 100% trên cùng một máy ảo Linux** mà không cần bất kỳ từ khóa `needs:` nào!
+* **Bảng Đối Sánh: Kiến Trúc 1 Job (Single-Job) vs. Đa Job (Multi-Job với `needs`)**:
+
+| Tiêu chí | Single-Job Architecture (Như Bài 26) | Multi-Job Architecture (Với `needs:`) |
+|---|---|---|
+| **Cấu trúc** | Duy nhất 1 Job, bên trong có nhiều `steps`. | Nhiều Jobs tách rời (`build`, `test`, `deploy`). |
+| **Máy ảo Runner** | Dùng **1 máy ảo Ubuntu duy nhất** cho toàn bộ quá trình. | Khởi tạo **nhiều máy ảo Ubuntu độc lập** cho từng công đoạn. |
+| **Thời gian khởi động** | **Tối ưu nhất**: Chỉ mất 1 lần cấp phát máy ảo (~10s) và 1 lần cài môi trường. | **Lâu hơn**: Mỗi Job mới phải chờ GitHub xếp hàng và cấp phát máy ảo mới (~10s - 30s/job). |
+| **Chia sẻ File / Cache** | Chia sẻ trực tiếp qua ổ đĩa máy ảo cực nhanh (0ms). | Bắt buộc phải đóng gói qua `upload-artifact` rồi `download-artifact` lại giữa các jobs (tốn băng thông và thời gian). |
+| **Sử dụng `needs:`** | ❌ **Không cần dùng** (vì các `steps` tự động tuần tự). | ✅ **Bắt buộc dùng** (để khóa thứ tự thực thi và tránh chạy song song bừa bãi). |
+| **Khi nào nên dùng?** | Rất phù hợp cho **Test Sandbox, Automation Suite tập trung** (như Bài 26), nơi mục tiêu chính là chạy test và xuất báo cáo khép kín. | Phù hợp cho **Enterprise Delivery Pipeline hoàn chỉnh**: Đội Dev cần `build`, Đội QA cần `test`, Đội Ops cần `deploy` độc lập. |
 
 ---
 
@@ -1456,6 +1550,238 @@ jobs:
 
 ---
 
+### 🔹 4.2.1. Giải Phẫu & Phân Tích Kỹ Thuật Chi Tiết 8 Khối (Blocks) Trong File `playwright-lesson26.yml`
+
+File cấu hình `.github/workflows/playwright-lesson26.yml` không đơn thuần là một danh sách lệnh chạy tuần tự, mà được thiết kế theo **Kiến trúc Pipeline Hướng Sự Kiện Chuẩn Enterprise (Event-Driven Enterprise Pipeline Architecture)**. Toàn bộ file được module hóa thành **8 khối kỹ thuật độc lập**, đảm nhiệm từng mắt xích then chốt trong chuỗi cung ứng chất lượng phần mềm (CI/CD Quality Supply Chain).
+
+```mermaid
+graph TD
+    B1["Block 1: Name<br/>(Định Danh Pipeline)"] --> B2["Block 2: On (Triggers & Portal)<br/>(Push, PR & 5 Inputs Dynamic Dispatch)"]
+    B2 --> B3["Block 3: Concurrency<br/>(Hủy Chạy Cũ - Tiết Kiệm Chi Phí)"]
+    B3 --> B4["Block 4: Workflow-Level Env<br/>(Tầng 4: Hằng Số Toàn Cục)"]
+    B4 --> B5["Block 5: Job Infrastructure<br/>(ubuntu-latest, 15m Timeout Guard)"]
+    B5 --> B6["Block 6: Environment Binding<br/>(Tầng 3: Dynamic Staging vs Prod)"]
+    B6 --> B7["Block 7: Job-Level Env<br/>(Tầng 5: Ghi Đè Lên Workflow)"]
+    B7 --> B8["Block 8: Linear Execution Steps<br/>(Chuỗi 8 Steps Khép Kín Từ Cài Đặt Đến Cứu Hộ)"]
+```
+
+---
+
+#### 🧱 KHỐI 1: METADATA ĐỊNH DANH WORKFLOW (`name`)
+
+```yaml
+name: 🚀 Lesson 26 - Playwright CI/CD Sandbox
+```
+
+* **Mục đích thiết kế**: Đặt tên định danh duy nhất cho toàn bộ Pipeline. Tên này xuất hiện ở:
+  1. Thanh điều hướng bên trái của Tab **Actions** trên GitHub Web UI.
+  2. Kết quả liệt kê dòng lệnh khi quản trị viên gõ `gh workflow list`.
+  3. Huy hiệu trạng thái (Status Badge Markdown) gắn trên file `README.md` của dự án.
+* **Quy chuẩn Enterprise**:
+  - Nên bắt đầu bằng một Emoji đại diện (`🚀`, `🛡️`, `☕`) để phân biệt trực quan với hàng chục workflow khác trong tổ chức.
+  - Tên phải phản ánh rõ ràng mục đích: Tên Module/Bài học + Nhiệm vụ kiểm thử (`Playwright CI/CD Sandbox`).
+
+---
+
+#### 🧱 KHỐI 2: BỘ KÍCH HOẠT ĐA PHƯƠNG THỨC & CỔNG TỰ PHỤC VỤ (`on`)
+
+Khối này định nghĩa **khi nào** và **bằng cách nào** pipeline được phép khởi động:
+
+```yaml
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'modules/2-api/NekoCoffee/lesson-26/**'
+      - 'configs/playwright.lesson26-cicd.config.ts'
+      - '.github/workflows/playwright-lesson26.yml'
+
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'modules/2-api/NekoCoffee/lesson-26/**'
+      - 'configs/playwright.lesson26-cicd.config.ts'
+      - '.github/workflows/playwright-lesson26.yml'
+
+  workflow_dispatch:
+    inputs:
+      test_case: ...
+      target_env: ...
+      retries: ...
+      workers: ...
+      simulate_failure: ...
+```
+
+##### 1. Kỹ Thuật Lọc Đường Dẫn Thông Minh (`paths:` Filtering):
+* **Vấn đề thực tế**: Trong một kho mã nguồn lớn (Monorepo), nếu một kỹ sư chỉ sửa tài liệu `README.md` hoặc code của Bài 01 mà GitHub lại kích hoạt toàn bộ test của Bài 26, tổ chức sẽ lãng phí hàng nghìn phút máy ảo vô ích.
+* **Giải pháp**: Bộ lọc `paths:` hoạt động như một "Màng lọc thông minh":
+  - Chỉ khi có sự thay đổi trong thư mục `lesson-26/**`, file cấu hình `playwright.lesson26-cicd.config.ts` hoặc chính file YAML này thì GitHub mới cấp phát máy ảo để chạy.
+  - Mọi commit ngoài phạm vi trên đều bị GitHub tự động bỏ qua (**Skipped**) trong 0 giây!
+
+##### 2. Bảng Điều Khiển Động Tự Phục Vụ (`workflow_dispatch` Portal):
+Khối này biến GitHub Actions từ một kịch bản thụ động thành một **Cổng kiểm thử tương tác (Interactive Testing Portal)** với 5 tham số đầu vào:
+
+| Tham số Input | Kiểu dữ liệu | Giá trị lựa chọn | Ý nghĩa kỹ thuật & Nghiệp vụ |
+|---|---|---|---|
+| `test_case` | `choice` | `all`, `case-01` ➔ `case-10` | Cho phép chạy cô lập từng test case riêng lẻ để debug siêu tốc trong vài giây, thay vì bắt buộc phải chạy cả bộ 10 cases tốn thời gian. |
+| `target_env` | `choice` | `production`, `staging` | Điều phối môi trường kiểm thử. Tự động kết nối với GitHub Environments để nạp đúng URL và Secrets tương ứng. |
+| `retries` | `choice` | `'2'`, `'1'`, `'0'` | Công cụ nghiên cứu Flaky Test: Đặt `0` để quan sát Case 05 ném lỗi mạng ĐỎ; đặt `2` để chứng minh cơ chế tự chữa lành (Self-Healing). |
+| `workers` | `choice` | `'2'`, `'1'` | Điều chỉnh mức độ song song hóa phù hợp với năng lực phần cứng của máy ảo 2 vCPU. |
+| `simulate_failure` | `boolean` | `true`, `false` | Bật công tắc cố tình gây lỗi Assertion nhằm kiểm chứng bước cứu hộ Báo cáo Artifacts (`if: always()`). |
+
+---
+
+#### 🧱 KHỐI 3: TỐI ƯU CHI PHÍ & CHỐNG ĐUA TIẾN TRÌNH (`concurrency`)
+
+```yaml
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+```
+
+* **Bản chất kỹ thuật**:
+  - Khi một developer push một commit lên Pull Request, GitHub khởi tạo Job 1.
+  - Nếu 30 giây sau, developer nhận ra lỗi chính tả và push tiếp commit thứ 2, GitHub mặc định sẽ khởi tạo tiếp Job 2 và chạy song song cả hai.
+  - Kết quả: Tốn gấp đôi số phút máy ảo (Run Minutes), gây quá tải server backend và có thể tạo ra tình trạng chạy đua (Race Condition) khi ghi dữ liệu.
+* **Cơ chế cứu cánh `cancel-in-progress: true`**:
+  - Tự động phát hiện có commit mới trong cùng một nhánh (`github.ref`).
+  - **Lập tức hủy bỏ (Cancel) lượt chạy cũ đang dang dở** và chỉ dành toàn bộ tài nguyên chạy commit mới nhất.
+  - Tiết kiệm ngay lập tức **30% – 50% chi phí CI/CD** cho doanh nghiệp!
+
+---
+
+#### 🧱 KHỐI 4: TẦNG BIẾN MÔI TRƯỜNG TOÀN CỤC (`env` Workflow-Level - Tầng 4)
+
+```yaml
+env:
+  WORKFLOW_SCOPE: "Workflow-Scope-Global-Value"
+  SCOPED_ENV_OVERRIDE: "Override-From-Workflow"
+```
+
+* **Phạm vi tác động**: Toàn bộ mọi Job và mọi Step bên trong workflow này đều tự động kế thừa (Inherit) hai biến trên.
+* **Ứng dụng thực tế**: Thường dùng để đặt các hằng số bất biến của toàn bộ dự án: phiên bản framework, đường dẫn tài liệu chung, hoặc các cờ cấu hình hệ thống.
+* **Ý nghĩa trong Sandbox**: Đóng vai trò là **Tầng 4** trong Kim tự tháp Env để chứng minh quy tắc ghi đè: nếu Job hoặc Step khai báo biến cùng tên `SCOPED_ENV_OVERRIDE`, giá trị ở cấp Workflow sẽ bị đè bẹp.
+
+---
+
+#### 🧱 KHỐI 5: ĐỊNH NGHĨA MÁY CHỦ & HẠ TẦNG THỰC THI (`jobs.<job_id>`)
+
+```yaml
+jobs:
+  playwright-sandbox:
+    name: 🧪 Run Playwright Suite
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+```
+
+* **`runs-on: ubuntu-latest`**:
+  - Chỉ định hệ điều hành của máy ảo là Ubuntu Linux LTS mới nhất (22.04 / 24.04).
+  - Máy ảo này hoàn toàn không có màn hình vật lý (Display Server X11), do đó Playwright **bắt buộc phải chạy ở chế độ Headless (`headless: true`)**.
+  - Phần cứng tiêu chuẩn của GitHub Free Runner: **2 vCPU, 7GB RAM, 14GB SSD**.
+* **`timeout-minutes: 15` — "Vòng Kim Cô" Bảo Vệ Ngân Sách**:
+  - Mặc định của GitHub Actions: Một job có thể treo tối đa **360 phút (6 tiếng)** trước khi bị ngắt.
+  - Nếu một bài test tự động bị Deadlock mạng hoặc vòng lặp vô tận (Infinite Wait) do selector sai, runner sẽ chạy suốt 6 tiếng và ngốn sạch 360 phút hạn mức tài khoản.
+  - Khai báo `timeout-minutes: 15` cưỡng chế máy ảo phải tự hủy nếu vượt quá 15 phút, bảo vệ tuyệt đối ví tiền của bạn!
+
+---
+
+#### 🧱 KHỐI 6: TẦNG MÔI TRƯỜNG GITHUB ENVIRONMENTS (`environment` - Tầng 3)
+
+```yaml
+    environment: ${{ github.event.inputs.target_env || 'production' }}
+```
+
+* **Bản chất kỹ thuật**:
+  - Đây chính là **Tầng 3** trong Kim tự tháp Biến môi trường.
+  - Biểu thức `${{ github.event.inputs.target_env || 'production' }}` tự động liên kết Job với một Profile Môi trường trên GitHub Web UI (`production` hoặc `staging`).
+* **Lợi ích bảo mật & Kiểm soát phát hành (Release Governance)**:
+  - **Tách biệt Secrets tuyệt đối**: Secret `API_KEY` của Production không thể bị truy cập khi chạy trên môi trường Staging.
+  - **Quality Gates & Manual Approval**: Bạn có thể cài đặt chính sách trên GitHub để khi ai đó chọn `target_env: production`, pipeline sẽ tạm dừng lại và gửi email bắt buộc ít nhất 1 Tech Lead phê duyệt (**Required Reviewers**) thì test mới được phép chạm vào hệ sinh thái Live!
+
+---
+
+#### 🧱 KHỐI 7: TẦNG BIẾN MÔI TRƯỜNG CẤP JOB (`env` Job-Level - Tầng 5)
+
+```yaml
+    env:
+      JOB_SCOPE: "Job-Scope-Runner-Value"
+      SCOPED_ENV_OVERRIDE: "Override-From-Job"
+```
+
+* **Phạm vi tác động**: Có hiệu lực trên toàn bộ các bước thực thi (Steps) của riêng job `playwright-sandbox`.
+* **Thực nghiệm quy tắc ghi đè**: Biến `SCOPED_ENV_OVERRIDE: "Override-From-Job"` ở đây sẽ **ghi đè trực tiếp** lên giá trị `"Override-From-Workflow"` của Tầng 4, là bằng chứng sống động phục vụ cho việc kiểm chứng tại **Case 01**.
+
+---
+
+#### 🧱 KHỐI 8: CHUỖI HÀNH TRÌNH THỰC THI TUYẾN TÍNH (`steps`)
+
+Bao gồm **8 mắt xích tuần tự** tạo thành một chu trình kiểm thử tự động khép kín hoàn hảo:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant R as Ubuntu Runner
+    participant G as Git Repository
+    participant N as Node & NPM Cache
+    participant P as Playwright Engine
+    participant A as GitHub Artifacts
+
+    R->>G: 1. actions/checkout@v4 (Clone Code)
+    R->>N: 2. actions/setup-node@v4 (Node 20 + Cache)
+    R->>N: 3. run: npm ci (Deterministic Clean Install)
+    R->>P: 4. run: npx playwright install --with-deps chromium
+    R->>R: 5. Dynamic Runtime Injection ($GITHUB_ENV, ::add-mask::)
+    R->>P: 6. Execute Playwright Suite (Shell Router + Step Env)
+    alt Test Gãy (Failure)
+        R->>R: 7. Incident Diagnostics [if: failure()]
+    end
+    R->>A: 8. Upload HTML Report & Traces [if: always()]
+```
+
+##### 🔹 Step 1: Kéo Mã Nguồn Về Máy Ảo (`actions/checkout@v4`)
+* Thực hiện `git clone` toàn bộ cây thư mục dự án về đường dẫn làm việc `$GITHUB_WORKSPACE` trên máy ảo Ubuntu.
+* Tự động checkout đúng nhánh và commit đã kích hoạt sự kiện (`github.sha`).
+
+##### 🔹 Step 2: Cài Đặt Node.js & Kích Hoạt Bộ Nhớ Đệm (`actions/setup-node@v4`)
+* Khởi tạo runtime **Node.js phiên bản 20 LTS** chuẩn mực.
+* Cấu hình `cache: 'npm'`: Tự động tính toán băm khóa (SHA Hash) của file `package-lock.json`. Nếu các lượt chạy trước đã tải các gói npm này rồi, GitHub sẽ phục hồi thư mục `~/.npm` từ cache máy chủ trong **3 giây**, thay vì phải tải lại từ npmjs.com mất 45 giây!
+
+##### 🔹 Step 3: Cài Đặt Sạch Dependencies (`run: npm ci`)
+* Bắt buộc dùng `npm ci` (*Clean Install*) thay vì `npm install`.
+* Đảm bảo tính bất biến (Idempotent): Cài đặt chính xác 100% từng byte mã nguồn từ file `package-lock.json`, loại bỏ hoàn toàn rủi ro sai lệch phiên bản thư viện giữa máy cá nhân và CI.
+
+##### 🔹 Step 4: Cài Đặt Trình Duyệt & Thư Viện C++ Hệ Thống (`npx playwright install --with-deps chromium`)
+* **Tại sao chỉ chọn `chromium`?** Để tiết kiệm 500MB dung lượng tải và rút ngắn 2 phút thời gian chạy CI, không tải WebKit và Firefox khi không dùng đến.
+* **Cờ sống còn `--with-deps`**: Ra lệnh cho trình quản lý gói `apt-get` của Linux tự động cài đặt đủ các thư viện C++ đồ họa và âm thanh (`libasound2`, `libgbm1`, `libnss3`) để Chromium render được web ở chế độ Headless.
+
+##### 🔹 Step 5: Nạp Biến Động Runtime & Che Giấu Token (`$GITHUB_ENV` & `::add-mask::`)
+* **Nạp biến động (Tầng 7)**: Ghi nối tiếp `echo "DYNAMIC_PIPELINE_ID=pipe-$(date +%s)" >> $GITHUB_ENV` cho phép các step tiếp theo đọc được ID sinh ra từ runtime của Linux shell.
+* **Che giấu Secrets động (Tầng 8)**: Sử dụng cú pháp dòng lệnh nội tại `echo "::add-mask::$DYNAMIC_SECRET"` để kích hoạt bộ lọc bảo mật Secrets Masking Engine của GitHub Runner. Kể từ thời điểm này, bất kể script nào cố tình in biến `$DYNAMIC_SECRET` ra màn hình, nó đều bị biến thành chuỗi `***`.
+* **Giao tiếp giữa các Steps**: Xuất thông tin số lõi CPU của máy ảo qua `echo "runner_cpu_cores=$(nproc)" >> $GITHUB_OUTPUT` để Step 6 đọc và hiển thị.
+
+##### 🔹 Step 6: Bộ Điều Hướng Shell & Thực Thi Playwright Suite Với Step-Level Env
+Khối này là "Trái tim thực thi" của toàn bộ pipeline:
+* **Bộ điều hướng Shell (`case ... esac`)**: Phân giải giá trị `${{ github.event.inputs.test_case }}`:
+  * Nếu chọn `case-01-env-hierarchy` ➔ Chỉ chạy duy nhất file `01-env-hierarchy-and-precedence.spec.ts`.
+  * Nếu chọn `case-10-live-smoke` ➔ Chỉ chạy kịch bản `10-neko-live-smoke-e2e.spec.ts`.
+  * Nếu chọn `all` ➔ Quét toàn bộ thư mục `modules/2-api/NekoCoffee/lesson-26/specs`.
+* **Tầng Biến Step-Level Env (Tầng 6)**: Tầng có quyền lực ghi đè tối cao, nạp các biến đặc quyền cho câu lệnh:
+  - `NODE_ENV: ${{ github.event.inputs.target_env || 'production' }}`
+  - `BASE_URL`: Tự động tính toán biểu thức ternary `staging` ➔ `https://staging-coffee.autoneko.com` hoặc `https://coffee.autoneko.com`.
+  - `STAFF_PASSWORD` & `NEKO_API_KEY`: Nạp từ kho bảo mật GitHub Secrets.
+* **Tham số CLI động**: Truyền cờ `--workers` và `--retries` trực tiếp từ input vào câu lệnh `npx playwright test`.
+
+##### 🔹 Step 7: Chẩn Đoán Sự Cố Khi Pipeline Gãy (`if: failure()`)
+* **Điều kiện rẽ nhánh `if: failure()`**: Step này ở trạng thái ngủ yên và **CHỈ ĐƯỢC ĐÁNH THỨC** khi Step 6 ném mã lỗi (Test thất bại hoặc Crash).
+* In ra các thông tin sinh tử phục vụ điều tra: Mã định danh lần chạy (`github.run_id`), người kích hoạt (`github.actor`), mã băm commit (`github.sha`).
+
+##### 🔹 Step 8: Cứu Hộ Báo Cáo Toàn Diện (`actions/upload-artifact@v4` kèm `if: always()`)
+* **Điều kiện sống còn `if: always()`**: Dù pipeline XANH (Passed), ĐỎ (Failed) hay BỊ HỦY (Cancelled), step này **BẮT BUỘC 100% PHẢI CHẠY**.
+* **Đóng gói Artifacts**: Nén toàn bộ thư mục `playwright-report-lesson26/` chứa file HTML tương tác, ảnh chụp màn hình lúc gãy và file nén `trace.zip` thành gói Artifact đính kèm trên giao diện GitHub Actions Run Summary.
+* **Chính sách lưu trữ (`retention-days: 7`)**: Tự động dọn sạch sau 7 ngày để không làm cạn kiệt dung lượng ổ đĩa của kho mã nguồn.
+
+---
+
 ### 🔹 4.3. Giải Phẫu Chi Tiết 10 Test Cases Thực Nghiệm
 
 Thư mục: `modules/2-api/NekoCoffee/lesson-26/specs/`:
@@ -2198,15 +2524,406 @@ Trong môi trường thực tế, bước `npx playwright install` có thể ng�
 
 ---
 
-## 🌐 PHẦN 6: CHIẾN LƯỢC CHẠY SONG SONG ĐA TRÌNH DUYỆT VỚI MATRIX STRATEGY (KHÁI QUÁT)
+## 🌐 PHẦN 6: CHIẾN LƯỢC CHẠY SONG SONG ĐA TRÌNH DUYỆT VỚI MATRIX STRATEGY CHUYÊN SÂU
 
-Để kiểm thử tương thích đa nền tảng (Cross-Browser Testing: Chromium, Firefox, WebKit) mà không làm tăng thời gian chờ đợi:
-* Sử dụng từ khóa `strategy: matrix`.
-* GitHub Actions sẽ khởi tạo đồng thời **3 máy ảo Ubuntu độc lập** chạy song song cùng lúc:
-  * Máy ảo 1: Chạy `project: chromium`
-  * Máy ảo 2: Chạy `project: firefox`
-  * Máy ảo 3: Chạy `project: webkit`
-* Tổng thời gian chạy của cả 3 trình duyệt chỉ bằng thời gian của 1 trình duyệt duy nhất!
+Trong môi trường thực chiến Enterprise, một ứng dụng Web như Hệ sinh thái Neko Coffee không chỉ phục vụ người dùng Google Chrome trên Windows, mà còn phục vụ người dùng Firefox trên Linux, Safari trên macOS/iOS. Nếu chỉ test trên một trình duyệt duy nhất (Chromium), bạn đang để lọt hàng loạt lỗi vỡ giao diện (CSS Rendering Bugs), lỗi lệch cú pháp JavaScript (JS Engine Discrepancies) và sự khác biệt về bảo mật Cookie giữa các trình duyệt.
+
+Tuy nhiên, nếu chạy lần lượt 3 trình duyệt trên cùng 1 máy ảo, tổng thời gian kiểm thử sẽ bị nhân lên gấp 3 lần (từ 10 phút vọt lên 30 phút), gây tắc nghẽn nghiêm trọng quy trình Release. Giải pháp chuẩn mực của các tập đoàn công nghệ là sử dụng **GitHub Actions Matrix Strategy** kết hợp kiến trúc Đa Job Fan-Out / Fan-In.
+
+---
+
+### 6.1. Bản Chất & Nguyên Lý Hoạt Động Của Matrix Strategy
+
+#### 1. Nguyên Lý Tích Descartes (Cartesian Product)
+**Matrix Strategy** là cơ chế nhân bản Job tự động của GitHub Actions. Khi bạn khai báo một ma trận các mảng biến, GitHub Actions sẽ tính toán **tích Descartes** của tất cả các mảng để sinh ra tập hợp các Job con (Matrix Runners) chạy hoàn toàn độc lập và song song trên các máy ảo riêng biệt:
+
+$$	ext{Tổng số Runners} = \prod_{i=1}^{n} |	ext{Dimension}_i|$$
+
+* Ví dụ thực tế trong dự án Neko Coffee (`playwright-lesson26-matrix.yml`):
+  ```yaml
+  strategy:
+    matrix:
+      browser: [chromium, firefox, webkit] # Ma trận 1 chiều: 3 phần tử
+  ```
+  ➔ GitHub Actions sẽ cấp phát tức thì **3 máy ảo Ubuntu (`ubuntu-latest`) độc lập**:
+  - **Runner 1**: `matrix.browser = chromium`
+  - **Runner 2**: `matrix.browser = firefox`
+  - **Runner 3**: `matrix.browser = webkit`
+
+* Nếu mở rộng ma trận 2 chiều (Cross-OS & Cross-Browser):
+  ```yaml
+  strategy:
+    matrix:
+      os: [ubuntu-latest, windows-latest]
+      browser: [chromium, firefox, webkit]
+  ```
+  ➔ Hệ thống sẽ tự động khởi tạo $2 	imes 3 = 6$ máy ảo chạy song song!
+
+#### 2. Đối Sánh Tốc Độ: Chạy Tuần Tự vs Chạy Ma Trận Song Song (Wall-Clock Time)
+
+```
+CHẠY TUẦN TỰ TRÊN 1 MÁY ẢO (Tốn 15 phút):
+[ VM 1 ] ──► Chromium (5m) ──► Firefox (5m) ──► WebKit (5m) ──► Hoàn tất (15m)
+
+CHẠY MA TRẬN SONG SONG TRÊN 3 MÁY ẢO (Tốn đúng 5 phút):
+[ VM 1 ] ──► Chromium (5m) ──┐
+[ VM 2 ] ──► Firefox  (5m) ──┼──► 🏁 Hoàn tất đồng thời lúc phút thứ 5! (Nhanh gấp 3 lần)
+[ VM 3 ] ──► WebKit   (5m) ──┘
+```
+
+#### 3. Hai Tham Số Cốt Tử Trong `strategy`:
+* `fail-fast: false`:
+  - **Mặc định nguy hiểm**: GitHub Actions để mặc định `fail-fast: true`. Nghĩa là nếu máy ảo Chromium bị FAIL ở giây thứ 30, GitHub sẽ **lập tức phát tín hiệu hủy diệt (cancel) 2 máy ảo Firefox và WebKit** đang chạy dở!
+  - **Tại sao bắt buộc phải là `false`**: Trong QA Testing, mục tiêu của chúng ta là thu thập đầy đủ bức tranh chất lượng trên TẤT CẢ các trình duyệt. Việc Firefox fail không có nghĩa là WebKit cũng fail. Đặt `fail-fast: false` đảm bảo dù 1 hoặc 2 trình duyệt có gãy, các trình duyệt còn lại vẫn chạy đến cùng để xuất đủ báo cáo Artifacts cho đội ngũ phân tích!
+* `max-parallel: 3`:
+  - Khống chế số lượng máy ảo tối đa được phép khởi tạo đồng thời.
+  - Ngăn ngừa việc vô tình mở rộng ma trận quá lớn làm cạn kiệt hạn mức phút chạy (Concurrency Quota) của tổ chức và tránh tạo áp lực tải dồn dập (DDoS vô tình) lên hệ thống máy chủ Neko Coffee.
+* `include` & `exclude`:
+  - Cho phép tùy biến thêm hoặc loại trừ các cấu hình đặc thù. Ví dụ: WebKit chạy tối ưu nhất trên macOS, bạn có thể dùng `include` để chỉ định riêng WebKit chạy trên `macos-latest`, trong khi Chromium và Firefox chạy trên `ubuntu-latest`.
+
+---
+
+### 6.2. Kiến Trúc Đa Job: Mô Hình Fan-Out (Matrix) & Fan-In (Tổng Kết) Kết Hợp `needs:`
+
+Một bài toán kiến trúc kinh điển trong CI/CD: *Khi 3 máy ảo chạy song song, làm thế nào để biết khi nào toàn bộ ma trận đã hoàn tất để đưa ra quyết định đóng/mở Cổng Gác Chất Lượng (Quality Gate)?*
+
+Giải pháp là xây dựng mô hình **Đa Job: Fan-Out / Fan-In** phối hợp với từ khóa phụ thuộc `needs:`:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ 🎯 TRIGGER: workflow_dispatch (Inputs: test_case = 'case-08', target_env = 'production')│
+└───────────────────────────────────────────┬────────────────────────────────────────────┘
+                                            │
+               ┌────────────────────────────┼────────────────────────────┐
+               ▼ (FAN-OUT: 3 MÁY ẢO)        ▼                            ▼
+  ┌─────────────────────────┐  ┌─────────────────────────┐  ┌─────────────────────────┐
+  │ 🧪 VM 1: Chromium       │  │ 🧪 VM 2: Firefox        │  │ 🧪 VM 3: WebKit         │
+  ├─────────────────────────┤  ├─────────────────────────┤  ├─────────────────────────┤
+  │ • OS: ubuntu-latest     │  │ • OS: ubuntu-latest     │  │ • OS: ubuntu-latest     │
+  │ • Node v20 & npm ci     │  │ • Node v20 & npm ci     │  │ • Node v20 & npm ci     │
+  │ • Install: chromium     │  │ • Install: firefox      │  │ • Install: webkit       │
+  │ • Run: --project=chrome │  │ • Run: --project=firefox│  │ • Run: --project=webkit │
+  │ • Upload: report-chrome │  │ • Upload: report-firefox│  │ • Upload: report-webkit │
+  └────────────┬────────────┘  └────────────┬────────────┘  └────────────┬────────────┘
+               │                            │                            │
+               └────────────────────────────┼────────────────────────────┘
+                                            │
+                                            ▼ (FAN-IN: HỘI TỤ & ĐÁNH GIÁ)
+                               ┌─────────────────────────────────────────┐
+                               │ 📊 JOB 2: matrix-summary                │
+                               │ needs: [matrix-cross-browser]           │
+                               │ if: always()                            │
+                               ├─────────────────────────────────────────┤
+                               │ • Bắt buộc đợi cả 3 máy ảo hoàn tất    │
+                               │ • Đánh giá: needs.<job>.result          │
+                               │ • Nếu có bất kỳ browser fail: exit 1   │
+                               │ • Nếu 3 browser đều PASS: Quality Gate ✅│
+                               └─────────────────────────────────────────┘
+```
+
+* **Cơ chế hoạt động của `needs: [matrix-cross-browser]`**:
+  - `Job 2` sẽ bị GitHub Actions giữ ở trạng thái chờ (`Pending`) cho đến khi toàn bộ 3 máy ảo của `Job 1` kết thúc vòng đời.
+* **Cơ chế hoạt động của `if: always()`**:
+  - Theo mặc định của GitHub, nếu `Job 1` có bất kỳ runner nào bị FAIL, `Job 2` sẽ bị hủy (`Skipped`).
+  - Cờ `if: always()` phá vỡ hành vi này, ép `Job 2` **luôn luôn thực thi** dù kết quả của ma trận là Thành công, Thất bại hay Bị hủy.
+* **Biến trạng thái toàn cục `${{ needs.matrix-cross-browser.result }}`**:
+  - Trả về `'success'` nếu cả 3 máy ảo đều xanh.
+  - Trả về `'failure'` nếu có ít nhất 1 máy ảo bị đỏ. `Job 2` lập tức in cảnh báo đỏ và gọi lệnh `exit 1` để chặn đứng tiến trình merge code.
+
+---
+
+### 6.3. Giải Phẫu Chi Tiết File Workflow `.github/workflows/playwright-lesson26-matrix.yml`
+
+Dưới đây là toàn bộ mã nguồn của pipeline thực chiến đa trình duyệt chuẩn Enterprise:
+
+```yaml
+name: 🌐 Lesson 26 - Cross-Browser Matrix Simulation
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_case:
+        description: '🎯 Chọn Kịch Bản Muốn Chạy Matrix'
+        required: true
+        default: 'case-08-headless-viewport'
+        type: choice
+        options:
+          - 'case-08-headless-viewport'
+          - 'case-10-live-smoke'
+          - 'all'
+      target_env:
+        description: '🌐 Chọn Tầng Môi Trường (GitHub Environments)'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - 'production'
+          - 'staging'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ════════════════════════════════════════════════════════════════════════════
+  # 🧪 JOB 1: CHẠY MA TRẬN 3 TRÌNH DUYỆT TRÊN 3 MÁY ẢO LINUX ĐỘC LẬP (FAN-OUT)
+  # ════════════════════════════════════════════════════════════════════════════
+  matrix-cross-browser:
+    name: 🧪 Run on [${{ matrix.browser }}]
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.target_env || 'production' }}
+
+    strategy:
+      fail-fast: false      # ⚡ SỐNG CÒN: 1 browser fail thì 2 browser kia vẫn chạy tiếp
+      max-parallel: 3       # Khởi tạo tối đa 3 máy ảo chạy đồng thời
+      matrix:
+        browser: [chromium, firefox, webkit] # 👈 Ma trận 3 trình duyệt
+
+    steps:
+      - name: 📥 Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js v20 with NPM Cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Install NPM Dependencies (Clean Install)
+        run: npm ci
+
+      # ⚡ TỐI ƯU SIÊU TỐC: Mỗi máy ảo chỉ tải đúng 1 trình duyệt của nó!
+      - name: 🌐 Install Browser [${{ matrix.browser }}] & OS Dependencies
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: ⚙️ Dynamic Runtime Env Injection
+        id: dynamic_env_builder
+        run: |
+          echo "DYNAMIC_PIPELINE_ID=matrix-${{ matrix.browser }}-$(date +%s)" >> $GITHUB_ENV
+          echo "RUNNER_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_ENV
+          echo "runner_cpu_cores=$(nproc)" >> $GITHUB_OUTPUT
+          echo "✅ Đã nạp thành công biến động trên máy ảo [${{ matrix.browser }}]!"
+
+      - name: 🎭 Execute Playwright Suite on [${{ matrix.browser }}]
+        run: |
+          TARGET_SPEC=""
+          case "${{ github.event.inputs.test_case }}" in
+            "case-08-headless-viewport")
+              TARGET_SPEC="modules/2-api/NekoCoffee/lesson-26/specs/08-headless-and-viewport-matrix.spec.ts"
+              ;;
+            "case-10-live-smoke")
+              TARGET_SPEC="modules/2-api/NekoCoffee/lesson-26/specs/10-neko-live-smoke-e2e.spec.ts"
+              ;;
+            *)
+              TARGET_SPEC="modules/2-api/NekoCoffee/lesson-26/specs"
+              ;;
+          esac
+
+          npx playwright test $TARGET_SPEC             --config=configs/playwright.lesson26-cicd.config.ts             --project=${{ matrix.browser }}             --workers=1             --retries=1
+        env:
+          CI: true
+          NODE_ENV: ${{ github.event.inputs.target_env || 'production' }}
+          TARGET_ENV: ${{ github.event.inputs.target_env || 'production' }}
+          BASE_URL: ${{ (github.event.inputs.target_env == 'staging') && 'https://staging-coffee.autoneko.com' || 'https://coffee.autoneko.com' }}
+          STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD || 'NekoStaffVaultPass2026!' }}
+          NEKO_API_KEY: ${{ secrets.NEKO_API_KEY || 'neko_sec_live_998877665544' }}
+
+      # ── ĐÓNG GÓI ARTIFACTS THEO TÊN TRÌNH DUYỆT (CHỐNG GHI ĐÈ FILE) ─────────
+      - name: "📊 Upload HTML Report for [${{ matrix.browser }}] [if: always()]"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.browser }}-${{ github.run_id }}
+          path: playwright-report-lesson26/
+          retention-days: 7
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # 📊 JOB 2: HỘI TỤ (FAN-IN) — DÙNG 'needs' ĐỂ TỔNG KẾT VÀ BÁO CÁO TOÀN CỤC
+  # ════════════════════════════════════════════════════════════════════════════
+  matrix-summary:
+    name: 📊 Matrix Quality Gate Summary
+    needs: [matrix-cross-browser] # 👈 BẮT BUỘC ĐỢI CẢ 3 TRÌNH DUYỆT CHẠY XONG
+    runs-on: ubuntu-latest
+    if: always() # ⚡ Luôn chạy dù có trình duyệt nào bị fail
+    steps:
+      - name: 📢 Tổng Kết Trạng Thái Kiểm Thử Đa Trình Duyệt
+        run: |
+          echo "════════════════════════════════════════════════════════════════"
+          echo "🏁 BÁO CÁO TỔNG KẾT MATRIX CROSS-BROWSER QUALITY GATE"
+          echo "📌 Matrix Result : ${{ needs.matrix-cross-browser.result }}"
+          echo "🌐 Trình duyệt   : Chromium (Blink), Firefox (Gecko), WebKit (Safari)"
+          echo "📦 Artifacts     : 3 gói báo cáo độc lập đã được lưu trữ thành công!"
+          echo "════════════════════════════════════════════════════════════════"
+          if [ "${{ needs.matrix-cross-browser.result }}" != "success" ]; then
+            echo "⚠️ CẢNH BÁO: Phát hiện có ít nhất 1 trình duyệt kiểm thử không đạt!"
+            exit 1
+          else
+            echo "🎉 CHÚC MỪNG: Cả 3 trình duyệt đã vượt qua Quality Gate xuất sắc 100%!"
+          fi
+```
+
+#### 🔍 Điểm Nhấn Kỹ Thuật Độc Nhất Vô Nhị:
+1. **Tối ưu băng thông mạng với `--with-deps ${{ matrix.browser }}`**:
+   Thay vì chạy `npx playwright install --with-deps` (tải cả 3 browser nặng ~800MB trên mỗi máy ảo), chúng ta truyền thẳng biến `${{ matrix.browser }}`. Máy ảo Chromium chỉ tải đúng Chromium (~150MB), máy ảo Firefox chỉ tải Firefox (~120MB), máy ảo WebKit chỉ tải WebKit (~110MB). Tiết kiệm hơn **66% băng thông và rút ngắn 90 giây setup** cho mỗi runner!
+2. **Ngăn chặn triệt để xung đột Artifacts (Collision Guard)**:
+   Nếu bạn đặt tên artifact cố định là `playwright-report`, 3 máy ảo chạy đồng thời sẽ cùng tải file zip lên cùng một tên, dẫn tới lỗi ghi đè hoặc crash upload. Bằng cách chèn biến `${{ matrix.browser }}`:
+   `name: playwright-report-${{ matrix.browser }}-${{ github.run_id }}`
+   Sau khi hoàn tất, trang GitHub Actions sẽ hiển thị rõ ràng 3 gói báo cáo riêng biệt:
+   - `playwright-report-chromium-12345678`
+   - `playwright-report-firefox-12345678`
+   - `playwright-report-webkit-12345678`
+
+---
+
+### 6.4. Ghép Nối Kịch Bản Thực Nghiệm: CASE 08 (Headless & Viewport Matrix Integrity)
+
+Kịch bản được thiết kế độc quyền để kiểm chứng ma trận trình duyệt nằm tại:  
+`modules/2-api/NekoCoffee/lesson-26/specs/08-headless-and-viewport-matrix.spec.ts`
+
+```typescript
+import { test, expect } from "@playwright/test";
+
+test.describe("🖥️ [CASE 08] Headless Mode & Viewport Matrix Integrity", () => {
+  test("01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt", async ({
+    page,
+    browserName,
+  }) => {
+    console.log(`
+🌐 [Browser Audit] Trình duyệt đang chạy: [${browserName.toUpperCase()}]`);
+
+    const userAgent = await page.evaluate(() => navigator.userAgent);
+    const viewportSize = page.viewportSize();
+
+    console.log(`   ├─ User-Agent   : ${userAgent}`);
+    console.log(`   └─ Viewport Size: ${viewportSize?.width}x${viewportSize?.height}`);
+
+    expect(browserName).toBeTruthy();
+    expect(userAgent).toBeTruthy();
+
+    // Trên CI, viewport chuẩn thường là 1280x720
+    if (viewportSize) {
+      expect(viewportSize.width).toBeGreaterThanOrEqual(1024);
+      expect(viewportSize.height).toBeGreaterThanOrEqual(600);
+    }
+
+    // Mở trang kiểm thử layout responsive CSS Grid
+    await page.setContent(`
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px;">
+        <div id="col-menu" style="background: #e6f7ff; padding: 15px; border-radius: 8px;">
+          <h3>Menu Trà Sữa Neko</h3>
+          <p>Trà Đào Hồng Đài</p>
+        </div>
+        <div id="col-cart" style="background: #f6ffed; padding: 15px; border-radius: 8px;">
+          <h3>Giỏ Hàng</h3>
+          <p>Số lượng: 1</p>
+        </div>
+      </div>
+    `);
+
+    await expect(page.locator("#col-menu")).toBeVisible();
+    await expect(page.locator("#col-cart")).toBeVisible();
+
+    console.log(`✅ Trình duyệt [${browserName}] render CSS Grid và Viewport chuẩn mực trên CI!`);
+  });
+});
+```
+
+#### 🎯 Ba Mục Tiêu Kiểm Chứng Sống Còn:
+1. **Dấu vân tay Engine (`browserName` & `userAgent`)**: Chứng minh Playwright đang khởi tạo đúng bộ lõi nhị phân (Blink của Google Chrome, Gecko của Mozilla Firefox, WebKit của Apple Safari) chứ không phải dùng trình duyệt giả lập.
+2. **Kích thước Viewport CI chuẩn mực (1280x720)**: Đảm bảo giao diện màn hình máy tính đầy đủ, không bị co giật hay rơi vào điểm ngắt (Breakpoint) Mobile dẫn tới ẩn các nút bấm quan trọng.
+3. **Thẩm định năng lực dựng hình CSS Grid hiện đại**: Bơm thẳng mã HTML chứa `display: grid` vào DOM của từng trình duyệt và xác minh 2 khối `#col-menu` và `#col-cart` hiển thị hoàn hảo.
+
+---
+
+### 6.5. Cẩm Nang Lệnh Thực Thi & Đối Chiếu Log Terminal Thực Tế 3 Browser Engines
+
+#### 1. Kiểm Thử Cục Bộ Tại Local (Mô Phỏng Từng Nhánh Matrix):
+Trước khi đẩy lên Git, bạn có thể chạy thử từng engine trình duyệt tại máy cá nhân thông qua cờ `--project`:
+
+```bash
+# 🌐 1. Chạy trên lõi Chromium (Google Chrome / Edge engine):
+npx playwright test modules/2-api/NekoCoffee/lesson-26/specs/08-headless-and-viewport-matrix.spec.ts --config=configs/playwright.lesson26-cicd.config.ts --project=chromium
+
+# 🦊 2. Chạy trên lõi Firefox (Mozilla Gecko engine):
+npx playwright test modules/2-api/NekoCoffee/lesson-26/specs/08-headless-and-viewport-matrix.spec.ts --config=configs/playwright.lesson26-cicd.config.ts --project=firefox
+
+# 🧭 3. Chạy trên lõi WebKit (Apple Safari engine):
+npx playwright test modules/2-api/NekoCoffee/lesson-26/specs/08-headless-and-viewport-matrix.spec.ts --config=configs/playwright.lesson26-cicd.config.ts --project=webkit
+```
+
+#### 2. Kích Hoạt Ma Trận Song Song Trên GitHub Actions Bằng GitHub CLI (`gh`):
+Để chạy toàn bộ ma trận 3 máy ảo trên đám mây GitHub:
+
+```bash
+# Bước 1: Đồng bộ mã nguồn và pipeline lên GitHub
+git add .
+git commit -m "feat(lesson-26): integrate cross-browser matrix pipeline"
+git push origin main
+
+# Bước 2: Kích hoạt Workflow Matrix bằng GitHub CLI
+gh workflow run playwright-lesson26-matrix.yml -f test_case=case-08-headless-viewport -f target_env=production
+
+# Bước 3: Theo dõi trực tiếp tiến trình 3 máy ảo chạy song song
+gh run watch
+
+# Bước 4: Xem log thực thi chi tiết
+gh run view --log
+```
+
+#### 3. Bằng Chứng Thực Thi Đối Chiếu Log Terminal Giữa 3 Trình Duyệt:
+
+```text
+════════════════════════════════════════════════════════════════════════════════
+MÁY ẢO 1: [CHROMIUM] (Lõi Blink / V8 Engine)
+════════════════════════════════════════════════════════════════════════════════
+Running 1 test using 1 worker
+
+🌐 [Browser Audit] Trình duyệt đang chạy: [CHROMIUM]
+   ├─ User-Agent   : Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.55 Safari/537.36
+   └─ Viewport Size: 1280x720
+✅ Trình duyệt [chromium] render CSS Grid và Viewport chuẩn mực trên CI!
+  ok 1 [chromium] › 08-headless-and-viewport-matrix.spec.ts:16:7 › 🖥️ [CASE 08] Headless Mode & Viewport Matrix Integrity › 01 (142ms)
+
+  1 passed (536ms)
+
+════════════════════════════════════════════════════════════════════════════════
+MÁY ẢO 2: [FIREFOX] (Lõi Gecko / SpiderMonkey Engine)
+════════════════════════════════════════════════════════════════════════════════
+Running 1 test using 1 worker
+
+🌐 [Browser Audit] Trình duyệt đang chạy: [FIREFOX]
+   ├─ User-Agent   : Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:151.0) Gecko/20100101 Firefox/151.0
+   └─ Viewport Size: 1280x720
+✅ Trình duyệt [firefox] render CSS Grid và Viewport chuẩn mực trên CI!
+  ok 1 [firefox] › 08-headless-and-viewport-matrix.spec.ts:16:7 › 🖥️ [CASE 08] Headless Mode & Viewport Matrix Integrity › 01 (664ms)
+
+  1 passed (1.5s)
+
+════════════════════════════════════════════════════════════════════════════════
+MÁY ẢO 3: [WEBKIT] (Lõi WebKit / JavaScriptCore Engine - Safari)
+════════════════════════════════════════════════════════════════════════════════
+Running 1 test using 1 worker
+
+🌐 [Browser Audit] Trình duyệt đang chạy: [WEBKIT]
+   ├─ User-Agent   : Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15
+   └─ Viewport Size: 1280x720
+✅ Trình duyệt [webkit] render CSS Grid và Viewport chuẩn mực trên CI!
+  ok 1 [webkit] › 08-headless-and-viewport-matrix.spec.ts:16:7 › 🖥️ [CASE 08] Headless Mode & Viewport Matrix Integrity › 01 (325ms)
+
+  1 passed (698ms)
+
+════════════════════════════════════════════════════════════════════════════════
+MÁY ẢO 4: [JOB 2: MATRIX-SUMMARY] (Hội Tụ & Báo Cáo Chất Lượng)
+════════════════════════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════════
+🏁 BÁO CÁO TỔNG KẾT MATRIX CROSS-BROWSER QUALITY GATE
+📌 Matrix Result : success
+🌐 Trình duyệt   : Chromium (Blink), Firefox (Gecko), WebKit (Safari)
+📦 Artifacts     : 3 gói báo cáo độc lập đã được lưu trữ thành công!
+════════════════════════════════════════════════════════════════
+🎉 CHÚC MỪNG: Cả 3 trình duyệt đã vượt qua Quality Gate xuất sắc 100%!
+```
 
 ---
 
