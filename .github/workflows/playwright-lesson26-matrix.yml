@@ -169,18 +169,59 @@ jobs:
           pattern: blob-report-*
           merge-multiple: true
 
-      # ── THỰC THI LỆNH GHÉP BÁO CÁO THẦN THÁNH CỦA PLAYWRIGHT ────────────────
-      - name: 🔄 Merge Reports into Single Unified HTML Report
-        run: |
-          npx playwright merge-reports --reporter html ./all-blob-reports
+      # ── KHÔI PHỤC LỊCH SỬ KIỂM THỬ ĐỂ TÍCH LŨY BIỂU ĐỒ TREND (CACHE / GIT) ──
+      - name: 🔄 Restore Smart Reporter History Cache
+        id: cache_history
+        uses: actions/cache/restore@v4
+        with:
+          path: test-history.json
+          key: smart-reporter-history-${{ github.run_id }}
+          restore-keys: |
+            smart-reporter-history-
 
-      # ── XUẤT BẢN ĐÚNG 1 GÓI HTML REPORT DUY NHẤT (CHỨA ĐẦY ĐỦ CẢ 3 BROWSER) ─
-      - name: "📊 Upload Merged HTML Report [if: always()]"
+      # ── BỔ SUNG DỰ PHÒNG: LẤY LỊCH SỬ TRỰC TIẾP TỪ NHÁNH GH-PAGES NẾU CHƯA CÓ CACHE ─
+      - name: 📜 Fallback Fetch Test History from gh-pages
+        run: |
+          if [ ! -f "test-history.json" ]; then
+            echo "🔍 Đang tìm nạp test-history.json từ nhánh origin/gh-pages..."
+            git fetch origin gh-pages --depth=1 || true
+            git checkout origin/gh-pages -- test-history.json || true
+            if [ -f "test-history.json" ]; then
+              echo "✅ Đã khôi phục thành công test-history.json từ origin/gh-pages!"
+            fi
+          fi
+
+      # ── THỰC THI LỆNH GHÉP BÁO CÁO THẦN THÁNH CỦA PLAYWRIGHT ────────────────
+      - name: 🔄 Merge Reports into Single Unified Smart Report & Native HTML
+        run: |
+          npx playwright merge-reports --config=configs/playwright.lesson26-cicd.config.ts ./all-blob-reports
+        env:
+          CI: true
+
+      # ── LƯU ĐÈ LỊCH SỬ MỚI VÀO CACHE CHO CÁC LẦN CHẠY TIẾP THEO ────────────
+      - name: "💾 Save Smart Reporter History Cache [if: always()]"
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: test-history.json
+          key: smart-reporter-history-${{ github.run_id }}
+
+      # ── XUẤT BẢN SMART HTML REPORT ĐỘC LẬP (CHỨA CẢ 3 BROWSER & BIỂU ĐỒ) ────
+      - name: "📊 Upload Smart HTML Report [if: always()]"
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report-merged-${{ github.run_id }}
-          path: playwright-report/
+          name: playwright-smart-report-matrix-${{ github.run_id }}
+          path: playwright-report-smart.html
+          retention-days: 14
+
+      # ── XUẤT BẢN NATIVE MERGED HTML REPORT (HỖ TRỢ SOI TRACES CHI TIẾT) ─────
+      - name: "📊 Upload Native Merged HTML Report [if: always()]"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-native-merged-${{ github.run_id }}
+          path: playwright-report-lesson26/
           retention-days: 14
 
       # ── TỰ ĐỘNG XUẤT BẢN LIVE MATRIX DASHBOARD LÊN GITHUB PAGES ─────────────
@@ -188,8 +229,17 @@ jobs:
         if: always() && (github.event.inputs.deploy_pages != 'false')
         run: |
           mkdir -p public
-          cp -r playwright-report/* public/
-          echo "✅ Đã chuẩn bị xong thư mục public/ từ Playwright Merged Report (gộp cả 3 trình duyệt)!"
+          if [ -f "playwright-report-smart.html" ]; then
+            cp playwright-report-smart.html public/index.html
+            cp test-history.json public/ || true
+            mkdir -p public/native
+            cp -r playwright-report-lesson26/* public/native/ || true
+            echo "✅ Đã nạp thành công Smart Reporter làm Dashboard chính (public/index.html)!"
+            echo "✅ Đã đính kèm Native Report tại public/native/index.html!"
+          else
+            echo "❌ Không tìm thấy playwright-report-smart.html!"
+            exit 1
+          fi
 
       - name: "🌐 Deploy Live Matrix Report to GitHub Pages [if: always()]"
         uses: peaceiris/actions-gh-pages@v4

@@ -3022,12 +3022,13 @@ concurrency:
 
 ---
 
-#### 🧱 KHỐI 7: JOB 2 — CHUỖI STEPS GHÉP BÁO CÁO THẦN THÁNH & ĐÓNG GÓI 1 HTML DUY NHẤT
+#### 🧱 KHỐI 7: JOB 2 — CHUỖI STEPS GHÉP BÁO CÁO THẦN THÁNH & XUẤT BẢN SMART REPORT LÊN GITHUB PAGES
 
-Đây chính là câu trả lời toàn diện cho câu hỏi *"Làm sao để gom thành 1 Report duy nhất?"*:
+Đây chính là câu trả lời toàn diện cho câu hỏi *"Làm sao để gom 3 trình duyệt thành 1 Report duy nhất và xuất bản Live Dashboard Smart Reporter?"*:
 
 1. **Chuẩn bị môi trường Playwright CLI**:
    Checkout code và chạy `npm ci` để nạp bộ thư viện Playwright CLI vào máy ảo Job 2.
+
 2. **Kéo toàn bộ Blob Reports từ 3 máy ảo về 1 chỗ**:
    ```yaml
    - name: 📥 Download all blob reports from matrix jobs
@@ -3039,32 +3040,49 @@ concurrency:
    ```
    - `pattern: blob-report-*`: Tự động tìm kiếm và tải toàn bộ các gói artifact có tên bắt đầu bằng `blob-report-` (cả 3 trình duyệt).
    - `merge-multiple: true`: Đổ phẳng tất cả các file zip nhị phân vào chung một thư mục đích `all-blob-reports/`.
-3. **Thực thi lệnh ghép báo cáo của Playwright**:
-   ```yaml
-   - name: 🔄 Merge Reports into Single Unified HTML Report
-     run: |
-       npx playwright merge-reports --reporter html ./all-blob-reports
-   ```
-   - Lệnh `npx playwright merge-reports` giải nén toàn bộ các file zip, đọc toàn bộ sự kiện kiểm thử (test runs, steps, screenshots, traces, console logs), và **tổng hợp thành đúng 1 thư mục HTML Report duy nhất**: `playwright-report/`!
-4. **Đóng gói ĐÚNG 1 Artifact duy nhất gửi lên GitHub**:
-   ```yaml
-   - name: "📊 Upload Merged HTML Report [if: always()]"
-     uses: actions/upload-artifact@v4
-     if: always()
-     with:
-       name: playwright-report-merged-${{ github.run_id }}
-       path: playwright-report/
-       retention-days: 14
-   ```
-   - Người dùng giờ đây **chỉ thấy duy nhất 1 gói artifact** mang tên `playwright-report-merged-<run_id>`. Khi tải về và mở ra, toàn bộ kết quả của Chromium, Firefox, WebKit hiển thị trực quan trong một giao diện duy nhất!
 
-5. **Tự Động Xuất Bản Thẳng Lên GitHub Pages (Đỉnh Cao Của Matrix Pipeline)**:
+3. **Khôi phục Lịch sử kiểm thử cũ (`test-history.json`)**:
+   ```yaml
+   - name: 🔄 Restore Smart Reporter History Cache
+     uses: actions/cache/restore@v4
+     with:
+       path: test-history.json
+       key: smart-reporter-history-${{ github.run_id }}
+       restore-keys: |
+         smart-reporter-history-
+   ```
+   - Nạp lại lịch sử chạy của các lần trước từ GitHub Cache (hoặc fallback từ nhánh `gh-pages`) để Smart Reporter vẽ biểu đồ xu hướng (Trend Lines).
+
+4. **Thực thi lệnh ghép báo cáo của Playwright với file Cấu hình**:
+   ```yaml
+   - name: 🔄 Merge Reports into Single Unified Smart Report & Native HTML
+     run: |
+       npx playwright merge-reports --config=configs/playwright.lesson26-cicd.config.ts ./all-blob-reports
+     env:
+       CI: true
+   ```
+   - ⚡ **Bí mật kỹ thuật đỉnh cao**: Khi truyền cờ `--config=configs/playwright.lesson26-cicd.config.ts`, lệnh `merge-reports` sẽ **kích hoạt đồng thời tất cả các phóng viên được định cấu hình**:
+     - 🌟 **`playwright-smart-reporter`**: Tổng hợp dữ liệu từ cả 3 trình duyệt thành đúng 1 file HTML duy nhất: `playwright-report-smart.html` và tích lũy lịch sử vào `test-history.json`!
+     - 📑 **Native HTML Reporter**: Sinh ra tại `playwright-report-lesson26/index.html` (kèm trace và screenshot của cả 3 browser).
+
+5. **Lưu đè Cache Lịch sử & Đóng gói Artifacts**:
+   - Lưu `test-history.json` mới lên cache bằng `actions/cache/save@v4`.
+   - Tải lên 2 gói Artifacts: `playwright-smart-report-matrix-<run_id>` (Smart Report độc lập) và `playwright-report-native-merged-<run_id>` (Native HTML gộp).
+
+6. **Tự Động Xuất Bản Thẳng Lên GitHub Pages (`public/index.html`)**:
    ```yaml
    - name: "🚀 Prepare GitHub Pages Web Directory [if: always()]"
      if: always() && (github.event.inputs.deploy_pages != 'false')
      run: |
        mkdir -p public
-       cp -r playwright-report/* public/
+       if [ -f "playwright-report-smart.html" ]; then
+         cp playwright-report-smart.html public/index.html
+         cp test-history.json public/ || true
+         mkdir -p public/native
+         cp -r playwright-report-lesson26/* public/native/ || true
+         echo "✅ Đã nạp thành công Smart Reporter làm Dashboard chính (public/index.html)!"
+         echo "✅ Đã đính kèm Native Report tại public/native/index.html!"
+       fi
 
    - name: "🌐 Deploy Live Matrix Report to GitHub Pages [if: always()]"
      uses: peaceiris/actions-gh-pages@v4
@@ -3074,8 +3092,8 @@ concurrency:
        publish_dir: ./public
        keep_files: false
    ```
-   - Thay vì phải tải file zip, Job 2 đưa toàn bộ website báo cáo gộp (chứa kết quả của cả 3 trình duyệt) lên thẳng nhánh `gh-pages`!
-   - Khi mở đường link GitHub Pages, người xem thấy ngay báo cáo đa trình duyệt chuyên nghiệp với menu chọn Chromium, Firefox, Safari!
+   - Chép `playwright-report-smart.html` thành `public/index.html` để biến nó thành trang chủ chính thức khi người dùng truy cập link GitHub Pages!
+   - Chép Native Report vào `public/native/index.html` để có thể đối chiếu trace chi tiết khi cần.
 
 6. **Đánh giá Cổng Gác Chất Lượng Toàn Cục**:
    ```bash
