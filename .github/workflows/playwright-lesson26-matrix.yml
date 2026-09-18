@@ -30,10 +30,23 @@ on:
           - 'production'
           - 'staging'
 
+      deploy_pages:
+        description: '🌐 Tự động xuất bản Live Matrix Report lên GitHub Pages?'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
 # ── 2. TỐI ƯU CHI PHÍ VÀ HÀNG ĐỢI (CONCURRENCY) ──────────────────────────────
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+# ── CẤP QUYỀN GHI ĐỂ TỰ ĐỘNG PUSH LÊN NHÁNH GH-PAGES (GITHUB PAGES) ───────────
+permissions:
+  contents: write
 
 # ── 3. KHỐI CÔNG VIỆC THỰC THI (JOBS) ────────────────────────────────────────
 jobs:
@@ -169,6 +182,22 @@ jobs:
           name: playwright-report-merged-${{ github.run_id }}
           path: playwright-report/
           retention-days: 14
+
+      # ── TỰ ĐỘNG XUẤT BẢN LIVE MATRIX DASHBOARD LÊN GITHUB PAGES ─────────────
+      - name: "🚀 Prepare GitHub Pages Web Directory [if: always()]"
+        if: always() && (github.event.inputs.deploy_pages != 'false')
+        run: |
+          mkdir -p public
+          cp -r playwright-report/* public/
+          echo "✅ Đã chuẩn bị xong thư mục public/ từ Playwright Merged Report (gộp cả 3 trình duyệt)!"
+
+      - name: "🌐 Deploy Live Matrix Report to GitHub Pages [if: always()]"
+        uses: peaceiris/actions-gh-pages@v4
+        if: always() && (github.event.inputs.deploy_pages != 'false')
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          keep_files: false
 
       # ── BÁO CÁO TỔNG KẾT CỔNG GÁC CHẤT LƯỢNG TOÀN CỤC ──────────────────────
       - name: 📢 Tổng Kết Trạng Thái Kiểm Thử Đa Trình Duyệt

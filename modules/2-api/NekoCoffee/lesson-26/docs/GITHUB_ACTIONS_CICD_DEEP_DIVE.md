@@ -424,6 +424,15 @@ on:
           - 'production'
           - 'staging'
 
+      deploy_pages:
+        description: '🌐 Tự động xuất bản Live Matrix Report lên GitHub Pages?'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
       retries:
         description: '🔄 Số lần Retry (Chọn 0 để xem Case 05 bị ĐỎ thế nào)'
         required: true
@@ -2680,6 +2689,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# ── CẤP QUYỀN GHI ĐỂ TỰ ĐỘNG PUSH LÊN NHÁNH GH-PAGES (GITHUB PAGES) ───────────
+permissions:
+  contents: write
+
 # ── 3. KHỐI CÔNG VIỆC THỰC THI (JOBS) ────────────────────────────────────────
 jobs:
   # ════════════════════════════════════════════════════════════════════════════
@@ -2814,6 +2827,22 @@ jobs:
           name: playwright-report-merged-${{ github.run_id }}
           path: playwright-report/
           retention-days: 14
+
+      # ── TỰ ĐỘNG XUẤT BẢN LIVE MATRIX DASHBOARD LÊN GITHUB PAGES ─────────────
+      - name: "🚀 Prepare GitHub Pages Web Directory [if: always()]"
+        if: always() && (github.event.inputs.deploy_pages != 'false')
+        run: |
+          mkdir -p public
+          cp -r playwright-report/* public/
+          echo "✅ Đã chuẩn bị xong thư mục public/ từ Playwright Merged Report (gộp cả 3 trình duyệt)!"
+
+      - name: "🌐 Deploy Live Matrix Report to GitHub Pages [if: always()]"
+        uses: peaceiris/actions-gh-pages@v4
+        if: always() && (github.event.inputs.deploy_pages != 'false')
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          keep_files: false
 
       # ── BÁO CÁO TỔNG KẾT CỔNG GÁC CHẤT LƯỢNG TOÀN CỤC ──────────────────────
       - name: 📢 Tổng Kết Trạng Thái Kiểm Thử Đa Trình Duyệt
@@ -3028,7 +3057,27 @@ concurrency:
        retention-days: 14
    ```
    - Người dùng giờ đây **chỉ thấy duy nhất 1 gói artifact** mang tên `playwright-report-merged-<run_id>`. Khi tải về và mở ra, toàn bộ kết quả của Chromium, Firefox, WebKit hiển thị trực quan trong một giao diện duy nhất!
-5. **Đánh giá Cổng Gác Chất Lượng Toàn Cục**:
+
+5. **Tự Động Xuất Bản Thẳng Lên GitHub Pages (Đỉnh Cao Của Matrix Pipeline)**:
+   ```yaml
+   - name: "🚀 Prepare GitHub Pages Web Directory [if: always()]"
+     if: always() && (github.event.inputs.deploy_pages != 'false')
+     run: |
+       mkdir -p public
+       cp -r playwright-report/* public/
+
+   - name: "🌐 Deploy Live Matrix Report to GitHub Pages [if: always()]"
+     uses: peaceiris/actions-gh-pages@v4
+     if: always() && (github.event.inputs.deploy_pages != 'false')
+     with:
+       github_token: ${{ secrets.GITHUB_TOKEN }}
+       publish_dir: ./public
+       keep_files: false
+   ```
+   - Thay vì phải tải file zip, Job 2 đưa toàn bộ website báo cáo gộp (chứa kết quả của cả 3 trình duyệt) lên thẳng nhánh `gh-pages`!
+   - Khi mở đường link GitHub Pages, người xem thấy ngay báo cáo đa trình duyệt chuyên nghiệp với menu chọn Chromium, Firefox, Safari!
+
+6. **Đánh giá Cổng Gác Chất Lượng Toàn Cục**:
    ```bash
    if [ "${{ needs.matrix-cross-browser.result }}" != "success" ]; then
      echo "⚠️ CẢNH BÁO: Phát hiện có ít nhất 1 trình duyệt kiểm thử không đạt!"

@@ -48,11 +48,12 @@ export default defineConfig({
   // Giới hạn 2 workers trên CI để bảo vệ máy ảo Ubuntu 2 vCPU; ở local dùng tối đa tài nguyên
   workers: isCI ? 2 : undefined,
 
-  // Báo cáo: CI xuất 'github' annotation, 'html' report và 'playwright-smart-reporter'
+  // Báo cáo: CI xuất 'github' annotation, 'list', 'blob', 'html' report và 'playwright-smart-reporter'
   reporter: isCI
     ? [
         ["github"],
         ["list"],
+        ["blob"],
         ["html", { outputFolder: "../playwright-report-lesson26", open: "never" }],
         [
           "playwright-smart-reporter",
