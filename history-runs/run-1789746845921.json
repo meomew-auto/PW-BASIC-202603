@@ -1,0 +1,410 @@
+{
+  "runId": "run-1789746845921",
+  "timestamp": "2026-09-18T15:54:05.921Z",
+  "tests": {
+    "[chromium] 02-secrets-masking-and-security.spec.ts::01 - [SECRETS MASKING] Xác nhận dữ liệu nhạy cảm được bảo vệ nghiêm ngặt": {
+      "testId": "[chromium] 02-secrets-masking-and-security.spec.ts::01 - [SECRETS MASKING] Xác nhận dữ liệu nhạy cảm được bảo vệ nghiêm ngặt",
+      "title": "01 - [SECRETS MASKING] Xác nhận dữ liệu nhạy cảm được bảo vệ nghiêm ngặt",
+      "file": "02-secrets-masking-and-security.spec.ts",
+      "status": "passed",
+      "duration": 14,
+      "retry": 0,
+      "steps": []
+    },
+    "[chromium] 01-env-hierarchy-and-precedence.spec.ts::01 - [HIERARCHY PRECEDENCE] Thẩm định quy tắc ghi đè biến môi trường": {
+      "testId": "[chromium] 01-env-hierarchy-and-precedence.spec.ts::01 - [HIERARCHY PRECEDENCE] Thẩm định quy tắc ghi đè biến môi trường",
+      "title": "01 - [HIERARCHY PRECEDENCE] Thẩm định quy tắc ghi đè biến môi trường",
+      "file": "01-env-hierarchy-and-precedence.spec.ts",
+      "status": "passed",
+      "duration": 13,
+      "retry": 0,
+      "steps": []
+    },
+    "[chromium] 03-dynamic-runtime-env-injection.spec.ts::01 - [RUNTIME INJECTION] Thẩm định biến động sinh ra từ Step tiền xử lý": {
+      "testId": "[chromium] 03-dynamic-runtime-env-injection.spec.ts::01 - [RUNTIME INJECTION] Thẩm định biến động sinh ra từ Step tiền xử lý",
+      "title": "01 - [RUNTIME INJECTION] Thẩm định biến động sinh ra từ Step tiền xử lý",
+      "file": "03-dynamic-runtime-env-injection.spec.ts",
+      "status": "passed",
+      "duration": 11,
+      "retry": 0,
+      "steps": []
+    },
+    "[chromium] 01-env-hierarchy-and-precedence.spec.ts::02 - [GITHUB CONTEXT] Trích xuất siêu dữ liệu (Metadata) máy ảo GitHub": {
+      "testId": "[chromium] 01-env-hierarchy-and-precedence.spec.ts::02 - [GITHUB CONTEXT] Trích xuất siêu dữ liệu (Metadata) máy ảo GitHub",
+      "title": "02 - [GITHUB CONTEXT] Trích xuất siêu dữ liệu (Metadata) máy ảo GitHub",
+      "file": "01-env-hierarchy-and-precedence.spec.ts",
+      "status": "passed",
+      "duration": 14,
+      "retry": 0,
+      "steps": []
+    },
+    "[chromium] 04-environment-staging-vs-prod.spec.ts::01 - [ENV SWITCHING] Phân giải chính xác domain theo môi trường mục tiêu": {
+      "testId": "[chromium] 04-environment-staging-vs-prod.spec.ts::01 - [ENV SWITCHING] Phân giải chính xác domain theo môi trường mục tiêu",
+      "title": "01 - [ENV SWITCHING] Phân giải chính xác domain theo môi trường mục tiêu",
+      "file": "04-environment-staging-vs-prod.spec.ts",
+      "status": "passed",
+      "duration": 387,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "Launch browser",
+          "duration": 299,
+          "category": "pw:api",
+          "isSlowest": true
+        },
+        {
+          "title": "Create context",
+          "duration": 21,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 104,
+          "category": "pw:api"
+        },
+        {
+          "title": "Set content",
+          "duration": 20,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 106,
+          "category": "pw:api"
+        }
+      ]
+    },
+    "[chromium] 05-flaky-retry-self-healing.spec.ts::01 - [SELF-HEALING] Hồi phục thành công ở lần Retry đầu tiên": {
+      "testId": "[chromium] 05-flaky-retry-self-healing.spec.ts::01 - [SELF-HEALING] Hồi phục thành công ở lần Retry đầu tiên",
+      "title": "01 - [SELF-HEALING] Hồi phục thành công ở lần Retry đầu tiên",
+      "file": "05-flaky-retry-self-healing.spec.ts",
+      "status": "passed",
+      "duration": 349,
+      "retry": 1,
+      "steps": [
+        {
+          "title": "Launch browser",
+          "duration": 72,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create context",
+          "duration": 10,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 47,
+          "category": "pw:api"
+        },
+        {
+          "title": "Set content",
+          "duration": 26,
+          "category": "pw:api"
+        },
+        {
+          "title": "Evaluate locator('#network-indicator')",
+          "duration": 63,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 102,
+          "category": "pw:api",
+          "isSlowest": true
+        }
+      ],
+      "attachments": {
+        "screenshots": [],
+        "videos": [],
+        "traces": [
+          "./traces/[chromium] 05-flaky-retry-self-healing.spec.ts____01 - [SELF-HEALING] Hồi phục thành công ở lần Retry đầu tiên-trace-0.zip"
+        ],
+        "custom": []
+      }
+    },
+    "[chromium] 07-failure-artifacts-postmortem.spec.ts::01 - [ARTIFACT RESCUE] Thu thập ảnh chụp màn hình và video sự cố": {
+      "testId": "[chromium] 07-failure-artifacts-postmortem.spec.ts::01 - [ARTIFACT RESCUE] Thu thập ảnh chụp màn hình và video sự cố",
+      "title": "01 - [ARTIFACT RESCUE] Thu thập ảnh chụp màn hình và video sự cố",
+      "file": "07-failure-artifacts-postmortem.spec.ts",
+      "status": "passed",
+      "duration": 277,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "Create context",
+          "duration": 2,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 34,
+          "category": "pw:api"
+        },
+        {
+          "title": "Set content",
+          "duration": 14,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 165,
+          "category": "pw:api",
+          "isSlowest": true
+        }
+      ]
+    },
+    "[chromium] 06-timeout-and-deadlock-guard.spec.ts::01 - [TIMEOUT BUDGET] Quản lý ngân sách thời gian an toàn cho kịch bản nặng": {
+      "testId": "[chromium] 06-timeout-and-deadlock-guard.spec.ts::01 - [TIMEOUT BUDGET] Quản lý ngân sách thời gian an toàn cho kịch bản nặng",
+      "title": "01 - [TIMEOUT BUDGET] Quản lý ngân sách thời gian an toàn cho kịch bản nặng",
+      "file": "06-timeout-and-deadlock-guard.spec.ts",
+      "status": "passed",
+      "duration": 1541,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "Create context",
+          "duration": 3,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 42,
+          "category": "pw:api"
+        },
+        {
+          "title": "Set content",
+          "duration": 11,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 79,
+          "category": "pw:api"
+        }
+      ]
+    },
+    "[chromium] 08-headless-and-viewport-matrix.spec.ts::01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt": {
+      "testId": "[chromium] 08-headless-and-viewport-matrix.spec.ts::01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt",
+      "title": "01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt",
+      "file": "08-headless-and-viewport-matrix.spec.ts",
+      "status": "passed",
+      "duration": 267,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "Create context",
+          "duration": 2,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 41,
+          "category": "pw:api"
+        },
+        {
+          "title": "Evaluate",
+          "duration": 3,
+          "category": "pw:api"
+        },
+        {
+          "title": "Set content",
+          "duration": 9,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 97,
+          "category": "pw:api"
+        }
+      ]
+    },
+    "[chromium] 09-api-mock-network-isolation.spec.ts::01 - [API INTERCEPT] Chặn request đơn hàng và mock phản hồi thành công": {
+      "testId": "[chromium] 09-api-mock-network-isolation.spec.ts::01 - [API INTERCEPT] Chặn request đơn hàng và mock phản hồi thành công",
+      "title": "01 - [API INTERCEPT] Chặn request đơn hàng và mock phản hồi thành công",
+      "file": "09-api-mock-network-isolation.spec.ts",
+      "status": "passed",
+      "duration": 264,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "Create context",
+          "duration": 3,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 48,
+          "category": "pw:api"
+        },
+        {
+          "title": "Set content",
+          "duration": 14,
+          "category": "pw:api"
+        },
+        {
+          "title": "Click locator('#btn-pay')",
+          "duration": 65,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 80,
+          "category": "pw:api"
+        }
+      ]
+    },
+    "[chromium] 10-neko-live-smoke-e2e.spec.ts::01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit": {
+      "testId": "[chromium] 10-neko-live-smoke-e2e.spec.ts::01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit",
+      "title": "01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit",
+      "file": "10-neko-live-smoke-e2e.spec.ts",
+      "status": "passed",
+      "duration": 2695,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "Launch browser",
+          "duration": 67,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create context",
+          "duration": 17,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 44,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create request context",
+          "duration": 2,
+          "category": "pw:api"
+        },
+        {
+          "title": "POST \"/auth/register\"",
+          "duration": 847,
+          "category": "pw:api",
+          "isSlowest": true
+        },
+        {
+          "title": "Create request context",
+          "duration": 1,
+          "category": "pw:api"
+        },
+        {
+          "title": "GET \"/public/products\"",
+          "duration": 182,
+          "category": "pw:api"
+        },
+        {
+          "title": "Navigate to \"/admin/products\"",
+          "duration": 428,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for function",
+          "duration": 83,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table thead th')",
+          "duration": 4,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table tbody tr')",
+          "duration": 1,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table tbody tr')",
+          "duration": 1,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table tbody tr')",
+          "duration": 1,
+          "category": "pw:api"
+        },
+        {
+          "title": "GET \"/public/products/285\"",
+          "duration": 92,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 69,
+          "category": "pw:api"
+        }
+      ]
+    },
+    "[chromium] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất": {
+      "testId": "[chromium] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất",
+      "title": "02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất",
+      "file": "10-neko-live-smoke-e2e.spec.ts",
+      "status": "passed",
+      "duration": 2204,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "Create context",
+          "duration": 2,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 37,
+          "category": "pw:api"
+        },
+        {
+          "title": "Navigate to \"/vi/admin/orders/103\"",
+          "duration": 274,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for event \"page\"",
+          "duration": 336,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('a[href*=\"/invoice\"]').filter({ hasText: 'In hóa đơn' })",
+          "duration": 1,
+          "category": "pw:api"
+        },
+        {
+          "title": "Click locator('a[href*=\"/invoice\"]').filter({ hasText: 'In hóa đơn' })",
+          "duration": 34,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for load state \"domcontentloaded\"",
+          "duration": 36,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for selector locator('text=Đang kiểm tra quyền truy cập...')",
+          "duration": 362,
+          "category": "pw:api",
+          "isSlowest": true
+        },
+        {
+          "title": "Close page",
+          "duration": 91,
+          "category": "pw:api"
+        },
+        {
+          "title": "Bring to front",
+          "duration": 1,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 66,
+          "category": "pw:api"
+        }
+      ]
+    }
+  }
+}
