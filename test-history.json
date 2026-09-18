@@ -23,6 +23,10 @@
     {
       "runId": "run-1789746845921",
       "timestamp": "2026-09-18T15:54:05.921Z"
+    },
+    {
+      "runId": "run-1789746921693",
+      "timestamp": "2026-09-18T15:55:21.693Z"
     }
   ],
   "tests": {
@@ -494,6 +498,14 @@
         "runId": "run-1789746845921",
         "skipped": false,
         "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 2421,
+        "timestamp": "2026-09-18T15:55:21.766Z",
+        "runId": "run-1789746921693",
+        "skipped": false,
+        "retry": 0
       }
     ],
     "[chromium] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất": [
@@ -536,6 +548,14 @@
         "runId": "run-1789746845921",
         "skipped": false,
         "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 2012,
+        "timestamp": "2026-09-18T15:55:21.766Z",
+        "runId": "run-1789746921693",
+        "skipped": false,
+        "retry": 0
       }
     ],
     "[firefox] 08-headless-and-viewport-matrix.spec.ts::01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt": [
@@ -554,6 +574,46 @@
         "duration": 6423,
         "timestamp": "2026-09-18T15:27:24.948Z",
         "runId": "run-1789745244884",
+        "skipped": false,
+        "retry": 0
+      }
+    ],
+    "[firefox] 10-neko-live-smoke-e2e.spec.ts::01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit": [
+      {
+        "passed": true,
+        "duration": 2782,
+        "timestamp": "2026-09-18T15:55:21.766Z",
+        "runId": "run-1789746921693",
+        "skipped": false,
+        "retry": 0
+      }
+    ],
+    "[firefox] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất": [
+      {
+        "passed": true,
+        "duration": 2325,
+        "timestamp": "2026-09-18T15:55:21.766Z",
+        "runId": "run-1789746921693",
+        "skipped": false,
+        "retry": 0
+      }
+    ],
+    "[webkit] 10-neko-live-smoke-e2e.spec.ts::01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit": [
+      {
+        "passed": true,
+        "duration": 6082,
+        "timestamp": "2026-09-18T15:55:21.766Z",
+        "runId": "run-1789746921693",
+        "skipped": false,
+        "retry": 0
+      }
+    ],
+    "[webkit] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất": [
+      {
+        "passed": true,
+        "duration": 6133,
+        "timestamp": "2026-09-18T15:55:21.766Z",
+        "runId": "run-1789746921693",
         "skipped": false,
         "retry": 0
       }
@@ -631,6 +691,18 @@
       "slow": 2,
       "duration": 9792,
       "passRate": 100
+    },
+    {
+      "runId": "run-1789746921693",
+      "timestamp": "2026-09-18T15:55:21.693Z",
+      "total": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "slow": 0,
+      "duration": 73,
+      "passRate": 100
     }
   ],
   "runFiles": {
@@ -639,6 +711,7 @@
     "run-1789743907147": "./history-runs/run-1789743907147.json",
     "run-1789745176718": "./history-runs/run-1789745176718.json",
     "run-1789745244884": "./history-runs/run-1789745244884.json",
-    "run-1789746845921": "./history-runs/run-1789746845921.json"
+    "run-1789746845921": "./history-runs/run-1789746845921.json",
+    "run-1789746921693": "./history-runs/run-1789746921693.json"
   }
 }

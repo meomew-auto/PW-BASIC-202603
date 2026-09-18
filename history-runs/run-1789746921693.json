@@ -1,0 +1,462 @@
+{
+  "runId": "run-1789746921693",
+  "timestamp": "2026-09-18T15:55:21.693Z",
+  "tests": {
+    "[chromium] 10-neko-live-smoke-e2e.spec.ts::01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit": {
+      "testId": "[chromium] 10-neko-live-smoke-e2e.spec.ts::01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit",
+      "title": "01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit",
+      "file": "10-neko-live-smoke-e2e.spec.ts",
+      "status": "passed",
+      "duration": 2421,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "Launch browser",
+          "duration": 1856,
+          "category": "pw:api",
+          "isSlowest": true
+        },
+        {
+          "title": "Create context",
+          "duration": 13,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 46,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create request context",
+          "duration": 2,
+          "category": "pw:api"
+        },
+        {
+          "title": "POST \"/auth/register\"",
+          "duration": 771,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create request context",
+          "duration": 1,
+          "category": "pw:api"
+        },
+        {
+          "title": "GET \"/public/products\"",
+          "duration": 91,
+          "category": "pw:api"
+        },
+        {
+          "title": "Navigate to \"/admin/products\"",
+          "duration": 555,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for function",
+          "duration": 200,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table thead th')",
+          "duration": 9,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table tbody tr')",
+          "duration": 5,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table tbody tr')",
+          "duration": 1,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table tbody tr')",
+          "duration": 2,
+          "category": "pw:api"
+        },
+        {
+          "title": "GET \"/public/products/285\"",
+          "duration": 97,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 66,
+          "category": "pw:api"
+        }
+      ]
+    },
+    "[chromium] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất": {
+      "testId": "[chromium] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất",
+      "title": "02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất",
+      "file": "10-neko-live-smoke-e2e.spec.ts",
+      "status": "passed",
+      "duration": 2012,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "Create context",
+          "duration": 2,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 36,
+          "category": "pw:api"
+        },
+        {
+          "title": "Navigate to \"/vi/admin/orders/103\"",
+          "duration": 211,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for event \"page\"",
+          "duration": 262,
+          "category": "pw:api",
+          "isSlowest": true
+        },
+        {
+          "title": "Query count locator('a[href*=\"/invoice\"]').filter({ hasText: 'In hóa đơn' })",
+          "duration": 1,
+          "category": "pw:api"
+        },
+        {
+          "title": "Click locator('a[href*=\"/invoice\"]').filter({ hasText: 'In hóa đơn' })",
+          "duration": 34,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for load state \"domcontentloaded\"",
+          "duration": 82,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for selector locator('text=Đang kiểm tra quyền truy cập...')",
+          "duration": 234,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close page",
+          "duration": 114,
+          "category": "pw:api"
+        },
+        {
+          "title": "Bring to front",
+          "duration": 0,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 58,
+          "category": "pw:api"
+        }
+      ]
+    },
+    "[firefox] 10-neko-live-smoke-e2e.spec.ts::01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit": {
+      "testId": "[firefox] 10-neko-live-smoke-e2e.spec.ts::01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit",
+      "title": "01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit",
+      "file": "10-neko-live-smoke-e2e.spec.ts",
+      "status": "passed",
+      "duration": 2782,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "Launch browser",
+          "duration": 394,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create context",
+          "duration": 81,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 615,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create request context",
+          "duration": 3,
+          "category": "pw:api"
+        },
+        {
+          "title": "POST \"/auth/register\"",
+          "duration": 866,
+          "category": "pw:api",
+          "isSlowest": true
+        },
+        {
+          "title": "Create request context",
+          "duration": 1,
+          "category": "pw:api"
+        },
+        {
+          "title": "GET \"/public/products\"",
+          "duration": 59,
+          "category": "pw:api"
+        },
+        {
+          "title": "Navigate to \"/admin/products\"",
+          "duration": 249,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for function",
+          "duration": 32,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table thead th')",
+          "duration": 3,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table tbody tr')",
+          "duration": 10,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table tbody tr')",
+          "duration": 5,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table tbody tr')",
+          "duration": 4,
+          "category": "pw:api"
+        },
+        {
+          "title": "GET \"/public/products/285\"",
+          "duration": 38,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 78,
+          "category": "pw:api"
+        }
+      ]
+    },
+    "[firefox] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất": {
+      "testId": "[firefox] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất",
+      "title": "02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất",
+      "file": "10-neko-live-smoke-e2e.spec.ts",
+      "status": "passed",
+      "duration": 2325,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "Create context",
+          "duration": 11,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 171,
+          "category": "pw:api"
+        },
+        {
+          "title": "Navigate to \"/vi/admin/orders/103\"",
+          "duration": 222,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for event \"page\"",
+          "duration": 390,
+          "category": "pw:api",
+          "isSlowest": true
+        },
+        {
+          "title": "Query count locator('a[href*=\"/invoice\"]').filter({ hasText: 'In hóa đơn' })",
+          "duration": 2,
+          "category": "pw:api"
+        },
+        {
+          "title": "Click locator('a[href*=\"/invoice\"]').filter({ hasText: 'In hóa đơn' })",
+          "duration": 98,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for load state \"domcontentloaded\"",
+          "duration": 61,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for selector locator('text=Đang kiểm tra quyền truy cập...')",
+          "duration": 255,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close page",
+          "duration": 94,
+          "category": "pw:api"
+        },
+        {
+          "title": "Bring to front",
+          "duration": 4,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 81,
+          "category": "pw:api"
+        }
+      ]
+    },
+    "[webkit] 10-neko-live-smoke-e2e.spec.ts::01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit": {
+      "testId": "[webkit] 10-neko-live-smoke-e2e.spec.ts::01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit",
+      "title": "01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit",
+      "file": "10-neko-live-smoke-e2e.spec.ts",
+      "status": "passed",
+      "duration": 6082,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "Launch browser",
+          "duration": 424,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create context",
+          "duration": 16,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 532,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create request context",
+          "duration": 3,
+          "category": "pw:api"
+        },
+        {
+          "title": "POST \"/auth/register\"",
+          "duration": 772,
+          "category": "pw:api",
+          "isSlowest": true
+        },
+        {
+          "title": "Create request context",
+          "duration": 1,
+          "category": "pw:api"
+        },
+        {
+          "title": "GET \"/public/products\"",
+          "duration": 109,
+          "category": "pw:api"
+        },
+        {
+          "title": "Navigate to \"/admin/products\"",
+          "duration": 371,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for function",
+          "duration": 198,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table thead th')",
+          "duration": 59,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table tbody tr')",
+          "duration": 64,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table tbody tr')",
+          "duration": 29,
+          "category": "pw:api"
+        },
+        {
+          "title": "Query count locator('table tbody tr')",
+          "duration": 54,
+          "category": "pw:api"
+        },
+        {
+          "title": "GET \"/public/products/285\"",
+          "duration": 93,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 183,
+          "category": "pw:api"
+        }
+      ]
+    },
+    "[webkit] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất": {
+      "testId": "[webkit] 10-neko-live-smoke-e2e.spec.ts::02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất",
+      "title": "02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất",
+      "file": "10-neko-live-smoke-e2e.spec.ts",
+      "status": "passed",
+      "duration": 6133,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "Create context",
+          "duration": 3,
+          "category": "pw:api"
+        },
+        {
+          "title": "Create page",
+          "duration": 213,
+          "category": "pw:api"
+        },
+        {
+          "title": "Navigate to \"/vi/admin/orders/103\"",
+          "duration": 313,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for event \"page\"",
+          "duration": 3374,
+          "category": "pw:api",
+          "isSlowest": true
+        },
+        {
+          "title": "Query count locator('a[href*=\"/invoice\"]').filter({ hasText: 'In hóa đơn' })",
+          "duration": 3,
+          "category": "pw:api"
+        },
+        {
+          "title": "Click locator('a[href*=\"/invoice\"]').filter({ hasText: 'In hóa đơn' })",
+          "duration": 3085,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for load state \"domcontentloaded\"",
+          "duration": 74,
+          "category": "pw:api"
+        },
+        {
+          "title": "Wait for selector locator('text=Đang kiểm tra quyền truy cập...')",
+          "duration": 272,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close page",
+          "duration": 132,
+          "category": "pw:api"
+        },
+        {
+          "title": "Bring to front",
+          "duration": 1,
+          "category": "pw:api"
+        },
+        {
+          "title": "Close context",
+          "duration": 137,
+          "category": "pw:api"
+        }
+      ]
+    }
+  }
+}
