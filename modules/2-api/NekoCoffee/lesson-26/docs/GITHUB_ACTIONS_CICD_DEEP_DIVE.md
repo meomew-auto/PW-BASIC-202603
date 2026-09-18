@@ -3338,28 +3338,46 @@ Giải pháp chuẩn xác là kết hợp **Action Caching (`actions/cache@v4`)*
                   └──────────────────────────────────────────────┘
 ```
 
-#### Mã nguồn YAML tích hợp Cache trong `.github/workflows/playwright-lesson26.yml`:
+#### Mã nguồn YAML tích hợp Cache trong `.github/workflows/playwright-lesson26-matrix.yml`:
 
 ```yaml
-      # ── BƯỚC 1: KHÔI PHỤC LỊCH SỬ KIỂM THỬ TỪ GITHUB ACTIONS CACHE ─────────
+      # ── BƯỚC 1: KHÔI PHỤC LỊCH SỬ VÀ CHI TIẾT RUNS TỪ GITHUB ACTIONS CACHE ──
       - name: 🔄 Restore Smart Reporter History Cache
+        id: cache_history
         uses: actions/cache/restore@v4
         with:
-          path: test-history.json
+          path: |
+            test-history.json
+            history-runs
           key: smart-reporter-history-${{ github.run_id }}
           restore-keys: |
             smart-reporter-history-
 
-      # ... [Thực thi lệnh chạy Playwright Test] ...
+      # ── BỔ SUNG DỰ PHÒNG: LẤY LỊCH SỬ TRỰC TIẾP TỪ NHÁNH GH-PAGES NẾU CHƯA CÓ CACHE ─
+      - name: 📜 Fallback Fetch Test History from gh-pages
+        run: |
+          if [ ! -f "test-history.json" ] || [ ! -d "history-runs" ]; then
+            git fetch origin gh-pages --depth=1 || true
+            git checkout origin/gh-pages -- test-history.json || true
+            git checkout origin/gh-pages -- history-runs || true
+          fi
 
-      # ── BƯỚC 2: LƯU ĐÈ LỊCH SỬ MỚI LÊN CACHE ĐỂ TÍCH LŨY BIỂU ĐỒ TREND ─────
+      # ... [Thực thi lệnh gộp Playwright Merge Reports] ...
+
+      # ── BƯỚC 2: LƯU ĐÈ LỊCH SỬ MỚI VÀ SNAPSHOT RUNS LÊN CACHE ──────────────
       - name: "💾 Save Smart Reporter History Cache [if: always()]"
         uses: actions/cache/save@v4
         if: always()
         with:
-          path: test-history.json
+          path: |
+            test-history.json
+            history-runs
           key: smart-reporter-history-${{ github.run_id }}
 ```
+
+> [!TIP]
+> **Khám phá kỹ thuật sâu sắc về `history-runs/`**:  
+> Khi bật `enableHistoryDrilldown: true`, `playwright-smart-reporter` không chỉ cập nhật `test-history.json` (bảng tổng hợp tóm tắt) mà còn tạo ra thư mục `history-runs/` chứa các file `run-<timestamp>.json` lưu trữ chi tiết timeline và snapshot từng bước của lần chạy đó. Do đó, pipeline bắt buộc phải lưu trữ và deploy cả **`test-history.json`** lẫn thư mục **`history-runs/`** để người xem có thể nhấp vào xem lại chi tiết kịch bản của các lần chạy quá khứ mà không bị lỗi 404!
 
 ---
 
@@ -3380,30 +3398,39 @@ permissions:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-smart-report-${{ github.run_id }}
+          name: playwright-smart-report-matrix-${{ github.run_id }}
           path: playwright-report-smart.html
           retention-days: 14
 
-      # ── 2. CHUẨN BỊ THƯ MỤC WEB PUBLIC (INDEX.HTML) ────────────────────────
+      # ── 2. CHUẨN BỊ THƯ MỤC WEB PUBLIC (INDEX.HTML, HISTORY & NATIVE) ──────
       - name: "🚀 Prepare GitHub Pages Web Directory [if: always()]"
         if: always() && (github.event.inputs.deploy_pages != 'false')
         run: |
           mkdir -p public
           if [ -f "playwright-report-smart.html" ]; then
             cp playwright-report-smart.html public/index.html
-            echo "✅ Đã nạp thành công Dashboard Smart Reporter vào public/index.html!"
+            cp test-history.json public/ || true
+            if [ -d "history-runs" ]; then
+              cp -r history-runs public/
+            fi
+            mkdir -p public/native
+            cp -r playwright-report-lesson26/* public/native/ || true
+            echo "✅ Đã nạp thành công Smart Reporter làm Dashboard chính (public/index.html)!"
+            echo "✅ Đã lưu trữ test-history.json và history-runs/ cho tính năng History Drilldown!"
+            echo "✅ Đã đính kèm Native Report tại public/native/index.html!"
           else
-            echo "<h1>Playwright Report Not Available</h1>" > public/index.html
+            echo "❌ Không tìm thấy playwright-report-smart.html!"
+            exit 1
           fi
 
       # ── 3. TỰ ĐỘNG TRIỂN KHAI LÊN NHÁNH GH-PAGES (GITHUB PAGES ENGINE) ────
-      - name: "🌐 Deploy Live Dashboard to GitHub Pages [if: always()]"
+      - name: "🌐 Deploy Live Matrix Report to GitHub Pages [if: always()]"
         uses: peaceiris/actions-gh-pages@v4
         if: always() && (github.event.inputs.deploy_pages != 'false')
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-          keep_files: false # Xóa các file cũ của lần deploy trước để web luôn sạch sẽ
+          keep_files: false # Đảm bảo dữ liệu public mới nhất được đồng bộ sạch sẽ
 ```
 
 ---
