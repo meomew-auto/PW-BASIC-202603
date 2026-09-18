@@ -16,25 +16,32 @@ import { test, expect } from "@playwright/test";
 
 test.describe("⚡ [CASE 03] Dynamic Runtime Env Injection ($GITHUB_ENV)", () => {
   test("01 - [RUNTIME INJECTION] Thẩm định biến động sinh ra từ Step tiền xử lý", async () => {
-    console.log("\n⚡ [Runtime Probe] Kiểm tra các biến được nạp động qua $GITHUB_ENV:");
+    let pipelineId: string;
+    let runnerTimestamp: string;
+    let dynamicSecret: string;
 
-    const pipelineId = process.env.DYNAMIC_PIPELINE_ID ?? "fallback_local_pipeline_id";
-    const runnerTimestamp = process.env.RUNNER_TIMESTAMP ?? new Date().toISOString();
-    const dynamicSecret = process.env.DYNAMIC_MASKED_SECRET ?? "fallback_local_secret_999";
+    await test.step("1. [EXTRACT DYNAMIC] Kiểm tra các biến môi trường nạp động qua $GITHUB_ENV", async () => {
+      console.log("\n⚡ [Runtime Probe] Kiểm tra các biến được nạp động qua $GITHUB_ENV:");
 
-    console.log(`   ├─ DYNAMIC_PIPELINE_ID  : ${pipelineId}`);
-    console.log(`   ├─ RUNNER_TIMESTAMP     : ${runnerTimestamp}`);
-    console.log(`   └─ DYNAMIC_MASKED_SECRET: [${dynamicSecret}]`); // Trên GitHub log dòng này sẽ là [***]
+      pipelineId = process.env.DYNAMIC_PIPELINE_ID ?? "fallback_local_pipeline_id";
+      runnerTimestamp = process.env.RUNNER_TIMESTAMP ?? new Date().toISOString();
+      dynamicSecret = process.env.DYNAMIC_MASKED_SECRET ?? "fallback_local_secret_999";
 
-    // Thẩm định tính khả dụng trong RAM
-    expect(pipelineId).toBeTruthy();
-    expect(runnerTimestamp).toBeTruthy();
-    expect(dynamicSecret).toBeTruthy();
+      console.log(`   ├─ DYNAMIC_PIPELINE_ID  : ${pipelineId}`);
+      console.log(`   ├─ RUNNER_TIMESTAMP     : ${runnerTimestamp}`);
+      console.log(`   └─ DYNAMIC_MASKED_SECRET: [${dynamicSecret}]`); // Trên GitHub log dòng này sẽ là [***]
+    });
 
-    if (process.env.CI) {
-      console.log("✅ Xác nhận: $GITHUB_ENV đã tiêm dữ liệu động thành công vào Runner!");
-    } else {
-      console.log("ℹ️ Đang chạy kiểm thử tại máy Local với dữ liệu fallback an toàn.");
-    }
+    await test.step("2. [ASSERT] Thẩm định tính khả dụng trong RAM và tính bảo mật của Dynamic Secret", async () => {
+      expect(pipelineId).toBeTruthy();
+      expect(runnerTimestamp).toBeTruthy();
+      expect(dynamicSecret).toBeTruthy();
+
+      if (process.env.CI) {
+        console.log("✅ Xác nhận: $GITHUB_ENV đã tiêm dữ liệu động thành công vào Runner!");
+      } else {
+        console.log("ℹ️ Đang chạy kiểm thử tại máy Local với dữ liệu fallback an toàn.");
+      }
+    });
   });
 });

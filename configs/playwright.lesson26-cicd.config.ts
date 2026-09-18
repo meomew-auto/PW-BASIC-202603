@@ -64,6 +64,7 @@ export default defineConfig({
             enableAIRecommendations: false,
             enableAISuiteHealth: false,
             enableHistoryDrilldown: true,
+            filterPwApiSteps: true,
           },
         ],
       ]
@@ -79,6 +80,7 @@ export default defineConfig({
             enableAIRecommendations: false,
             enableAISuiteHealth: false,
             enableHistoryDrilldown: true,
+            filterPwApiSteps: true,
           },
         ],
       ],

@@ -15,23 +15,27 @@ import { test, expect } from "@playwright/test";
 
 test.describe("🔐 [CASE 02] GitHub Secrets Masking & Security Shield", () => {
   test("01 - [SECRETS MASKING] Xác nhận dữ liệu nhạy cảm được bảo vệ nghiêm ngặt", async () => {
-    console.log("\n🛡️ [Security Audit] Thẩm định cơ chế tiêm Secret vào Playwright:");
+    let staffSecret: string;
+    let apiKey: string;
 
-    // Đọc secret giả lập hoặc secret thật từ GitHub Secrets
-    const staffSecret = process.env.STAFF_PASSWORD ?? "SuperSecretP@ssw0rd2026";
-    const apiKey = process.env.NEKO_API_KEY ?? "neko_live_secret_token_abcdef123456";
+    await test.step("1. [EXTRACT] Nạp bí mật từ GitHub Secrets / Runner Env", async () => {
+      console.log("\n🛡️ [Security Audit] Thẩm định cơ chế tiêm Secret vào Playwright:");
+      staffSecret = process.env.STAFF_PASSWORD ?? "SuperSecretP@ssw0rd2026";
+      apiKey = process.env.NEKO_API_KEY ?? "neko_live_secret_token_abcdef123456";
+    });
 
-    // In ra console log để kiểm tra tính năng Masking của GitHub
-    console.log(`   - Độ dài Staff Password : ${staffSecret.length} ký tự`);
-    console.log(`   - Ký tự đầu Staff Pass  : ${staffSecret.charAt(0)}***`);
-    console.log(`   - Log trực tiếp Secret   : [${staffSecret}]`); // Trên GitHub log dòng này sẽ là [***]
+    await test.step("2. [AUDIT MASKING] Kiểm chứng cơ chế GitHub Masking Engine che chắn dữ liệu nhạy cảm", async () => {
+      console.log(`   - Độ dài Staff Password : ${staffSecret.length} ký tự`);
+      console.log(`   - Ký tự đầu Staff Pass  : ${staffSecret.charAt(0)}***`);
+      console.log(`   - Log trực tiếp Secret   : [${staffSecret}]`); // Trên GitHub log dòng này sẽ là [***]
+    });
 
-    // Thẩm định logic nghiệp vụ: Giá trị thực sự vẫn tồn tại đầy đủ trong RAM
-    expect(staffSecret).toBeTruthy();
-    expect(staffSecret.length).toBeGreaterThanOrEqual(8);
-    expect(apiKey).toBeTruthy();
-    expect(apiKey.length).toBeGreaterThanOrEqual(10);
-
-    console.log("✅ Secret đã được tiêm vào môi trường an toàn và được GitHub che giấu hoàn hảo!");
+    await test.step("3. [ASSERT] Đối soát giá trị thực sự của Secret nguyên vẹn trong RAM", async () => {
+      expect(staffSecret).toBeTruthy();
+      expect(staffSecret.length).toBeGreaterThanOrEqual(8);
+      expect(apiKey).toBeTruthy();
+      expect(apiKey.length).toBeGreaterThanOrEqual(10);
+      console.log("✅ Secret đã được tiêm vào môi trường an toàn và được GitHub che giấu hoàn hảo!");
+    });
   });
 });

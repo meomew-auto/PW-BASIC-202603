@@ -17,30 +17,36 @@ test.describe("⏱️ [CASE 06] Timeout Cascade & Deadlock Guard", () => {
   test("01 - [TIMEOUT BUDGET] Quản lý ngân sách thời gian an toàn cho kịch bản nặng", async ({
     page,
   }) => {
-    // Đặt ngân sách thời gian tùy biến cho kịch bản này
-    test.setTimeout(15_000);
-    console.log("\n⏱️ [Timeout Budget] Ngân sách thực thi được cấp: 15,000ms");
+    let startTime: number;
 
-    const startTime = Date.now();
-
-    await page.setContent(`
-      <div id="async-container">
-        <p id="msg">Đang khởi tạo tài nguyên phức tạp...</p>
-      </div>
-      <script>
-        setTimeout(() => {
-          document.getElementById('msg').textContent = 'Tài nguyên đã tải xong!';
-        }, 1200);
-      </script>
-    `);
-
-    // Chờ phần tử xuất hiện trong ngân sách cho phép
-    await expect(page.locator("#msg")).toHaveText("Tài nguyên đã tải xong!", {
-      timeout: 5_000,
+    await test.step("1. [TIMEOUT CONFIG] Thiết lập ngân sách thời gian tùy biến test.setTimeout(15,000ms)", async () => {
+      test.setTimeout(15_000);
+      console.log("\n⏱️ [Timeout Budget] Ngân sách thực thi được cấp: 15,000ms");
+      startTime = Date.now();
     });
 
-    const elapsed = Date.now() - startTime;
-    console.log(`✅ Kịch bản hoàn tất an toàn sau ${elapsed}ms (thấp hơn nhiều so với trần 15s)!`);
-    expect(elapsed).toBeLessThan(5_000);
+    await test.step("2. [ASYNC SIMULATION] Bơm HTML mô phỏng tải tài nguyên bất đồng bộ (1,200ms)", async () => {
+      await page.setContent(`
+        <div id="async-container">
+          <p id="msg">Đang khởi tạo tài nguyên phức tạp...</p>
+        </div>
+        <script>
+          setTimeout(() => {
+            document.getElementById('msg').textContent = 'Tài nguyên đã tải xong!';
+          }, 1200);
+        </script>
+      `);
+    });
+
+    await test.step("3. [ASSERT] Chờ phần tử xuất hiện và thẩm định thời gian thực thi an toàn", async () => {
+      // Chờ phần tử xuất hiện trong ngân sách cho phép
+      await expect(page.locator("#msg")).toHaveText("Tài nguyên đã tải xong!", {
+        timeout: 5_000,
+      });
+
+      const elapsed = Date.now() - startTime;
+      console.log(`✅ Kịch bản hoàn tất an toàn sau ${elapsed}ms (thấp hơn nhiều so với trần 15s)!`);
+      expect(elapsed).toBeLessThan(5_000);
+    });
   });
 });

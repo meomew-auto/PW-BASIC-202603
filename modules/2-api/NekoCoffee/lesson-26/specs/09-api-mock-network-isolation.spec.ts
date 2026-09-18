@@ -17,55 +17,57 @@ test.describe("🛡️ [CASE 09] CI Network Isolation & API Mocking", () => {
   test("01 - [API INTERCEPT] Chặn request đơn hàng và mock phản hồi thành công", async ({
     page,
   }) => {
-    console.log("\n🛡️ [Network Isolation] Thiết lập quy tắc chặn request qua page.route()...");
-
     const targetEndpoint = "https://coffee.autoneko.com/api/v1/checkout";
 
-    // 1. Mock API thanh toán /api/v1/checkout trả về trạng thái SUCCESS tức thì
-    await page.route("**/api/v1/checkout", async (route) => {
-      console.log("   ⚡ [Mock Interceptor] Đã bắt được request gửi tới /api/v1/checkout -> Trả về Mock JSON!");
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          success: true,
-          orderId: "NEKO-MOCK-2026-9999",
-          totalAmount: 85000,
-          status: "PAID",
-          message: "Thanh toán thành công (Mocked trên CI Runner)",
-        }),
+    await test.step("1. [API ROUTE INTERCEPT] Thiết lập page.route() chặn /api/v1/checkout và trả về Mock JSON", async () => {
+      console.log("\n🛡️ [Network Isolation] Thiết lập quy tắc chặn request qua page.route()...");
+      await page.route("**/api/v1/checkout", async (route) => {
+        console.log("   ⚡ [Mock Interceptor] Đã bắt được request gửi tới /api/v1/checkout -> Trả về Mock JSON!");
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            orderId: "NEKO-MOCK-2026-9999",
+            totalAmount: 85000,
+            status: "PAID",
+            message: "Thanh toán thành công (Mocked trên CI Runner)",
+          }),
+        });
       });
     });
 
-    // 2. Nạp giao diện web tương tác
-    await page.setContent(`
-      <div style="font-family: sans-serif; padding: 20px;">
-        <h2>Cổng Thanh Toán Neko Coffee</h2>
-        <button id="btn-pay" style="padding: 10px 20px; cursor: pointer;">Thanh Toán Đơn Hàng</button>
-        <div id="payment-result" style="margin-top: 15px; font-weight: bold;">Chưa thanh toán</div>
-      </div>
-      <script>
-        document.getElementById('btn-pay').addEventListener('click', async () => {
-          try {
-            const res = await fetch('${targetEndpoint}', { method: 'POST' });
-            const data = await res.json();
-            document.getElementById('payment-result').textContent = data.orderId + ' - ' + data.status;
-          } catch (err) {
-            document.getElementById('payment-result').textContent = 'LỖI: ' + err.message;
-          }
-        });
-      </script>
-    `);
+    await test.step("2. [RENDER UI] Nạp giao diện cổng thanh toán đơn hàng Neko Coffee", async () => {
+      await page.setContent(`
+        <div style="font-family: sans-serif; padding: 20px;">
+          <h2>Cổng Thanh Toán Neko Coffee</h2>
+          <button id="btn-pay" style="padding: 10px 20px; cursor: pointer;">Thanh Toán Đơn Hàng</button>
+          <div id="payment-result" style="margin-top: 15px; font-weight: bold;">Chưa thanh toán</div>
+        </div>
+        <script>
+          document.getElementById('btn-pay').addEventListener('click', async () => {
+            try {
+              const res = await fetch('${targetEndpoint}', { method: 'POST' });
+              const data = await res.json();
+              document.getElementById('payment-result').textContent = data.orderId + ' - ' + data.status;
+            } catch (err) {
+              document.getElementById('payment-result').textContent = 'LỖI: ' + err.message;
+            }
+          });
+        </script>
+      `);
+    });
 
-    // 3. Click thanh toán
-    await page.locator("#btn-pay").click();
+    await test.step("3. [ACTION CLICK] Click nút 'Thanh Toán Đơn Hàng'", async () => {
+      await page.locator("#btn-pay").click();
+    });
 
-    // 4. Xác nhận kết quả hiển thị đúng mock
-    await expect(page.locator("#payment-result")).toHaveText(
-      "NEKO-MOCK-2026-9999 - PAID",
-      { timeout: 5000 },
-    );
-
-    console.log("✅ CI Network Isolation hoạt động hoàn hảo: Đã mock API thành công, triệt tiêu 100% rủi ro rớt mạng!");
+    await test.step("4. [ASSERT] Đối soát kết quả thanh toán hiển thị đúng từ Mock Payload", async () => {
+      await expect(page.locator("#payment-result")).toHaveText(
+        "NEKO-MOCK-2026-9999 - PAID",
+        { timeout: 5000 },
+      );
+      console.log("✅ CI Network Isolation hoạt động hoàn hảo: Đã mock API thành công, triệt tiêu 100% rủi ro rớt mạng!");
+    });
   });
 });
