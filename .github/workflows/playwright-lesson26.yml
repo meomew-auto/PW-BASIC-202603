@@ -145,12 +145,24 @@ jobs:
 
       # ── TÍCH HỢP SMART REPORTER: KHÔI PHỤC LỊCH SỬ TỪ GITHUB CACHE ────────
       - name: 🔄 Restore Smart Reporter History Cache
+        id: cache_history
         uses: actions/cache/restore@v4
         with:
-          path: test-history.json
+          path: |
+            test-history.json
+            history-runs
           key: smart-reporter-history-${{ github.run_id }}
           restore-keys: |
             smart-reporter-history-
+
+      # ── BỔ SUNG DỰ PHÒNG: LẤY LỊCH SỬ TRỰC TIẾP TỪ NHÁNH GH-PAGES NẾU CHƯA CÓ CACHE ─
+      - name: 📜 Fallback Fetch Test History from gh-pages
+        run: |
+          if [ ! -f "test-history.json" ] || [ ! -d "history-runs" ]; then
+            git fetch origin gh-pages --depth=1 || true
+            git checkout origin/gh-pages -- test-history.json || true
+            git checkout origin/gh-pages -- history-runs || true
+          fi
 
       # ── THỰC THI SUITE PLAYWRIGHT VỚI STEP-LEVEL ENV (TẦNG 6) ───────────────
       - name: 🎭 Execute Dynamic Playwright Test Suite
@@ -244,7 +256,9 @@ jobs:
         uses: actions/cache/save@v4
         if: always()
         with:
-          path: test-history.json
+          path: |
+            test-history.json
+            history-runs
           key: smart-reporter-history-${{ github.run_id }}
 
       # ── ĐÓNG GÓI BÁO CÁO ĐỘC LẬP: SMART HTML REPORT [IF: ALWAYS()] ─────────
@@ -263,6 +277,10 @@ jobs:
           mkdir -p public
           if [ -f "playwright-report-smart.html" ]; then
             cp playwright-report-smart.html public/index.html
+            cp test-history.json public/ || true
+            if [ -d "history-runs" ]; then
+              cp -r history-runs public/
+            fi
             echo "✅ Đã nạp thành công Dashboard Smart Reporter vào public/index.html!"
           else
             echo "<h1>Playwright Report Not Available</h1>" > public/index.html

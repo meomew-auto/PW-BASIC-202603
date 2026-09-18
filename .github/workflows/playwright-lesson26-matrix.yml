@@ -174,7 +174,9 @@ jobs:
         id: cache_history
         uses: actions/cache/restore@v4
         with:
-          path: test-history.json
+          path: |
+            test-history.json
+            history-runs
           key: smart-reporter-history-${{ github.run_id }}
           restore-keys: |
             smart-reporter-history-
@@ -182,12 +184,16 @@ jobs:
       # ── BỔ SUNG DỰ PHÒNG: LẤY LỊCH SỬ TRỰC TIẾP TỪ NHÁNH GH-PAGES NẾU CHƯA CÓ CACHE ─
       - name: 📜 Fallback Fetch Test History from gh-pages
         run: |
-          if [ ! -f "test-history.json" ]; then
-            echo "🔍 Đang tìm nạp test-history.json từ nhánh origin/gh-pages..."
+          if [ ! -f "test-history.json" ] || [ ! -d "history-runs" ]; then
+            echo "🔍 Đang tìm nạp test-history.json và history-runs từ nhánh origin/gh-pages..."
             git fetch origin gh-pages --depth=1 || true
             git checkout origin/gh-pages -- test-history.json || true
+            git checkout origin/gh-pages -- history-runs || true
             if [ -f "test-history.json" ]; then
               echo "✅ Đã khôi phục thành công test-history.json từ origin/gh-pages!"
+            fi
+            if [ -d "history-runs" ]; then
+              echo "✅ Đã khôi phục thành công thư mục history-runs từ origin/gh-pages!"
             fi
           fi
 
@@ -203,7 +209,9 @@ jobs:
         uses: actions/cache/save@v4
         if: always()
         with:
-          path: test-history.json
+          path: |
+            test-history.json
+            history-runs
           key: smart-reporter-history-${{ github.run_id }}
 
       # ── XUẤT BẢN SMART HTML REPORT ĐỘC LẬP (CHỨA CẢ 3 BROWSER & BIỂU ĐỒ) ────
@@ -232,9 +240,13 @@ jobs:
           if [ -f "playwright-report-smart.html" ]; then
             cp playwright-report-smart.html public/index.html
             cp test-history.json public/ || true
+            if [ -d "history-runs" ]; then
+              cp -r history-runs public/
+            fi
             mkdir -p public/native
             cp -r playwright-report-lesson26/* public/native/ || true
             echo "✅ Đã nạp thành công Smart Reporter làm Dashboard chính (public/index.html)!"
+            echo "✅ Đã lưu trữ test-history.json và history-runs/ cho tính năng History Drilldown!"
             echo "✅ Đã đính kèm Native Report tại public/native/index.html!"
           else
             echo "❌ Không tìm thấy playwright-report-smart.html!"
