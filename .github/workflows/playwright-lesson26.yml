@@ -77,10 +77,23 @@ on:
         type: boolean
         default: false
 
+      deploy_pages:
+        description: '🌐 Tự động xuất bản Smart Dashboard lên GitHub Pages?'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
 # ── 2. TỐI ƯU CHI PHÍ VÀ HÀNG ĐỢI (CONCURRENCY) ──────────────────────────────
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+# ── CẤP QUYỀN GHI ĐỂ TỰ ĐỘNG PUSH LÊN NHÁNH GH-PAGES (GITHUB PAGES) ───────────
+permissions:
+  contents: write
 
 # ── 3. TẦNG 4: WORKFLOW-LEVEL ENV (TOÀN CỤC WORKFLOW) ────────────────────────
 env:
@@ -129,6 +142,15 @@ jobs:
           echo "DYNAMIC_MASKED_SECRET=$DYNAMIC_SECRET" >> $GITHUB_ENV
           echo "runner_cpu_cores=$(nproc)" >> $GITHUB_OUTPUT
           echo "✅ Đã nạp thành công biến động vào \$GITHUB_ENV và che giấu token an toàn!"
+
+      # ── TÍCH HỢP SMART REPORTER: KHÔI PHỤC LỊCH SỬ TỪ GITHUB CACHE ────────
+      - name: 🔄 Restore Smart Reporter History Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: test-history.json
+          key: smart-reporter-history-${{ github.run_id }}
+          restore-keys: |
+            smart-reporter-history-
 
       # ── THỰC THI SUITE PLAYWRIGHT VỚI STEP-LEVEL ENV (TẦNG 6) ───────────────
       - name: 🎭 Execute Dynamic Playwright Test Suite
@@ -216,3 +238,40 @@ jobs:
           name: playwright-report-lesson26-${{ github.run_id }}
           path: playwright-report-lesson26/
           retention-days: 7
+
+      # ── TÍCH HỢP SMART REPORTER: LƯU LỊCH SỬ KIỂM THỬ VÀO CACHE ───────────
+      - name: "💾 Save Smart Reporter History Cache [if: always()]"
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: test-history.json
+          key: smart-reporter-history-${{ github.run_id }}
+
+      # ── ĐÓNG GÓI BÁO CÁO ĐỘC LẬP: SMART HTML REPORT [IF: ALWAYS()] ─────────
+      - name: "📊 Upload Smart HTML Report [if: always()]"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-smart-report-${{ github.run_id }}
+          path: playwright-report-smart.html
+          retention-days: 14
+
+      # ── TỰ ĐỘNG XUẤT BẢN LIVE DASHBOARD LÊN GITHUB PAGES ───────────────────
+      - name: "🚀 Prepare GitHub Pages Web Directory [if: always()]"
+        if: always() && (github.event.inputs.deploy_pages != 'false')
+        run: |
+          mkdir -p public
+          if [ -f "playwright-report-smart.html" ]; then
+            cp playwright-report-smart.html public/index.html
+            echo "✅ Đã nạp thành công Dashboard Smart Reporter vào public/index.html!"
+          else
+            echo "<h1>Playwright Report Not Available</h1>" > public/index.html
+          fi
+
+      - name: "🌐 Deploy Live Dashboard to GitHub Pages [if: always()]"
+        uses: peaceiris/actions-gh-pages@v4
+        if: always() && (github.event.inputs.deploy_pages != 'false')
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          keep_files: false

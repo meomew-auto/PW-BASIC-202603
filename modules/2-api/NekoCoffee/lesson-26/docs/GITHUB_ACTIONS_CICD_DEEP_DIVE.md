@@ -48,7 +48,12 @@
    - 6.3.1. Giải phẫu & phân tích kỹ thuật chi tiết 7 khối (blocks) trong file `playwright-lesson26-matrix.yml` (Cơ chế gộp ĐÚNG 1 Report duy nhất).
    - 6.4. Ghép nối kịch bản thực nghiệm: CASE 08 (Headless & Viewport Matrix Integrity).
    - 6.5. Cẩm nang lệnh thực thi và đối chiếu Log Terminal thực tế 3 Browser Engines.
-7. [📊 Phần 7: Xuất Bản Báo Cáo Tự Động Lên GitHub Pages (Khái Quát Lộ Trình)](#-phần-7-xuất-bản-báo-cáo-tự-động-lên-github-pages-khái-quát-lộ-trình)
+7. [📊 Phần 7: Tự Động Xuất Bản Dashboard Kiểm Thử Lên GitHub Pages Với `playwright-smart-reporter`](#-phần-7-tự-động-xuất-bản-dashboard-kiểm-thử-lên-github-pages-với-playwright-smart-reporter)
+   - 7.1. Tại sao `playwright-smart-reporter` + GitHub Pages là bộ đôi hoàn hảo chuẩn Enterprise?
+   - 7.2. Bí quyết bảo lưu lịch sử (`test-history.json`) giữa các máy ảo CI vô trạng thái bằng `actions/cache@v4`.
+   - 7.3. Thiết lập phân quyền `permissions` & Chuỗi Steps triển khai tự động (`peaceiris/actions-gh-pages@v4`).
+   - 7.4. Hướng dẫn 3 bước kích hoạt GitHub Pages trên giao diện Web Repository (Settings ➔ Pages).
+   - 7.5. Trải nghiệm Dashboard thực chiến: Phân tích chỉ số KPI, Flaky Tests & History Trend Lines.
 
 ---
 
@@ -3187,11 +3192,211 @@ MÁY ẢO 4: [JOB 2: MATRIX-SUMMARY] (Hội Tụ & Báo Cáo Chất Lượng)
 
 ---
 
-## 📊 PHẦN 7: XUẤT BẢN BÁO CÁO TỰ ĐỘNG LÊN GITHUB PAGES (KHÁI QUÁT)
+## 📊 PHẦN 7: TỰ ĐỘNG XUẤT BẢN DASHBOARD KIỂM THỬ LÊN GITHUB PAGES VỚI `PLAYWRIGHT-SMART-REPORTER`
 
-Thay vì phải tải file `.zip` từ Artifacts về máy tính giải nén để xem báo cáo HTML, quy trình Enterprise sẽ tích hợp **GitHub Pages Deployment**:
-* Sau khi test hoàn tất, một step tự động đẩy thư mục `playwright-report/` lên nhánh `gh-pages`.
-* Cung cấp một đường link website công khai (ví dụ: `https://your-org.github.io/your-repo/`) để toàn bộ thành viên trong dự án (Product Owner, Dev, QA Manager) có thể bấm vào xem ngay trên điện thoại hoặc trình duyệt!
+Trong quy trình phát triển phần mềm hiện đại, việc yêu cầu Product Manager, Tech Lead hoặc các bên liên quan (Stakeholders) phải:
+1. Đăng nhập vào GitHub Actions.
+2. Tìm kiếm Job thực thi tương ứng.
+3. Tải file nén `.zip` từ mục Artifacts (nặng vài chục đến hàng trăm MB).
+4. Giải nén vào máy tính cá nhân rồi bấm mở file `index.html`.
+
+... là một **trải nghiệm người dùng vô cùng bất tiện và tốn thời gian**. Thay vào đó, chuẩn mực Enterprise đỉnh cao là **Tự động xuất bản kết quả kiểm thử lên một website công khai (Live Dashboard) thông qua GitHub Pages**. Bất kỳ ai trong tổ chức chỉ cần nhấp vào một đường link duy nhất (ví dụ: `https://<organization>.github.io/<repo>/`) là có thể theo dõi chất lượng toàn diện của sản phẩm ngay trên trình duyệt máy tính hoặc điện thoại di động!
+
+---
+
+### 7.1. Tại Sao `playwright-smart-reporter` + GitHub Pages Là Bộ Đôi Hoàn Hảo?
+
+Playwright sở hữu phóng viên báo cáo mặc định (Native HTML Reporter), nhưng khi triển khai lên GitHub Pages, Native Report bộc lộ một số hạn chế:
+* **Phân mảnh tài nguyên**: Xuất ra cả một cây thư mục chứa hàng chục file tĩnh (`index.html`, thư mục `data/`, các file `.zip`, `.png`). Nếu host tĩnh trên môi trường web, đôi khi dễ bị lỗi sai lệch đường dẫn tương đối (MIME Type) hoặc chặn CORS.
+* **Không lưu vết lịch sử (No Historical Context)**: Mỗi lần chạy test là một trang HTML độc lập. Bạn không thể biết lần chạy trước tỷ lệ Pass là bao nhiêu, tốc độ kiểm thử nhanh hay chậm hơn so với hiện tại.
+
+**`playwright-smart-reporter`** (tác giả **Gary Parker**) ra đời như một giải pháp đột phá giải quyết triệt để các hạn chế trên:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ 🌟 4 ĐẶC ĐIỂM SÁT THỦ CỦA PLAYWRIGHT-SMART-REPORTER TRÊN GITHUB PAGES                 │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1. 📦 SINGLE-FILE STANDALONE:                                                          │
+│    Toàn bộ mã nguồn CSS, JS, biểu đồ Chart.js, dữ liệu kịch bản được đóng gói gói gọn  │
+│    trong ĐÚNG 1 FILE DUY NHẤT: `playwright-report-smart.html`.                          │
+│    ➔ Chỉ cần đổi tên thành `index.html`, đẩy lên GitHub Pages là chạy 100% không lỗi! │
+│                                                                                        │
+│ 2. 📊 INTERACTIVE DASHBOARD ĐẲNG CẤP:                                                 │
+│    Cung cấp giao diện trực quan với biểu đồ tròn phân tích tỷ lệ Pass/Fail/Skip/Flaky,  │
+│    bảng xếp hạng Top 5 kịch bản chạy chậm nhất (Slowest Tests) để tối ưu thời gian.    │
+│                                                                                        │
+│ 3. 📈 THEO DÕI XU HƯỚNG LỊCH SỬ (HISTORY TREND DRILLDOWN):                             │
+│    Tự động tích lũy kết quả các lần chạy qua file `test-history.json`.                │
+│    Cho phép người xem bấm vào từng mốc lịch sử quá khứ để đối soát biểu đồ sức khỏe!  │
+│                                                                                        │
+│ 4. 🌐 LIVE ACCESS BẤT CỨ ĐÂU:                                                          │
+│    Xem báo cáo trực tiếp qua URL công khai, tối ưu tuyệt vời trên cả màn hình Mobile.  │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 7.2. Bí Quyết Bảo Lưu Lịch Sử (`test-history.json`) Giữa Các Máy Ảo Vô Trạng Thái Bằng `actions/cache@v4`
+
+Một thách thức kỹ thuật lớn trong CI/CD: *Máy ảo GitHub Actions là môi trường vô trạng thái (Ephemeral Runner). Khi một Job kết thúc, máy ảo bị xóa sổ vĩnh viễn cùng toàn bộ file trên ổ cứng. Vậy làm thế nào để `test-history.json` không bị mất đi qua từng lần chạy test?*
+
+Giải pháp chuẩn xác là kết hợp **Action Caching (`actions/cache@v4`)** qua quy trình 2 giai đoạn:
+
+```
+                  ┌──────────────────────────────────────────────┐
+                  │ ☁️ GITHUB ACTIONS CACHE (Đám Mây Lưu Trữ)    │
+                  │   Khóa cache: smart-reporter-history-<id>    │
+                  └──────────────┬───────────────────────────────┘
+                                 │
+     GIAI ĐOẠN 1: KHÔI PHỤC      │ (actions/cache/restore@v4)
+     Kéo `test-history.json` cũ  │
+     về máy ảo trước khi test    │
+                                 ▼
+                 ┌────────────────────────────────┐
+                 │ 🖥️ MÁY ẢO UBUNTU RUNNER        │
+                 │ 1. Nạp `test-history.json`     │
+                 │ 2. Chạy Playwright Test        │
+                 │ 3. Smart Reporter ghi nhận     │
+                 │    thêm mốc mới vào lịch sử    │
+                 │ 4. Xuất `playwright-report-...`│
+                 └──────────────┬─────────────────┘
+                                │
+     GIAI ĐOẠN 2: LƯU TRỮ       │ (actions/cache/save@v4)
+     Lưu đè file lịch sử mới    │
+     lên đám mây cho lần sau    │
+                                ▼
+                  ┌──────────────────────────────────────────────┐
+                  │ ☁️ GITHUB ACTIONS CACHE                      │
+                  │   Lịch sử được tích lũy liên tục qua các run!│
+                  └──────────────────────────────────────────────┘
+```
+
+#### Mã nguồn YAML tích hợp Cache trong `.github/workflows/playwright-lesson26.yml`:
+
+```yaml
+      # ── BƯỚC 1: KHÔI PHỤC LỊCH SỬ KIỂM THỬ TỪ GITHUB ACTIONS CACHE ─────────
+      - name: 🔄 Restore Smart Reporter History Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: test-history.json
+          key: smart-reporter-history-${{ github.run_id }}
+          restore-keys: |
+            smart-reporter-history-
+
+      # ... [Thực thi lệnh chạy Playwright Test] ...
+
+      # ── BƯỚC 2: LƯU ĐÈ LỊCH SỬ MỚI LÊN CACHE ĐỂ TÍCH LŨY BIỂU ĐỒ TREND ─────
+      - name: "💾 Save Smart Reporter History Cache [if: always()]"
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: test-history.json
+          key: smart-reporter-history-${{ github.run_id }}
+```
+
+---
+
+### 7.3. Thiết Lập Phân Quyền & Chuỗi Steps Triển Khai Tự Động (`peaceiris/actions-gh-pages@v4`)
+
+Để máy ảo CI có thể đẩy file HTML lên nhánh `gh-pages`, bạn bắt buộc phải cấp quyền ghi mã nguồn (Write Permission) cho mã định danh `GITHUB_TOKEN`.
+
+#### 1. Khai báo phân quyền ở đầu file Workflow:
+```yaml
+permissions:
+  contents: write # Cho phép GitHub Token tự động tạo nhánh và push code lên gh-pages
+```
+
+#### 2. Chuỗi Steps đóng gói và tự động xuất bản:
+```yaml
+      # ── 1. ĐÓNG GÓI BÁO CÁO SMART REPORT DƯỚI DẠNG ARTIFACT DỰ PHÒNG ───────
+      - name: "📊 Upload Smart HTML Report [if: always()]"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-smart-report-${{ github.run_id }}
+          path: playwright-report-smart.html
+          retention-days: 14
+
+      # ── 2. CHUẨN BỊ THƯ MỤC WEB PUBLIC (INDEX.HTML) ────────────────────────
+      - name: "🚀 Prepare GitHub Pages Web Directory [if: always()]"
+        if: always() && (github.event.inputs.deploy_pages != 'false')
+        run: |
+          mkdir -p public
+          if [ -f "playwright-report-smart.html" ]; then
+            cp playwright-report-smart.html public/index.html
+            echo "✅ Đã nạp thành công Dashboard Smart Reporter vào public/index.html!"
+          else
+            echo "<h1>Playwright Report Not Available</h1>" > public/index.html
+          fi
+
+      # ── 3. TỰ ĐỘNG TRIỂN KHAI LÊN NHÁNH GH-PAGES (GITHUB PAGES ENGINE) ────
+      - name: "🌐 Deploy Live Dashboard to GitHub Pages [if: always()]"
+        uses: peaceiris/actions-gh-pages@v4
+        if: always() && (github.event.inputs.deploy_pages != 'false')
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          keep_files: false # Xóa các file cũ của lần deploy trước để web luôn sạch sẽ
+```
+
+---
+
+### 7.4. Hướng Dẫn 3 Bước Kích Hoạt GitHub Pages Trên Giao Diện Web UI
+
+Sau khi workflow chạy lần đầu tiên, nhánh `gh-pages` sẽ tự động được khởi tạo trên kho lưu trữ của bạn. Để kích hoạt tên miền website công khai:
+
+1. **Bước 1**: Mở kho lưu trữ của bạn trên trình duyệt GitHub (`https://github.com/<your-username>/<your-repo>`).
+2. **Bước 2**: Nhấp vào tab **Settings** (ở thanh menu trên cùng) ➔ Chọn mục **Pages** ở thanh điều hướng bên trái.
+3. **Bước 3**: Tại phần **Build and deployment**:
+   - **Source**: Chọn `Deploy from a branch`.
+   - **Branch**: Bấm vào menu thả xuống chọn nhánh `gh-pages` và chọn thư mục `/ (root)`.
+   - Bấm nút **Save**.
+
+```
+HỆ THỐNG GITHUB PAGES TRÊN WEB UI:
+Settings ──► Pages ──► Build and deployment:
+                       Source: [ Deploy from a branch ]
+                       Branch: [ gh-pages ▼ ] [ / (root) ▼ ] ──► [ Save ]
+```
+
+* 🚀 **Kết quả đạt được**: Chỉ sau **30 - 60 giây**, GitHub sẽ hiển thị một dòng thông báo màu xanh kèm theo đường dẫn website chính thức:
+  > *Your site is live at:* **`https://<your-username>.github.io/<your-repo>/`**
+
+---
+
+### 7.5. Trải Nghiệm Dashboard Thực Chiến: Phân Tích Chỉ Số KPI, Flaky & History Trend
+
+Khi nhấp vào đường link GitHub Pages, bạn sẽ được chiêm ngưỡng một giao diện Dashboard kiểm thử tự động vô cùng ấn tượng:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ 📊 PLAYWRIGHT SMART REPORTER — LIVE EXECUTIVE QUALITY DASHBOARD                        │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ 🟢 PASSED: 10/10 (100%)   │ 🔴 FAILED: 0   │ 🟡 FLAKY: 1 (Case 05) │ ⏱️ TOTAL: 18.5s   │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ 📈 HISTORICAL EXECUTION TREND DRILLDOWN:                                               │
+│    Run #1 (2026-08-30) ──► Run #2 (2026-09-12) ──► Run #3 (2026-09-18) [LATEST]       │
+│    Duration: 22.4s     ──► Duration: 19.8s     ──► Duration: 18.5s (⚡ Nhanh hơn 17%)  │
+│    Pass Rate: 90%      ──► Pass Rate: 95%      ──► Pass Rate: 100% (🎯 Đạt Quality Gate)│
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ 📋 TEST SUITE EXPLORER — LESSON 26 (ENTERPRISE CI/CD SANDBOX):                         │
+│   ✓ [CASE 01] Env Hierarchy & Precedence Cascading (320ms)                             │
+│   ✓ [CASE 02] Secrets Masking Engine & ::add-mask:: Security (180ms)                   │
+│   ✓ [CASE 03] Dynamic Runtime Injection ($GITHUB_ENV & Outputs) (210ms)                │
+│   ✓ [CASE 04] Environment Staging vs Production Matrix (190ms)                         │
+│   ✓ [CASE 05] Flaky Retry Self-Healing Engine (Passed on Retry 1) (1.2s)               │
+│   ✓ [CASE 06] Timeout & Deadlock Guard Verification (1.5s)                             │
+│   ✓ [CASE 07] Failure Artifacts Post-Mortem Capture (310ms)                            │
+│   ✓ [CASE 08] Headless Mode & Viewport Matrix Integrity (536ms)                        │
+│   ✓ [CASE 09] API Mock Network Isolation & Circuit Breaker (160ms)                     │
+│   ✓ [CASE 10] Enterprise Hybrid Super E2E & Multi-Tab Live Workflow (17.4s)            │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 💡 Giá Trị Thực Tế Mang Lại Cho Nhóm Phát Triển:
+1. **Minh bạch thông tin (Transparency)**: Các bên liên quan không cần phải có kiến thức về code, git hay dòng lệnh vẫn có thể nắm bắt chính xác tình hình chất lượng dự án bất cứ lúc nào.
+2. **Cắt giảm thời gian báo cáo**: Đội ngũ QA không còn phải mất hàng giờ xuất file excel, chụp ảnh màn hình để làm báo cáo test hàng tuần. Toàn bộ quy trình từ kiểm thử, thu thập số liệu đến xuất bản website được tự động hóa 100%!
+3. **Phát hiện suy thoái hiệu năng sớm (Performance Regression)**: Dựa vào đường cong xu hướng thời gian chạy (Duration Trend Line), bạn sẽ lập tức nhận ra các test case hoặc API đang bị chậm dần qua các sprint để kịp thời tối ưu.
 
 ---
 

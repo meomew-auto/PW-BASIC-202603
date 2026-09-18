@@ -1,5 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 import dotenvFlow from "dotenv-flow";
+import path from "path";
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════
@@ -13,6 +14,8 @@ import dotenvFlow from "dotenv-flow";
  * 3. Cấu hình Retry (2 lần trên CI, 1 lần ở local để test flaky).
  * 4. Thu thập Trace & Screenshots tự động khi có sự cố.
  * 5. Xuất báo cáo HTML độc lập tại 'playwright-report-lesson26'.
+ * 6. Xuất báo cáo thông minh 'playwright-smart-reporter' độc lập 1 file HTML
+ *    kèm lịch sử 'test-history.json' để xuất bản lên GitHub Pages.
  */
 
 // 1. Phân giải Profile môi trường: TARGET_ENV (từ GitHub Actions) > NODE_ENV (từ shell/cross-env) > "production"
@@ -45,16 +48,38 @@ export default defineConfig({
   // Giới hạn 2 workers trên CI để bảo vệ máy ảo Ubuntu 2 vCPU; ở local dùng tối đa tài nguyên
   workers: isCI ? 2 : undefined,
 
-  // Báo cáo: CI xuất 'github' annotation và 'html' report; Local xuất 'list' và 'html'
+  // Báo cáo: CI xuất 'github' annotation, 'html' report và 'playwright-smart-reporter'
   reporter: isCI
     ? [
         ["github"],
         ["list"],
         ["html", { outputFolder: "../playwright-report-lesson26", open: "never" }],
+        [
+          "playwright-smart-reporter",
+          {
+            outputFile: path.resolve(__dirname, "../playwright-report-smart.html"),
+            historyFile: path.resolve(__dirname, "../test-history.json"),
+            maxHistoryRuns: 10,
+            enableAIRecommendations: false,
+            enableAISuiteHealth: false,
+            enableHistoryDrilldown: true,
+          },
+        ],
       ]
     : [
         ["list"],
         ["html", { outputFolder: "../playwright-report-lesson26", open: "never" }],
+        [
+          "playwright-smart-reporter",
+          {
+            outputFile: path.resolve(__dirname, "../playwright-report-smart.html"),
+            historyFile: path.resolve(__dirname, "../test-history.json"),
+            maxHistoryRuns: 10,
+            enableAIRecommendations: false,
+            enableAISuiteHealth: false,
+            enableHistoryDrilldown: true,
+          },
+        ],
       ],
 
   use: {
