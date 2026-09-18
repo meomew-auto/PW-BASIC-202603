@@ -1,0 +1,41 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="1" time="2.34369">
+<testsuite name="modules/1-basics/01-locators/01.getByRole.spec.ts" timestamp="2026-09-14T06:49:43.029Z" hostname="01-locators" tests="1" failures="0" skipped="0" time="0.001" errors="1">
+<testcase name="01-Locators / getByRole › GetByRole cơ bản" classname="modules/1-basics/01-locators/01.getByRole.spec.ts" time="0.001">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../../test-results/01.getByRole-01-Locators-getByRole-GetByRole-cơ-bản-01-locators/error-context.md]]
+]]>
+</system-out>
+<error message="browserType.launch: Target page, context or browser has been closed" type="Error">
+<![CDATA[  [01-locators] › modules/1-basics/01-locators/01.getByRole.spec.ts:19:7 › 01-Locators / getByRole › GetByRole cơ bản 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    ╔════════════════════════════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like you launched a headed browser without having a XServer running.                     ║
+    ║ Set either 'headless: true' or use 'xvfb-run <your-playwright-app>' before running Playwright. ║
+    ║                                                                                                ║
+    ║ <3 Playwright Team                                                                             ║
+    ╚════════════════════════════════════════════════════════════════════════════════════════════════╝
+    Call log:
+      - <launching> /ms-playwright/chromium-1228/chrome-linux64/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-2kxl7u --remote-debugging-pipe --no-startup-window
+      - <launched> pid=64
+      - [pid=64][err] [64:80:0914/064943.686990:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+      - [pid=64][err] [64:64:0914/064943.697210:ERROR:ui/ozone/platform/x11/ozone_platform_x11.cc:257] Missing X server or $DISPLAY
+      - [pid=64][err] [64:64:0914/064943.697251:ERROR:ui/aura/env.cc:246] The platform failed to initialize.  Exiting.
+      - [pid=64] <gracefully close start>
+      - [pid=64] <kill>
+      - [pid=64] <will force kill>
+      - [pid=64] <process did exit: exitCode=1, signal=null>
+      - [pid=64] starting temporary directories cleanup
+      - [pid=64] finished temporary directories cleanup
+      - [pid=64] <gracefully close end>
+
+
+    Error Context: test-results/01.getByRole-01-Locators-getByRole-GetByRole-cơ-bản-01-locators/error-context.md
+]]>
+</error>
+</testcase>
+</testsuite>
+</testsuites>

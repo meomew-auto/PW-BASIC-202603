@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../fixtures/hybrid-super-gatekeeper.fixture";
 
 /**
  * ════════════════════════════════════════════════════════════════════════════
@@ -141,66 +141,55 @@ test.describe("🧠 [LESSON 24] 03 - UI-API Synchronization & waitForResponse", 
     console.log("✅ Đón bắt song song 2 API phản hồi thành công!");
   });
 
-  // 📸 5. CASE 1: XỬ LÝ TÁC VỤ BẤT ĐỒNG BỘ NẶNG (UPLOAD ẢNH & CDN PROCESSING)
+  // 📸 5. CASE 1: XỬ LÝ TÁC VỤ BẤT ĐỒNG BỘ NẶNG TRÊN LIVE UI (UPLOAD ẢNH & CDN PROCESSING)
   test("05 - [CASE 1: ASYNC UPLOAD] Upload ảnh Neko Coffee -> Đón bắt đúng thời khắc Server nén ảnh xong và trả CDN URL", async ({
     page,
   }) => {
-    // Giả lập máy chủ Backend xử lý nén ảnh trong 800ms
-    await page.route("**/api/products/upload", async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        headers: { "access-control-allow-origin": "*" },
-        body: JSON.stringify({
-          status: "success",
-          image_url:
-            "https://images.autoneko.com/products/arabica-beans-2026.webp",
-          thumbnail_url:
-            "https://images.autoneko.com/thumbnails/arabica-beans-100x100.webp",
-          file_size_bytes: 420512,
-          processing_time_ms: 782,
-        }),
-      });
-    });
+    // 1. Mở trang quản trị Upload ảnh sản phẩm Neko Coffee với phiên Staff đã tiêm tự động từ RAM
+    await page.goto("https://coffee.autoneko.com/vi/upload/1");
+    await page.waitForLoadState("domcontentloaded");
+
+    // 2. Kích hoạt tính năng "Mô phỏng độ trễ (Demo)" trên giao diện thực tế (tạo trễ ?delay=3)
+    const latencyCheckbox = page.locator('input[type="checkbox"]');
+    if ((await latencyCheckbox.count()) > 0) {
+      await latencyCheckbox.check();
+    }
+
+    // 3. Chuẩn bị file ảnh mẫu cà phê dạng buffer nhị phân trong RAM
+    const tempImgBuffer = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    );
 
     const startTime = Date.now();
 
-    // Giăng lưới lắng nghe API upload hoàn tất
+    // 🎯 4. GIĂNG LƯỚI BẮT ĐÚNG THỜI KHẮC MÁY CHỦ CDN NÉN VÀ TRẢ URL (Thay vì waitForTimeout đoán mò)
     const [uploadResponse] = await Promise.all([
       page.waitForResponse(
         (res) =>
-          res.url().includes("/api/products/upload") &&
+          res.url().includes("/api/products/1/image") &&
           res.request().method() === "POST" &&
           res.status() === 200,
-        { timeout: 10000 },
+        { timeout: 20000 },
       ),
-      page.evaluate(() => {
-        return fetch(
-          "https://api-neko-coffee.autoneko.com/api/products/upload",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              filename: "arabica-beans.png",
-              raw_size: 5242880,
-            }),
-          },
-        );
+      page.locator('input[type="file"]').setInputFiles({
+        name: "arabica-specialty-2026.png",
+        mimeType: "image/png",
+        buffer: tempImgBuffer,
       }),
     ]);
 
     const elapsedTime = Date.now() - startTime;
     const uploadData = await uploadResponse.json();
 
+    // 🎯 5. THẨM ĐỊNH KẾT QUẢ TỪ CDN & BACKEND THỰC TẾ
     expect(uploadResponse.status()).toBe(200);
-    expect(uploadData.image_url).toBe(
-      "https://images.autoneko.com/products/arabica-beans-2026.webp",
-    );
-    expect(uploadData.thumbnail_url).toContain("100x100.webp");
-    expect(elapsedTime).toBeGreaterThanOrEqual(750);
+    expect(uploadData.image_url).toContain("https://images.autoneko.com/upload/");
+    expect(uploadData.thumbnail_url).toContain("w_200,h_200");
+    expect(elapsedTime).toBeGreaterThanOrEqual(1000);
 
     console.log(
-      `✅ [CASE 1 - UPLOAD] Đón bắt thành công phản hồi CDN sau ${elapsedTime}ms! Link ảnh: ${uploadData.image_url}`,
+      `✅ [CASE 1 - LIVE UI UPLOAD] Đón bắt thành công phản hồi CDN sau ${elapsedTime}ms! Link ảnh: ${uploadData.image_url}`,
     );
   });
 

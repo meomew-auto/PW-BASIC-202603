@@ -13,11 +13,12 @@ import * as path from "path";
  *    - Proof 2: Nấc 3 / Cách 2 - Dynamic In-Memory Injection (context.addInitScript).
  *    - Proof 3: Nấc 1 / Cách 1 - Storage State & Project Dependencies (File đĩa .auth/).
  *    - Proof 4: Session Isolation & Disposable User (Cô lập phiên động).
+ *    - Proof 5: Guest Dual-Session Isolation (guestPage & loginPage sạch bóng).
  *
  * 🏆 PHẦN 2: SIÊU KỊCH BẢN THỰC CHIẾN E2E FULL WORKFLOW TRÊN HỆ THỐNG THẬT
- *    - Test 05: [UI TABLE POM] Quét bản đồ cột tự động và trích xuất dữ liệu đơn hàng.
- *    - Test 06: [HYBRID E2E] Fast API Seed ➔ UI Table Audit ➔ API Zod Contract DB Audit.
- *    - Test 07: [UI TABLE FILTER] Kiểm thử ô tìm nhanh và bộ lọc bảng đơn hàng live.
+ *    - Test 06: [UI TABLE POM] Quét bản đồ cột tự động và trích xuất dữ liệu đơn hàng.
+ *    - Test 07: [HYBRID E2E] Fast API Seed ➔ UI Table Audit ➔ API Zod Contract DB Audit.
+ *    - Test 08: [UI TABLE FILTER] Kiểm thử ô tìm nhanh và bộ lọc bảng đơn hàng live.
  */
 
 test.describe("🏆 [LESSON 24] 06 - Hybrid Super App Workflow (Core Auth Proofs & Live E2E)", () => {
@@ -55,7 +56,7 @@ test.describe("🏆 [LESSON 24] 06 - Hybrid Super App Workflow (Core Auth Proofs
       await adminOrdersPage.navigate(
         "https://coffee.autoneko.com/admin/orders",
       );
-
+      await page.pause();
       // 2. Thẩm định URL hiện tại là trang admin, không hề bị Next.js Auth Guard đẩy về /login
       expect(page.url()).toContain("/admin/orders");
 
@@ -107,7 +108,7 @@ test.describe("🏆 [LESSON 24] 06 - Hybrid Super App Workflow (Core Auth Proofs
         isolatedPage.getByRole("heading", { name: "Trạng thái đơn hàng" }),
       ).toBeVisible({ timeout: 15000 });
       expect(isolatedPage.url()).toContain("/admin/orders");
-
+      await isolatedPage.pause();
       // 5. Dọn dẹp tài nguyên
       await isolatedContext.close();
       if (fs.existsSync(storageStatePath)) {
@@ -180,14 +181,170 @@ test.describe("🏆 [LESSON 24] 06 - Hybrid Super App Workflow (Core Auth Proofs
         "✅ [Proof 4 - Session Isolation] Tài khoản tạm độc lập không gây ô nhiễm Worker RAM Snapshot!",
       );
     });
+
+    test("05 - [PROOF 5: GUEST DUAL-SESSION ISOLATION] Chứng minh guestPage & loginPage độc lập 100%, không bị tiêm Staff Token và hiển thị Form Login sạch", async ({
+      loginPage,
+      guestPage,
+      workerStaffSnapshot,
+    }) => {
+      // 1. Mở trang đăng nhập qua loginPage (vốn đã được gắn với guestPage sạch bóng)
+      await loginPage.navigate("https://coffee.autoneko.com/login");
+
+      // 2. Thẩm định URL và các phần tử UI của Form Login hiển thị đầy đủ (không bị auto-redirect sang Admin)
+      expect(guestPage.url()).toContain("/login");
+      await loginPage.expectOnPage();
+
+      // 3. Khẳng định localStorage của guestPage là phiên khách (chưa xác thực, không dính token Staff)
+      const guestAuthRaw = await guestPage.evaluate(() =>
+        localStorage.getItem("neko_auth"),
+      );
+      if (guestAuthRaw) {
+        const guestAuth = JSON.parse(guestAuthRaw);
+        expect(guestAuth.state.isAuthenticated).toBe(false);
+        expect(guestAuth.state.accessToken).toBeNull();
+        expect(guestAuth.state.user).toBeNull();
+      }
+
+      const guestToken = await guestPage.evaluate(() =>
+        localStorage.getItem("access_token"),
+      );
+      expect(guestToken).toBeNull();
+
+      // 4. Khẳng định: workerStaffSnapshot trong RAM vẫn vẹn nguyên quyền Staff
+      expect(workerStaffSnapshot.user.role).toBe("staff");
+      expect(workerStaffSnapshot.token).toBeTruthy();
+
+      console.log(
+        "✅ [Proof 5 - Guest Dual-Session] loginPage & guestPage sạch 100%, không dính Staff Token từ RAM!",
+      );
+    });
+
+    test("06 - [PROOF 6: HTTPONLY COOKIE & CRM CASE STUDY] Chứng minh addInitScript bất lực với Cookie HttpOnly, bắt buộc dùng context.addCookies hoặc storageState", async ({
+      browser,
+    }) => {
+      // 🎯 GIẢ LẬP HỆ THỐNG CRM DOANH NGHIỆP (ĐÒI HỎI HTTPONLY SESSION COOKIE)
+      // Giả lập endpoint CRM: https://coffee.autoneko.com/crm/dashboard
+      // Nếu có Cookie 'crm_session_token=crm_auth_secret_999' ở HTTP Request Header -> Trả về 200 OK + Dashboard HTML
+      // Nếu KHÔNG CÓ Cookie hoặc chỉ có cookie client giả mạo -> Trả về 401 Unauthorized
+
+      const CRM_URL = "https://coffee.autoneko.com/crm/dashboard";
+      const CRM_COOKIE_NAME = "crm_session_token";
+      const CRM_VALID_TOKEN = "crm_auth_secret_999";
+
+      // ──────────────────────────────────────────────────────────────────────────
+      // ❌ THỬ NGHIỆM 1: CÁCH SAI LẦM - CỐ DÙNG addInitScript ĐỂ BƠM COOKIE HTTPONLY
+      // ──────────────────────────────────────────────────────────────────────────
+      const badContext = await browser.newContext();
+      const badPage = await badContext.newPage();
+
+      // Giả lập CRM Server trên badPage
+      await badPage.route(CRM_URL, (route) => {
+        const cookieHeader = route.request().headers()["cookie"] || "";
+        if (cookieHeader.includes(`${CRM_COOKIE_NAME}=${CRM_VALID_TOKEN}`)) {
+          route.fulfill({
+            status: 200,
+            contentType: "text/html; charset=utf-8",
+            body: '<h1 id="crm-title">Chào mừng đến với CRM Doanh Nghiệp (Đã Xác Thực)</h1>',
+          });
+        } else {
+          route.fulfill({
+            status: 401,
+            contentType: "text/html; charset=utf-8",
+            body: '<h1 id="crm-error">401 Unauthorized - Yêu cầu HttpOnly Cookie!</h1>',
+          });
+        }
+      });
+
+      // Tester cố dùng addInitScript để ghi Cookie có cờ HttpOnly:
+      await badContext.addInitScript(() => {
+        document.cookie = `crm_session_token=crm_auth_secret_999; Path=/; HttpOnly; Secure`;
+      });
+
+      await badPage.goto(CRM_URL);
+
+      // 💥 THẨM ĐỊNH LÝ DO THẤT BẠI 1: Trình duyệt gửi request đầu tiên trước khi addInitScript kịp tạo cookie
+      // Kết quả: Trang web bị 401 Unauthorized!
+      await expect(badPage.locator("#crm-error")).toBeVisible();
+      await expect(badPage.locator("#crm-title")).toHaveCount(0);
+
+      // 💥 THẨM ĐỊNH LÝ DO THẤT BẠI 2: Kiểm tra Cookie Jar trong browser
+      const badCookies = await badContext.cookies();
+      const badCrmCookie = badCookies.find((c) => c.name === CRM_COOKIE_NAME);
+      // Nếu cookie được tạo qua document.cookie, cờ httpOnly BẮT BUỘC bằng false (sandbox JS tước bỏ cờ HttpOnly)!
+      if (badCrmCookie) {
+        expect(badCrmCookie.httpOnly).toBe(false);
+      }
+      await badContext.close();
+
+      // ──────────────────────────────────────────────────────────────────────────
+      // ✅ THỬ NGHIỆM 2: CÁCH ĐÚNG ĐẮN - NẠP COOKIE HTTPONLY Ở TẦNG PROTOCOL BROWSER CONTEXT
+      // ──────────────────────────────────────────────────────────────────────────
+      const goodContext = await browser.newContext();
+      const goodPage = await goodContext.newPage();
+
+      // Giả lập CRM Server trên goodPage
+      await goodPage.route(CRM_URL, (route) => {
+        const cookieHeader = route.request().headers()["cookie"] || "";
+        if (cookieHeader.includes(`${CRM_COOKIE_NAME}=${CRM_VALID_TOKEN}`)) {
+          route.fulfill({
+            status: 200,
+            contentType: "text/html; charset=utf-8",
+            body: '<h1 id="crm-title">Chào mừng đến với CRM Doanh Nghiệp (Đã Xác Thực)</h1>',
+          });
+        } else {
+          route.fulfill({
+            status: 401,
+            contentType: "text/html; charset=utf-8",
+            body: '<h1 id="crm-error">401 Unauthorized - Yêu cầu HttpOnly Cookie!</h1>',
+          });
+        }
+      });
+
+      // 🏆 DÙNG context.addCookies() - ĐẶC QUYỀN TRÌNH DUYỆT (BROWSER PROTOCOL LEVEL)
+      await goodContext.addCookies([
+        {
+          name: CRM_COOKIE_NAME,
+          value: CRM_VALID_TOKEN,
+          domain: "coffee.autoneko.com",
+          path: "/",
+          httpOnly: true, // 👈 Gán thành công 100% cờ HttpOnly!
+          secure: true,
+          sameSite: "Lax",
+        },
+      ]);
+
+      // Thẩm định Cookie Jar: cờ httpOnly BẮT BUỘC bằng true!
+      const goodCookies = await goodContext.cookies();
+      const goodCrmCookie = goodCookies.find((c) => c.name === CRM_COOKIE_NAME);
+      expect(goodCrmCookie).toBeDefined();
+      expect(goodCrmCookie?.httpOnly).toBe(true);
+
+      // Điều hướng vào CRM: HTTP Request Header đính kèm Cookie ngay từ cái bắt tay đầu tiên!
+      await goodPage.goto(CRM_URL);
+
+      // 🏆 THẨM ĐỊNH THÀNH CÔNG: Mở thẳng Dashboard CRM trong 0ms!
+      await expect(goodPage.locator("#crm-title")).toBeVisible();
+      await expect(goodPage.locator("#crm-title")).toContainText(
+        "CRM Doanh Nghiệp (Đã Xác Thực)",
+      );
+
+      // 🛡️ THẨM ĐỊNH AN TOÀN XSS: Mã JS trong trang web hoàn toàn KHÔNG THỂ đọc trộm HttpOnly cookie này
+      const clientSideCookies = await goodPage.evaluate(() => document.cookie);
+      expect(clientSideCookies).not.toContain(CRM_VALID_TOKEN);
+
+      await goodContext.close();
+      console.log(
+        "✅ [Proof 6 - HttpOnly & CRM] Đã chứng minh addInitScript bất lực với HttpOnly Cookie và context.addCookies giải cứu thành công 100%!",
+      );
+    });
   });
 
   // ──────────────────────────────────────────────────────────────────────────
   // 🏆 PHẦN 2: SIÊU KỊCH BẢN THỰC CHIẾN E2E FULL WORKFLOW TRÊN WEBSITE THẬT
   // ──────────────────────────────────────────────────────────────────────────
   test.describe("🏆 PHẦN 2: SIÊU KỊCH BẢN THỰC CHIẾN E2E TRÊN NEKO COFFEE LIVE", () => {
-    // 🧪 5. LUỒNG FULL UI: XÁC THỰC BẢNG ĐƠN HÀNG ADMIN BẰNG TABLECOLUMNHELPERS
-    test("05 - [UI TABLE POM] Quét bản đồ cột tự động và trích xuất dữ liệu đơn hàng Neko Admin qua TableColumnHelpers", async ({
+    // 🧪 7. LUỒNG FULL UI: XÁC THỰC BẢNG ĐƠN HÀNG ADMIN BẰNG TABLECOLUMNHELPERS
+    test("07 - [UI TABLE POM] Quét bản đồ cột tự động và trích xuất dữ liệu đơn hàng Neko Admin qua TableColumnHelpers", async ({
       adminOrdersPage,
     }) => {
       // 1. Điều hướng thẳng vào trang Admin Orders thật (đã được auto-login qua Gatekeeper RAM snapshot)
@@ -223,8 +380,8 @@ test.describe("🏆 [LESSON 24] 06 - Hybrid Super App Workflow (Core Auth Proofs
       );
     });
 
-    // 🧪 6. LUỒNG HYBRID: LẤY/TẠO DỮ LIỆU QUA API (AOM) ➔ ĐỐI SOÁT TRÊN UI BẰNG TABLE HELPERS ➔ HẬU KIỂM
-    test("06 - [HYBRID E2E] Chuẩn bị dữ liệu siêu tốc qua API AOM -> Mở UI Admin đối soát bằng TableColumnHelpers", async ({
+    // 🧪 7. LUỒNG HYBRID: LẤY/TẠO DỮ LIỆU QUA API (AOM) ➔ ĐỐI SOÁT TRÊN UI BẰNG TABLE HELPERS ➔ HẬU KIỂM
+    test("08 - [HYBRID E2E] Chuẩn bị dữ liệu siêu tốc qua API AOM -> Mở UI Admin đối soát bằng TableColumnHelpers", async ({
       productApi,
       adminProductsPage,
     }) => {
@@ -290,8 +447,8 @@ test.describe("🏆 [LESSON 24] 06 - Hybrid Super App Workflow (Core Auth Proofs
       );
     });
 
-    // 🧪 7. LUỒNG FILTER & SEARCH TRÊN UI TABLE THẬT
-    test("07 - [UI TABLE FILTER] Kiểm thử ô tìm nhanh và bộ lọc bảng đơn hàng", async ({
+    // 🧪 8. LUỒNG FILTER & SEARCH TRÊN UI TABLE THẬT
+    test("09 - [UI TABLE FILTER] Kiểm thử ô tìm nhanh và bộ lọc bảng đơn hàng", async ({
       adminOrdersPage,
     }) => {
       await adminOrdersPage.navigate(

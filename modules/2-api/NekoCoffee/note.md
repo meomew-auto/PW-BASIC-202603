@@ -50,3 +50,81 @@ Cà Phê Cầu Đất ->về cái dạng url interne chấp nhận
 /api/products/{id}
 
 {id} -> path param
+
+bản chất của intercept trong plawyright là chúng ta đang test xem UI hiể thị như nào với các trường hợp
+giả mà ta gửi request ko cần backend
+edge case: các case rất khó có thể làm trực tiếp hoặc mất nhiềui thời gina
+await page.route("\*\*/api/products/285", async (route) => {
+await route.fulfill({
+status: 200,
+contentType: "application/json",
+json: {
+id: 285,
+name: "Cà Phê Arabica Đặc Biệt (MOCK DATA)",
+price: 990000,
+},
+});
+});
+
+/glob -> pw config
+\*\*/api/products/285
+
+await page.route("\*_/_.{png,jpg,jpeg,webp,svg}", async (route) => {
+await route.abort("blockedbyclient");
+});
+
+// Giả lập mất mạng hoàn toàn khi bấm nút Thanh Toán:
+await page.route("\*\*/api/checkout", async (route) => {
+await route.abort("internetdisconnected");
+});
+
+// Trạm 1: Middleware toàn cục - Chuyên tiêm Trace ID cho mọi request
+await page.route("\*_/_", async (route) => {
+const headers = { ...route.request().headers(), "X-Trace-ID": "TRACE-999" };
+// Nhường quyền cho trạm tiếp theo kèm Headers mới
+await route.fallback({ headers });
+});
+
+// Trạm 2: Xử lý chuyên biệt cho API Products
+await page.route("\*\*/api/products", async (route) => {
+// Trạm này nhận được request đã có "X-Trace-ID" từ Trạm 1!
+await route.fulfill({ json: [{ id: 1, name: "Cà phê Robusta" }] });
+});
+
+---
+
+# 🚀 BÀI 26: CI/CD GITHUB ACTIONS & ĐIỀU KHIỂN BẰNG GITHUB CLI (`gh`)
+
+## 1. Cơ chế lệnh `gh` & Cách theo dõi / In kết quả test
+- `gh workflow run` là lệnh **bất đồng bộ (Fire-and-Forget)**: Nó chỉ gửi request kích hoạt lên GitHub rồi thoát lệnh ngay, **không tự động in log test** ra màn hình.
+- Để theo dõi tiến trình máy ảo Linux chạy realtime:
+  ```bash
+  gh run watch
+  ```
+- Để in toàn bộ log console và kết quả test ra Terminal:
+  ```bash
+  gh run view --log
+  ```
+- Xem tóm tắt phiên chạy: `gh run view` | Mở xem trên Web: `gh run view --web`.
+- **Combo 1 dòng chạy + đợi + in log** (PowerShell):
+  ```powershell
+  gh workflow run playwright-lesson26.yml -f test_case=case-02-secrets-masking; Start-Sleep 3; gh run watch; gh run view --log
+  ```
+- **Cơ chế nhận diện Repo của `gh`**:
+  - Tự động đọc remote `origin` trong thư mục hiện tại (`cwd`).
+  - Chuẩn Senior: Thêm cờ `-R <owner>/<repo>` (ví dụ: `-R meomew-auto/PW-BASIC-202603`) để chạy an toàn tuyệt đối ở bất kỳ thư mục nào.
+
+## 2. Kiến trúc Đa Môi Trường Lai Ghép (Hybrid: Local `dotenv-flow` + CI GitHub Environments)
+- **Ở Local (Offline)**: Tester gõ `$env:NODE_ENV="staging"` ➔ `dotenv-flow` tự động nạp cascade `.env` ➔ `.env.staging` (lấy đúng URL staging).
+- **Trên CI (GitHub Actions)**: Nhận `target_env: staging` từ Web/CLI ➔ tiêm thẳng `NODE_ENV=staging` và `BASE_URL=https://...` vào `process.env`.
+- **Nguyên lý vàng sống còn**:
+  > **`dotenv-flow` KHÔNG BAO GIỜ GHI ĐÈ biến đã có sẵn trong `process.env`!**
+  - Khi chạy trên CI: Biến từ GitHub Actions đã nằm sẵn trong `process.env` ➔ `dotenv-flow` bỏ qua, **bảo toàn 100% giá trị từ hạ tầng CI**.
+  - Khi chạy ở Local: `process.env.BASE_URL` chưa có ➔ `dotenv-flow` nạp từ file `.env.<NODE_ENV>` làm fallback.
+
+## 3. Quy tắc cốt lõi khi dùng biểu thức `${{ }}` trong YAML `env:`
+- **Quotes Rule**: Bên trong `${{ ... }}` **bắt buộc dùng nháy đơn `'...'`** (ví dụ: `${{ inputs.env == 'staging' }}`). Dùng nháy kép `"..."` sẽ làm vỡ parser YAML.
+- **Bọc nháy kép ngoài**: Nếu dòng bắt đầu bằng `${{` và có nối chuỗi, luôn bọc trong `""` (ví dụ: `"${{ env.BASE_URL }}/api"`).
+- **Toán tử Fallback**: `${{ secrets.MY_SECRET || 'default_value' }}`.
+- **Toán tử 3 ngôi (Ternary)**: `${{ (inputs.target_env == 'staging') && 'https://staging...' || 'https://prod...' }}`.
+- **Chống Script Injection**: Không bao giờ nhúng trực tiếp `${{ github.event... }}` vào `run:`. Bắt buộc map qua `env:` trước rồi shell mới gọi `$VAR`.

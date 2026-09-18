@@ -210,7 +210,7 @@ test.describe("🛒 [LESSON 24] 08 - Real-World Enterprise Hybrid API + UI Workf
   test("03 - [DUAL-ROLE COLLABORATION] Phối hợp song song giữa Quản trị viên (Staff API) và Khách hàng (Customer UI)", async ({
     authedStaffClient,
     workerStaffSnapshot,
-    browser,
+    guestPage,
   }) => {
     console.log(
       "🚀 [Mô hình 3] Bắt đầu kịch bản phối hợp đa vai trò Staff (API) & Customer (UI)...",
@@ -241,43 +241,40 @@ test.describe("🛒 [LESSON 24] 08 - Real-World Enterprise Hybrid API + UI Workf
     );
 
     // ══════════════════════════════════════════════════════════════════════════
-    // 👥 VAI TRÒ 2: KHÁCH HÀNG (CUSTOMER TRÊN BROWSER CONTEXT ĐỘC LẬP)
+    // 👥 VAI TRÒ 2: KHÁCH HÀNG (CUSTOMER TRÊN GUESTPAGE SẠCH BÓNG TỪ GATEKEEPER)
     // ══════════════════════════════════════════════════════════════════════════
     console.log(
-      "👥 [Role 2 - Customer UI] Khách hàng mở trang tra cứu đơn hàng...",
+      "👥 [Role 2 - Customer UI] Khách hàng mở trang tra cứu đơn hàng qua guestPage...",
     );
-    const customerContext = await browser.newContext();
-    const customerPage = await customerContext.newPage();
 
-    await customerPage.goto("https://coffee.autoneko.com/order-tracking", {
+    await guestPage.goto("https://coffee.autoneko.com/order-tracking", {
       waitUntil: "commit",
     });
     // Chờ React Hydration hoàn tất gắn kết onSubmit trên context độc lập
-    await customerPage.waitForTimeout(2500);
+    await guestPage.waitForTimeout(2500);
 
-    await customerPage
+    await guestPage
       .getByPlaceholder("Ví dụ: B2C-20260116-9510")
       .fill("B2C-20260210-4528");
-    await customerPage
+    await guestPage
       .getByPlaceholder("Ví dụ: 0912345678")
       .fill("aa@gmail.com");
-    await customerPage.getByRole("button", { name: "Tra cứu ngay" }).click();
+    await guestPage.getByRole("button", { name: "Tra cứu ngay" }).click();
 
     await expect(
-      customerPage.getByRole("heading", { name: "Kết quả tra cứu" }),
+      guestPage.getByRole("heading", { name: "Kết quả tra cứu" }),
     ).toBeVisible({
       timeout: 10000,
     });
     await expect(
-      customerPage.getByText("Đơn hàng #B2C-20260210-4528"),
+      guestPage.getByText("Đơn hàng #B2C-20260210-4528"),
     ).toBeVisible();
 
     // Khẳng định cô lập: Context của khách hàng độc lập 100% với Worker RAM Staff Snapshot
     expect(workerStaffSnapshot.user.role).toBe("staff");
-    await customerContext.close();
 
     console.log(
-      "✅ [Mô hình 3] Phối hợp song song giữa Staff API và Customer UI thành công mượt mà (Zero Session Clashing)!",
+      "✅ [Mô hình 3] Phối hợp song song giữa Staff API và Customer UI thành công mượt mà qua guestPage (Zero Session Clashing)!",
     );
   });
 

@@ -1,4 +1,4 @@
-import { test as base } from "@playwright/test";
+import { test as base, type BrowserContext, type Page } from "@playwright/test";
 import { AuthApiClient } from "../../lesson-23/clients/auth.api-client";
 import { ProductApiClient } from "../../lesson-23/clients/product.api-client";
 
@@ -11,6 +11,7 @@ import { ProductApiClient } from "../../lesson-23/clients/product.api-client";
  * 2. Test-scoped page override: Tự động tiêm phiên từ RAM vào localStorage qua
  *    context.addInitScript() trước khi bất kỳ script trình duyệt nào nạp.
  * 3. Cung cấp authedStaffClient: API Client đã gắn sẵn token Staff trong RAM.
+ * 4. Cung cấp guestContext & guestPage: Phiên khách vãng lai sạch 100% không token.
  */
 
 export interface NekoUserDto {
@@ -33,6 +34,10 @@ export interface HybridAuthTestFixtures {
     authApi: AuthApiClient;
     productApi: ProductApiClient;
   };
+  // BrowserContext độc lập sạch 100%, không bị tiêm token/script của Staff
+  guestContext: BrowserContext;
+  // Page sạch dành cho kiểm thử Form Login hoặc luồng Khách vãng lai
+  guestPage: Page;
 }
 
 export interface HybridAuthWorkerFixtures {
@@ -129,5 +134,17 @@ export const hybridAuth = base.extend<
       authApi: new AuthApiClient(request, workerStaffSnapshot.token),
       productApi: new ProductApiClient(request, workerStaffSnapshot.token),
     });
+  },
+
+  // ── 4. PHIÊN TRÌNH DUYỆT KHÁCH VÃNG LAI ĐỘC LẬP (GUEST / CLEAN SESSION) ──
+  guestContext: async ({ browser }, use) => {
+    const context = await browser.newContext();
+    await use(context);
+    await context.close();
+  },
+
+  guestPage: async ({ guestContext }, use) => {
+    const page = await guestContext.newPage();
+    await use(page);
   },
 });

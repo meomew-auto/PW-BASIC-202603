@@ -10,14 +10,26 @@ import { BasePage } from "../../../../1-basics/03-pom/CRM/pom/BasePage";
  */
 export class NekoLoginPage extends BasePage {
   private readonly pageLocators = {
-    usernameInput: (page: Page) => page.locator("#username"),
-    passwordInput: (page: Page) => page.locator("#password"),
-    loginButton: (page: Page) => page.locator("#btn-login"),
-    alertBox: (page: Page) => page.locator("#alert-box"),
+    usernameInput: (page: Page) =>
+      page
+        .locator(
+          '#username, input[name="identifier"], input[placeholder*="email" i], input[placeholder*="username" i]',
+        )
+        .first(),
+    passwordInput: (page: Page) =>
+      page.locator('#password, input[type="password"]').first(),
+    loginButton: (page: Page) =>
+      page
+        .locator(
+          '#btn-login, button[type="submit"], button:has-text("Log In"), button:has-text("Đăng nhập")',
+        )
+        .first(),
+    alertBox: (page: Page) =>
+      page.locator('#alert-box, [role="alert"]').first(),
     loadingSpinner: (page: Page) =>
-      page.locator(".spinner-border, #loading-spinner"),
+      page.locator(".spinner-border, #loading-spinner, .spinner"),
     appHeader: (page: Page) =>
-      page.getByText("Neko Coffee Admin", { exact: false }),
+      page.getByText("Neko Coffee", { exact: false }),
   };
 
   public element = this.createLocatorGetter(this.pageLocators);

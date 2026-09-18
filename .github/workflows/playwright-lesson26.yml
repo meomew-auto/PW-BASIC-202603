@@ -183,11 +183,11 @@ jobs:
         # ── TẦNG 6: STEP-LEVEL ENV (ƯU TIÊN CAO NHẤT GHI ĐÈ LÊN JOB VÀ WORKFLOW) ────
         env:
           CI: true
-          NODE_ENV: test
+          NODE_ENV: ${{ github.event.inputs.target_env || 'production' }}
           STEP_SCOPE: "Step-Scope-Command-Value"
           SCOPED_ENV_OVERRIDE: "Override-From-Step"
           TARGET_ENV: ${{ github.event.inputs.target_env || 'production' }}
-          BASE_URL: https://coffee.autoneko.com
+          BASE_URL: ${{ (github.event.inputs.target_env == 'staging') && 'https://staging-coffee.autoneko.com' || 'https://coffee.autoneko.com' }}
           SIMULATE_FAILURE: ${{ github.event.inputs.simulate_failure || 'false' }}
           STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD || 'NekoStaffVaultPass2026!' }}
           NEKO_API_KEY: ${{ secrets.NEKO_API_KEY || 'neko_sec_live_998877665544' }}

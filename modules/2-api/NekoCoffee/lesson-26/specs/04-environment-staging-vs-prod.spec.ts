@@ -8,15 +8,18 @@ import { test, expect } from "@playwright/test";
  * 🎯 Mục tiêu kiểm chứng:
  * 1. Tầng GitHub Environments: Phân định rõ ràng giữa môi trường Kiểm thử (Staging)
  *    và môi trường Vận hành thực tế (Production).
- * 2. Phân giải động BASE_URL: Tự động trỏ đúng domain hệ thống theo tham số
- *    `TARGET_ENV` được truyền từ bảng điều khiển `workflow_dispatch`.
+ * 2. Kiến trúc Đa Môi Trường Lai Ghép (Hybrid Multi-Env):
+ *    - Ở Local: Hỗ trợ nạp cấu hình qua dotenv-flow dựa vào NODE_ENV.
+ *    - Trên CI: Tự động nhận diện TARGET_ENV và BASE_URL do GitHub Actions tiêm vào.
+ * 3. Phân giải động BASE_URL: Tự động trỏ đúng domain hệ thống theo tham số
+ *    `TARGET_ENV` hoặc `NODE_ENV`.
  */
 
 test.describe("🌐 [CASE 04] Multi-Environment Switching (Staging vs Prod)", () => {
   test("01 - [ENV SWITCHING] Phân giải chính xác domain theo môi trường mục tiêu", async ({
     page,
   }) => {
-    const targetEnv = process.env.TARGET_ENV || "production";
+    const targetEnv = process.env.TARGET_ENV || process.env.NODE_ENV || "production";
     const expectedDomain =
       targetEnv === "staging"
         ? "https://staging-coffee.autoneko.com"
@@ -24,6 +27,8 @@ test.describe("🌐 [CASE 04] Multi-Environment Switching (Staging vs Prod)", ()
 
     console.log(`\n🌍 [Environment Resolver] Đang điều phối kiểm thử trên môi trường: [${targetEnv.toUpperCase()}]`);
     console.log(`   - Domain mục tiêu: ${expectedDomain}`);
+    console.log(`   - BASE_URL thực tế: ${process.env.BASE_URL || expectedDomain}`);
+    console.log(`   - Nguồn phân giải: ${process.env.CI ? "GitHub Actions CI Injection" : "Local dotenv-flow / CLI"}`);
 
     // Thẩm định logic phân giải URL
     if (targetEnv === "staging") {

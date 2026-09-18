@@ -16,7 +16,8 @@ import { test, expect } from "@playwright/test";
  * 6. Shift-Left Contract Mocking (Mock API AI Sommelier trước khi Backend code xong)
  */
 
-const LAB_URL = process.env.LAB_URL || "https://coffee.autoneko.com/vi/lab/route-mock";
+const LAB_URL =
+  process.env.LAB_URL || "https://coffee.autoneko.com/vi/lab/route-mock";
 
 const FAKE_PRODUCTS = {
   data: [
@@ -49,7 +50,9 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
   // =====================================================================
   // 1 · Mock 200 OK — dữ liệu giả về tức thì (< 500ms)
   // =====================================================================
-  test("01 - [MOCK 200 OK] Dữ liệu giả về tức thì, UI render bình thường", async ({ page }) => {
+  test("01 - [MOCK 200 OK] Dữ liệu giả về tức thì, UI render bình thường", async ({
+    page,
+  }) => {
     await page.route("**/api/products*", async (route) => {
       await route.fulfill({
         status: 200,
@@ -61,7 +64,10 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
     await page.goto(LAB_URL);
     const started = Date.now();
     await page.getByTestId("mock-demo-get-success").click();
-    await expect(page.getByTestId("mock-demo-get-result")).toContainText("Cà phê mock Espresso");
+    await page.pause();
+    await expect(page.getByTestId("mock-demo-get-result")).toContainText(
+      "Cà phê mock Espresso",
+    );
     const elapsed = Date.now() - started;
     expect(elapsed).toBeLessThan(800);
   });
@@ -69,7 +75,9 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
   // =====================================================================
   // 2 · Mock mạng chậm 2000ms — Spinner hiện trong lúc chờ rồi biến mất
   // =====================================================================
-  test("02 - [LATENCY INJECTION] Mock mạng chậm 2000ms — Spinner hiện trong lúc chờ", async ({ page }) => {
+  test("02 - [LATENCY INJECTION] Mock mạng chậm 2000ms — Spinner hiện trong lúc chờ", async ({
+    page,
+  }) => {
     await page.route("**/api/products*", async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await route.fulfill({
@@ -81,19 +89,24 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
 
     await page.goto(LAB_URL);
     await page.getByTestId("mock-demo-get-slow").click();
-
+    await page.pause();
     // Spinner phải hiển thị trong lúc chờ
     await expect(page.getByTestId("mock-demo-get-spinner")).toBeVisible();
 
     // Sau ~2s, dữ liệu về và Spinner biến mất
-    await expect(page.getByTestId("mock-demo-get-result")).toContainText("Cà phê mock Latte");
+    await expect(page.getByTestId("mock-demo-get-result")).toContainText(
+      "Cà phê mock Latte",
+    );
+
     await expect(page.getByTestId("mock-demo-get-spinner")).toBeHidden();
   });
 
   // =====================================================================
   // 3 · Mock backend sập 500 — UI không vỡ layout
   // =====================================================================
-  test("03 - [RESILIENCE 500] Mock backend sập 500 — hiện thông báo lỗi, layout không vỡ", async ({ page }) => {
+  test("03 - [RESILIENCE 500] Mock backend sập 500 — hiện thông báo lỗi, layout không vỡ", async ({
+    page,
+  }) => {
     await page.route("**/api/products*", async (route) => {
       await route.fulfill({
         status: 500,
@@ -104,11 +117,10 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
 
     await page.goto(LAB_URL);
     await page.getByTestId("mock-demo-get-error-500").click();
-
+    await page.pause();
     const result = page.getByTestId("mock-demo-get-result");
     await expect(result).toContainText("500");
     await expect(result).toContainText("Internal Server Error (mock)");
-
     // Layout các khối vẫn nguyên vẹn
     await expect(page.getByTestId("mock-demo-title")).toBeVisible();
     await expect(page.getByTestId("mock-demo-panel-get")).toBeVisible();
@@ -118,8 +130,12 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
   // =====================================================================
   // 4 · Mock mất kết nối — route.abort() không có response nào cả
   // =====================================================================
-  test("04 - [NETWORK DISCONNECT] Mock mất kết nối (abort) — báo lỗi mạng thay vì crash", async ({ page }) => {
-    await page.route("**/api/products*", (route) => route.abort("connectionrefused"));
+  test("04 - [NETWORK DISCONNECT] Mock mất kết nối (abort) — báo lỗi mạng thay vì crash", async ({
+    page,
+  }) => {
+    await page.route("**/api/products*", (route) =>
+      route.abort("connectionrefused"),
+    );
 
     await page.goto(LAB_URL);
     await page.getByTestId("mock-demo-get-abort").click();
@@ -132,7 +148,9 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
   // =====================================================================
   // 5 · Mock dữ liệu rỗng — trạng thái rỗng (empty state) phải hiện
   // =====================================================================
-  test("05 - [EMPTY STATE] Mock dữ liệu rỗng — UI vào trạng thái rỗng, không treo", async ({ page }) => {
+  test("05 - [EMPTY STATE] Mock dữ liệu rỗng — UI vào trạng thái rỗng, không treo", async ({
+    page,
+  }) => {
     await page.route("**/api/products*", async (route) => {
       await route.fulfill({
         status: 200,
@@ -152,7 +170,9 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
   // =====================================================================
   // 6 · Mock 429 Rate Limit — UI đếm ngược 300s theo Retry-After
   // =====================================================================
-  test("06 - [RATE LIMIT 429] Mock 429 Rate Limit — UI đếm ngược 300s theo Retry-After", async ({ page }) => {
+  test("06 - [RATE LIMIT 429] Mock 429 Rate Limit — UI đếm ngược 300s theo Retry-After", async ({
+    page,
+  }) => {
     await page.route("**/api/mock-demo*", async (route) => {
       await route.fulfill({
         status: 429,
@@ -174,7 +194,9 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
   // =====================================================================
   // 7 · Mock dữ liệu lớn (Big Data 500 items) — UI render mượt mà
   // =====================================================================
-  test("07 - [BIG DATA EDGE CASE] Mock 500 items — UI render mượt mà kèm badge đếm", async ({ page }) => {
+  test("07 - [BIG DATA EDGE CASE] Mock 500 items — UI render mượt mà kèm badge đếm", async ({
+    page,
+  }) => {
     const BIG_DATA_PRODUCTS = {
       data: Array.from({ length: 500 }, (_, i) => ({
         id: i + 1,
@@ -201,17 +223,21 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
 
     await page.goto(LAB_URL);
     await page.getByTestId("mock-demo-get-big-data").click();
-
+    await page.pause();
     const countBadge = page.getByTestId("mock-demo-get-count");
     await expect(countBadge).toBeVisible();
     await expect(countBadge).toContainText("500");
-    await expect(page.getByTestId("mock-demo-get-result")).toContainText("Cà phê hạt Neko mẻ số #1");
+    await expect(page.getByTestId("mock-demo-get-result")).toContainText(
+      "Cà phê hạt Neko mẻ số #1",
+    );
   });
 
   // =====================================================================
   // 8 · Mock dữ liệu chứa chuỗi độc hại (XSS) — React tự escape an toàn
   // =====================================================================
-  test("08 - [SECURITY XSS SAFE] Mock dữ liệu XSS — chuỗi script escape an toàn thành plain text", async ({ page }) => {
+  test("08 - [SECURITY XSS SAFE] Mock dữ liệu XSS — chuỗi script escape an toàn thành plain text", async ({
+    page,
+  }) => {
     const XSS_PRODUCTS = {
       data: [
         {
@@ -248,33 +274,47 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
     await page.getByTestId("mock-demo-get-xss").click();
 
     await expect(page.getByTestId("mock-demo-xss-safe")).toBeVisible();
-    await expect(page.getByTestId("mock-demo-get-result")).toContainText("<script>alert('xss_attack')</script>");
+    await expect(page.getByTestId("mock-demo-get-result")).toContainText(
+      "<script>alert('xss_attack')</script>",
+    );
     expect(alertTriggered).toBe(false);
   });
 
   // =====================================================================
   // 9 · route.abort() — Chặn ảnh nặng & tracking analytics tăng tốc test
   // =====================================================================
-  test("09 - [PERF OPTIMIZATION] route.abort() — Chặn ảnh nặng và script Google Analytics", async ({ page }) => {
+  test("09 - [PERF OPTIMIZATION] route.abort() — Chặn ảnh nặng và script Google Analytics", async ({
+    page,
+  }) => {
     await page.route("**/*.png*", (route) => route.abort("blockedbyclient"));
-    await page.route("**/google-analytics.com/**", (route) => route.abort("blockedbyclient"));
+    await page.route("**/google-analytics.com/**", (route) =>
+      route.abort("blockedbyclient"),
+    );
 
     await page.goto(LAB_URL);
     await page.getByTestId("mock-demo-media-load").click();
-
+    await page.pause();
     // Fallback ảnh hiện ra
-    await expect(page.getByTestId("mock-demo-heavy-image-fallback")).toBeVisible();
-    await expect(page.getByTestId("mock-demo-heavy-image-fallback")).toContainText("route.abort()");
+    await expect(
+      page.getByTestId("mock-demo-heavy-image-fallback"),
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("mock-demo-heavy-image-fallback"),
+    ).toContainText("route.abort()");
 
     // Google Analytics bị chặn an toàn
     await expect(page.getByTestId("mock-demo-tracking-blocked")).toBeVisible();
-    await expect(page.getByTestId("mock-demo-tracking-blocked")).toContainText("Google Analytics: Đã bị chặn an toàn");
+    await expect(page.getByTestId("mock-demo-tracking-blocked")).toContainText(
+      "Google Analytics: Đã bị chặn an toàn",
+    );
   });
 
   // =====================================================================
   // 10 · route.fetch() + Tampering — Tráo đổi thuộc tính biến User thường thành VIP Gold
   // =====================================================================
-  test("10 - [RESPONSE TAMPERING] route.fetch() — Tráo đổi thuộc tính biến Customer thành VIP Gold", async ({ page }) => {
+  test("10 - [RESPONSE TAMPERING] route.fetch() — Tráo đổi thuộc tính biến Customer thành VIP Gold", async ({
+    page,
+  }) => {
     await page.route("**/api/users/profile*", async (route) => {
       let json: Record<string, unknown>;
       try {
@@ -305,7 +345,7 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
 
     await page.goto(LAB_URL);
     await page.getByTestId("mock-demo-profile-check").click();
-
+    await page.pause();
     const vipCard = page.getByTestId("mock-demo-profile-vip-card");
     await expect(vipCard).toBeVisible();
     await expect(vipCard).toContainText("HỘI VIÊN KIM CƯƠNG VIP GOLD");
@@ -315,7 +355,9 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
   // =====================================================================
   // 11 · route.continue() — Tiêm Custom Header & Feature Flag động
   // =====================================================================
-  test("11 - [HEADER INJECTION] route.continue() — Tiêm Custom Header X-Feature-Flag vào request", async ({ page }) => {
+  test("11 - [HEADER INJECTION] route.continue() — Tiêm Custom Header X-Feature-Flag vào request", async ({
+    page,
+  }) => {
     await page.route("**/public/test/echo*", async (route) => {
       const headers = {
         ...route.request().headers(),
@@ -355,7 +397,9 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
   // =====================================================================
   // 12 · Shift-Left Testing — Mock API AI khi Backend thật chưa triển khai
   // =====================================================================
-  test("12 - [SHIFT-LEFT CONTRACT MOCK] Mock API AI chưa tồn tại trên Backend", async ({ page }) => {
+  test("12 - [SHIFT-LEFT CONTRACT MOCK] Mock API AI chưa tồn tại trên Backend", async ({
+    page,
+  }) => {
     const CONTRACT_AI_PAYLOAD = {
       drink_name: "Cà Phê Muối Neko Signature",
       mood: "Sáng tạo & Tập trung cao độ",
@@ -384,7 +428,9 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
   // =====================================================================
   // 13 · route.fetch() + Tampering — Biến số dư 50k thành 1 TỶ ĐỒNG
   // =====================================================================
-  test("13 - [WALLET TAMPERING 1B] route.fetch() — Tráo đổi số dư 50k thành 1 TỶ ĐỒNG Platinum", async ({ page }) => {
+  test("13 - [WALLET TAMPERING 1B] route.fetch() — Tráo đổi số dư 50k thành 1 TỶ ĐỒNG Platinum", async ({
+    page,
+  }) => {
     await page.route("**/public/test/sample-data*", async (route) => {
       let json: Record<string, any>;
       try {
@@ -420,14 +466,21 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
 
     const vipWalletCard = page.getByTestId("mock-demo-wallet-card-vip");
     await expect(vipWalletCard).toBeVisible();
-    await expect(page.getByTestId("mock-demo-wallet-balance")).toContainText("999.999.999");
-    await expect(page.getByTestId("mock-demo-wallet-badge")).toContainText("VIP PLATINUM DIAMOND");
+    await expect(page.getByTestId("mock-demo-wallet-balance")).toContainText(
+      "999.999.999",
+    );
+    await expect(page.getByTestId("mock-demo-wallet-badge")).toContainText(
+      "VIP PLATINUM DIAMOND",
+    );
+    await page.pause();
   });
 
   // =====================================================================
   // 14 · Latency Injection — Bơm trễ 1000ms vào API Ping & thanh Progress Bar
   // =====================================================================
-  test("14 - [LATENCY PING METER] Latency Injection — Bơm trễ 1000ms, đồng hồ đo cảnh báo độ trễ cao", async ({ page }) => {
+  test("14 - [LATENCY PING METER] Latency Injection — Bơm trễ 1000ms, đồng hồ đo cảnh báo độ trễ cao", async ({
+    page,
+  }) => {
     await page.route("**/public/test/ping*", async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       await route.fulfill({
@@ -443,7 +496,8 @@ test.describe("🌐 [LESSON 24] 09 - Showroom 5 Siêu Năng Lực page.route() t
 
     const statusBadge = page.getByTestId("mock-demo-ping-status");
     await expect(statusBadge).toBeVisible();
-    await expect(statusBadge).toContainText("Cảnh báo: Mạng bị tiêm độ trễ cao");
+    await expect(statusBadge).toContainText(
+      "Cảnh báo: Mạng bị tiêm độ trễ cao",
+    );
   });
 });
-

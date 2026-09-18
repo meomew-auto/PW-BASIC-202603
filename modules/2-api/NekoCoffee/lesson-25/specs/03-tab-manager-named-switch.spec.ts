@@ -23,7 +23,9 @@ test.describe("📑 [LESSON 25] 03 - Enterprise TabManager Named Switching", () 
     orderDetailPage,
     tabManager,
   }) => {
-    console.log("🚀 [Test 01] Thao tác luồng đa tab hoàn toàn bằng TabManager...");
+    console.log(
+      "🚀 [Test 01] Thao tác luồng đa tab hoàn toàn bằng TabManager...",
+    );
 
     // BƯỚC 1: Vào trang chi tiết đơn hàng (Tab 'main' đã được tự động đăng ký trong fixture)
     await orderDetailPage.navigate(103);
@@ -52,7 +54,11 @@ test.describe("📑 [LESSON 25] 03 - Enterprise TabManager Named Switching", () 
     );
 
     expect(tabManager.getTabCount()).toBe(3);
-    expect(tabManager.getAllAliases()).toEqual(["main", "invoice", "invoice-popup"]);
+    expect(tabManager.getAllAliases()).toEqual([
+      "main",
+      "invoice",
+      "invoice-popup",
+    ]);
     expect(tabManager.getCurrentAlias()).toBe("invoice-popup");
 
     const popupPom = new NekoInvoicePage(popupWindow);
@@ -113,6 +119,94 @@ test.describe("📑 [LESSON 25] 03 - Enterprise TabManager Named Switching", () 
     expect(tabManager.hasTab("temp_tab")).toBe(false);
     expect(() => tabManager.getPage("temp_tab")).toThrow();
 
-    console.log("✅ [Test 02] Cơ chế bảo vệ và dọn dẹp lỗi kiểm chứng thành công!");
+    console.log(
+      "✅ [Test 02] Cơ chế bảo vệ và dọn dẹp lỗi kiểm chứng thành công!",
+    );
+  });
+
+  test("03 - [GET POM COMPARISON] So sánh khởi tạo POM thủ công (new POM) vs tự động qua tabManager.getPom()", async ({
+    orderDetailPage,
+    tabManager,
+  }) => {
+    console.log(
+      "🚀 [Test 03] Khởi động so sánh 2 trường phái khởi tạo Page Object Model...",
+    );
+
+    // BƯỚC 1: Vào trang chi tiết đơn hàng #103
+    await orderDetailPage.navigate(103);
+
+    // BƯỚC 2: Mở Tab Hóa đơn ('invoice') và Popup ('invoice-popup')
+    const invoiceTab = await tabManager.waitForNewTab("invoice", async () => {
+      await orderDetailPage.clickPrintInvoice();
+    });
+
+    const popupWindow = await tabManager.waitForPopup(
+      "invoice",
+      "invoice-popup",
+      async () => {
+        const invoiceTempPom = new NekoInvoicePage(invoiceTab);
+        await invoiceTempPom.clickOpenNewWindow();
+      },
+    );
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 1️⃣ TRƯỜNG PHÁI 1: KHỞI TẠO THỦ CÔNG (Manual Instantiation)
+    // ─────────────────────────────────────────────────────────────────────────
+    // Đặc điểm: Tester phải tự quản lý và truyền biến Page rời rạc (`invoiceTab`, `popupWindow`)
+    console.log(
+      "📐 [Cách 1] Khởi tạo thủ công bằng 'new NekoInvoicePage(page)'...",
+    );
+    const invoicePomManual = new NekoInvoicePage(invoiceTab);
+    const popupPomManual = new NekoInvoicePage(popupWindow);
+
+    await invoicePomManual.expectOnPage();
+    await popupPomManual.expectOnPage();
+
+    const manualInvoiceCode = await invoicePomManual.getInvoiceOrderCode();
+    const manualPopupCode = await popupPomManual.getInvoiceOrderCode();
+    expect(manualInvoiceCode).toMatch(/#B2C-/);
+    expect(manualPopupCode).toBe(manualInvoiceCode);
+    console.log(
+      `✅ [Cách 1] Khởi tạo thủ công thành công: Mã = ${manualInvoiceCode}`,
+    );
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 2️⃣ TRƯỜNG PHÁI 2: ENTERPRISE TỰ ĐỘNG QUA tabManager.getPom()
+    // ─────────────────────────────────────────────────────────────────────────
+    // Đặc điểm: Không cần giữ biến `Page`. TabManager tự tra cứu Map theo alias và khởi tạo POM!
+    console.log(
+      "⚡ [Cách 2] Khởi tạo tự động qua 'tabManager.getPom(alias, POM)'...",
+    );
+    const invoicePomAuto = tabManager.getPom("invoice", NekoInvoicePage);
+    const popupPomAuto = tabManager.getPom("invoice-popup", NekoInvoicePage);
+
+    await invoicePomAuto.expectOnPage();
+    await popupPomAuto.expectOnPage();
+
+    const autoInvoiceCode = await invoicePomAuto.getInvoiceOrderCode();
+    const autoPopupCode = await popupPomAuto.getInvoiceOrderCode();
+    expect(autoInvoiceCode).toBe(manualInvoiceCode);
+    expect(autoPopupCode).toBe(manualPopupCode);
+    console.log(
+      `✅ [Cách 2] tabManager.getPom() đồng bộ hoàn hảo: Mã = ${autoInvoiceCode}`,
+    );
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 3️⃣ KIỂM CHỨNG BẢO VỆ LỖI: Gọi getPom() với alias không tồn tại
+    // ─────────────────────────────────────────────────────────────────────────
+    // TabManager phát hiện ngay trước khi truyền vào POM, ném lỗi rõ ràng:
+    expect(() => tabManager.getPom("unknown_tab", NekoInvoicePage)).toThrow(
+      /Không tìm thấy Tab với bí danh 'unknown_tab'/,
+    );
+    console.log(
+      "🛡️ [Test 03] Cơ chế kiểm soát lỗi bí danh của getPom() hoạt động chuẩn xác!",
+    );
+
+    // BƯỚC 3: Dọn dẹp tab phụ, giữ lại 'main'
+    await tabManager.closeAllExcept("main");
+    expect(tabManager.getTabCount()).toBe(1);
+    console.log("✅ [Test 03] Hoàn tất bài test so sánh POM chuẩn Enterprise!");
   });
 });
+
+//banr than việc giao tiếp khi mình code vibe code kà gọi api tới server + api key

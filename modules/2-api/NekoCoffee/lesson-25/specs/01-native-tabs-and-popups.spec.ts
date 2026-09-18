@@ -34,6 +34,7 @@ test.describe("📑 [LESSON 25] 01 - Native Tabs & Popups Fundamentals", () => {
 
     // BƯỚC 3: Đợi tab mới nạp xong DOM
     await invoiceTab.waitForLoadState("domcontentloaded");
+    const total = context.pages();
     console.log("🌟 Đã bắt được Tab mới thành công!");
     console.log(`🔗 URL của Tab mới: ${invoiceTab.url()}`);
 
@@ -46,14 +47,18 @@ test.describe("📑 [LESSON 25] 01 - Native Tabs & Popups Fundamentals", () => {
     await invoiceTab.close();
     expect(invoiceTab.isClosed()).toBe(true);
     expect(context.pages().length).toBe(1);
-    console.log("✅ [Test 01] Đóng tab an toàn và kiểm tra số lượng page thành công!");
+    console.log(
+      "✅ [Test 01] Đóng tab an toàn và kiểm tra số lượng page thành công!",
+    );
   });
 
   test("02 - [POPUP WINDOW] Mở Popup Window độc lập bằng page.waitForEvent('popup')", async ({
     page,
     invoicePage,
   }) => {
-    console.log("🚀 [Test 02] Bắt đầu kiểm thử Popup Window từ nút 'Cửa sổ mới'...");
+    console.log(
+      "🚀 [Test 02] Bắt đầu kiểm thử Popup Window từ nút 'Cửa sổ mới'...",
+    );
 
     // BƯỚC 1: Vào thẳng trang in hóa đơn
     await invoicePage.navigate(103);
@@ -72,7 +77,9 @@ test.describe("📑 [LESSON 25] 01 - Native Tabs & Popups Fundamentals", () => {
     expect(popupWindow.url()).toContain("invoice?popup=true");
 
     // Kiểm chứng nội dung hóa đơn hiển thị sắc nét trên popup
-    const popupTitle = popupWindow.getByRole("heading", { name: /hóa đơn/i }).first();
+    const popupTitle = popupWindow
+      .getByRole("heading", { name: /hóa đơn/i })
+      .first();
     await expect(popupTitle).toBeVisible({ timeout: 10000 });
 
     // BƯỚC 4: Thao tác chuyển tiêu điểm về trang gốc (bringToFront)
@@ -93,14 +100,20 @@ test.describe("📑 [LESSON 25] 01 - Native Tabs & Popups Fundamentals", () => {
 
     // Mở thêm 2 tab trắng song song
     const tab2 = await context.newPage();
-    await tab2.goto("https://coffee.autoneko.com/vi/introduce", { waitUntil: "commit" });
+    await tab2.goto("https://coffee.autoneko.com/vi/introduce", {
+      waitUntil: "commit",
+    });
 
     const tab3 = await context.newPage();
-    await tab3.goto("https://coffee.autoneko.com/vi/products", { waitUntil: "commit" });
+    await tab3.goto("https://coffee.autoneko.com/vi/products", {
+      waitUntil: "commit",
+    });
 
     // Kiểm tra context có đúng 3 tab
     const allPages = context.pages();
-    console.log(`📊 Tổng số tab hiện có trong BrowserContext: ${allPages.length}`);
+    console.log(
+      `📊 Tổng số tab hiện có trong BrowserContext: ${allPages.length}`,
+    );
     expect(allPages.length).toBe(3);
 
     // Chuyển tiêu điểm lần lượt giữa các tab

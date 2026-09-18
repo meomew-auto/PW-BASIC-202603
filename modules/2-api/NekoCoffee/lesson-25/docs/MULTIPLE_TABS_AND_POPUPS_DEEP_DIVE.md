@@ -230,7 +230,105 @@ const [popupWindow] = await Promise.all([
 
 ---
 
-### 🔹 2.4. Phân Tích Thuộc Tính HTML Kích Hoạt
+### 🔹 2.4. Phân Tích Thuộc Tính HTML Kích Hoạt & Sơ Đồ Trực Quan Hóa
+
+---
+
+#### 🖼️ 1. Sơ Đồ Trực Quan Giao Diện Người Dùng: New Tab vs. Standalone Popup Window
+
+```text
+══════════════════════════════════════════════════════════════════════════════════════════════════
+📌 TRƯỜNG HỢP 1: <a href="..." target="_blank"> ➔ MỞ TAB MỚI (NEW TAB TRÊN CÙNG CỬA SỔ)
+══════════════════════════════════════════════════════════════════════════════════════════════════
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  [Tab 1: Neko Admin #103]  [★ Tab 2: Hóa Đơn #103]  [ + ]                           ─  □  ✕  │
+├────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  🔗 https://coffee.autoneko.com/vi/admin/orders/103/invoice                                    │
+├────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                │
+│   ☕ NEKO COFFEE — HÓA ĐƠN ĐƠN HÀNG #103                                                      │
+│   Khách hàng: Nguyen Van A | Tổng tiền: 185.000đ                                               │
+│                                                                                                │
+│   [ In Hóa Đơn ]  [ Tải PDF ]  [ Cửa Sổ Mới (Popup) ]                                          │
+│                                                                                                │
+└────────────────────────────────────────────────────────────────────────────────────────────────┘
+  👉 Đặc điểm:
+     - Nằm chung một cửa sổ trình duyệt (Window), chung hàng Tab (Tab bar).
+     - Chia sẻ kích thước toàn màn hình (Viewport) của cửa sổ mẹ.
+     - Playwright đón bắt qua: 'context.waitForEvent("page")' HOẶC 'page.waitForEvent("popup")'.
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════
+📌 TRƯỜNG HỢP 2: window.open(url, '_blank', 'width=800,height=900') ➔ MỞ CỬA SỔ POPUP ĐỘC LẬP
+══════════════════════════════════════════════════════════════════════════════════════════════════
+
+  [ CỬA SỔ MẸ: CHÍNH (Full HD 1920x1080) ]
+┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  [Tab 1: Neko Admin #103]                                                      ─  □  ✕  │
+├────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  Chi Tiết Đơn Hàng #103                                                                        │
+│                                                                                                │
+│                 ┌────────────────────────────────────────────────────────┐                     │
+│                 │  🧾 CỬA SỔ POPUP RIÊNG BIỆT (800x900px)        ─ □ ✕  │                     │
+│                 ├────────────────────────────────────────────────────────┤                     │
+│                 │  🔗 https://coffee.autoneko.com/.../invoice?popup=true  │                     │
+│                 ├────────────────────────────────────────────────────────┤                     │
+│                 │                                                        │                     │
+│                 │   ☕ NEKO COFFEE INVOICE (Chế độ xem trước)            │                     │
+│                 │   Mã đơn: #103 | Ngày in: 12/09/2026                   │                     │
+│                 │                                                        │                     │
+│                 │   • Cửa sổ bay nổi (Floating Window) độc lập          │                     │
+│                 │   • KHÔNG có thanh Tab bar (Zero Tab strip)            │                     │
+│                 │   • Giữ liên kết 'window.opener' với trang mẹ          │                     │
+│                 │                                                        │                     │
+│                 └────────────────────────────────────────────────────────┘                     │
+│                                                                                                │
+└────────────────────────────────────────────────────────────────────────────────────────────────┘
+  👉 Đặc điểm:
+     - Mở thành một OS Window riêng biệt nổi trên màn hình, kích thước cố định 800x900px.
+     - Không có Tab bar (thanh tab bị ẩn).
+     - Rất phổ biến cho: Hóa đơn in, Cổng thanh toán VNPay/Momo, Cửa sổ đăng nhập Google/OAuth.
+     - Playwright đón bắt tối ưu nhất qua: 'page.waitForEvent("popup")'.
+```
+
+---
+
+#### 🔄 2. Sơ Đồ Luồng Tín Hiệu CDP & Phân Phối Sự Kiện Trong Playwright
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Tester as 🧑‍💻 Kỹ sư Automation
+    participant DOM as 📄 Trang Mẹ (DOM/HTML)
+    participant Engine as 🌐 Chromium Browser Engine
+    participant CDP as ⚡ Chrome DevTools Protocol (CDP)
+    participant PW as 🎭 Playwright Event Router
+    participant Context as 🏢 BrowserContext
+    participant ParentPage as 📑 Page (Trang Mẹ)
+
+    Note over Tester, ParentPage: CÁCH 1: <a href="..." target="_blank">
+    DOM->>Engine: Người dùng click vào <a target="_blank">
+    Engine->>Engine: Khởi tạo Target mới (Type: Page / Tab mới)
+    Engine-->>CDP: Gửi tín hiệu Target.targetCreated { targetId: "page-abc-123" }
+    CDP-->>PW: Bắn WebSocket Event qua giao thức CDP
+    PW->>Context: 🔔 Phát sự kiện 'page' (Toàn cục Context nhận biết)
+    PW->>ParentPage: 🔔 Phát sự kiện 'popup' (Trang mẹ nhận diện con đẻ)
+    Note over Context, ParentPage: Tester dùng context.waitForEvent('page') HOẶC page.waitForEvent('popup') đều bắt được!
+
+    Note over Tester, ParentPage: CÁCH 2: window.open(url, '_blank', 'width=800,height=900')
+    DOM->>Engine: Thực thi JS window.open(..., features)
+    Engine->>Engine: Sinh Window mới riêng biệt (Popup Window 800x900, gán window.opener)
+    Engine-->>CDP: Gửi tín hiệu Target.targetCreated { targetId: "popup-xyz-789", openerId: "page-parent" }
+    CDP-->>PW: Bắn WebSocket Event Target.attachedToTarget
+    PW->>Context: 🔔 Phát sự kiện 'page'
+    PW->>ParentPage: 🔔 Phát sự kiện 'popup' (Chính xác 100% nhờ openerId)
+    Note over Context, ParentPage: Tester dùng page.waitForEvent('popup') là lựa chọn chuẩn Senior nhất!
+```
+
+---
+
+#### 🔬 3. Chi Tiết Thuộc Tính HTML & Cú Pháp Playwright Tương Ứng
 
 1. **Thẻ liên kết chuẩn với thuộc tính Target Blank**:
    ```html
@@ -239,16 +337,77 @@ const [popupWindow] = await Promise.all([
      In hóa đơn
    </a>
    ```
-   *Khi click vào liên kết này, trình duyệt gửi tín hiệu `Target.targetCreated` qua CDP. Playwright chuyển hóa thành sự kiện `'page'` trên context và `'popup'` trên trang hiện tại.*
+   * **Cơ chế**: Thuộc tính `target="_blank"` hướng dẫn Browser Engine mở tài nguyên trong một **Browsing Context mới** (mặc định là Tab mới).
+   * **Cú pháp đón bắt chuẩn**:
+     ```typescript
+     const [invoiceTab] = await Promise.all([
+       context.waitForEvent("page"),
+       orderDetailPage.element("printInvoiceLink").click(),
+     ]);
+     ```
 
-2. **Button gắn JavaScript gọi `window.open`**:
+2. **Button gắn JavaScript gọi `window.open` với Window Features**:
    ```html
    <!-- Nút Cửa sổ mới trên Neko Coffee Invoice -->
    <button onclick="window.open('/admin/orders/103/invoice?popup=true', '_blank', 'width=800,height=900')">
      Cửa sổ mới
    </button>
    ```
-   *Kích hoạt một cửa sổ popup độc lập với kích thước tùy chỉnh.*
+   * **Cơ chế**: Tham số thứ 3 (`'width=800,height=900'`) là các Window Features. Khi có tham số kích thước này, Browser sẽ **tách thành Cửa sổ Popup độc lập** thay vì mở một Tab trên thanh tab bar. Đồng thời, liên kết hai chiều `window.opener` được giữ nguyên.
+   * **Cú pháp đón bắt chuẩn**:
+     ```typescript
+     const [popupWindow] = await Promise.all([
+       page.waitForEvent("popup"),
+       invoicePage.element("newWindowButton").click(),
+     ]);
+     ```
+
+---
+
+#### 💡 4. Giải Đáp Thắc Mắc Sống Còn: "Nút In Hóa Đơn Là Page Hay Popup?"
+
+Một câu hỏi kinh điển mà hầu như mọi kỹ sư Automation đều băn khoăn:  
+> *"Nút 'In hóa đơn' mở ra Tab mới nằm ngay ngắn trên thanh Tab bar, vậy nó là `Page` hay `Popup`? Tại sao lại có thể đón bắt nó bằng cả `page.waitForEvent('popup')` lẫn `context.waitForEvent('page')`?"*
+
+Dưới đây là câu trả lời toàn diện từ 3 góc độ:
+
+##### 1. Góc nhìn Trải nghiệm Người dùng (UI View):
+- Thẻ `<a href="..." target="_blank">` mở ra một **TAB MỚI (New Tab)**. Nó nằm chung một cửa sổ trình duyệt (Window) với trang mẹ, có đầy đủ thanh địa chỉ và thanh Tab bar. Người dùng thông thường **không gọi đây là Popup**.
+
+##### 2. Góc nhìn Kiểu Dữ Liệu Playwright (TypeScript Type System):
+- Cả hai đều có kiểu dữ liệu duy nhất là: **`Page`** (`import { type Page } from '@playwright/test'`).
+- Trong toàn bộ mã nguồn của Playwright, **HOÀN TOÀN KHÔNG CÓ class nào tên là `Popup`**. Mọi Tab mới, Cửa sổ mới, Popup mới hay trang chính đều là các thể hiện (instance) của lớp `Page` và sở hữu các phương thức tương đồng 100% (`goto`, `click`, `locator`, `evaluate`, `close`...).
+
+##### 3. Góc nhìn Kiến Trúc Sự Kiện CDP (Event Architecture):
+- **Tại sao lại có sự kiện `'popup'` cho một Tab bình thường?**  
+  Trên đối tượng `Page` của Playwright, đội ngũ kỹ sư **không thiết kế sự kiện nào tên là `'page'` hay `'tab'`**. Thay vào đó, họ chỉ tạo ra **duy nhất một sự kiện tên là `'popup'`** để đại diện cho *bất kỳ trang mới nào được sinh ra từ hành động của trang hiện tại*!
+- Miễn là trang con sinh ra do một cú click (`<a target="_blank">`) hoặc script (`window.open()`) từ trang mẹ, Chromium sẽ gửi thuộc tính `openerId` về qua CDP, và Playwright sẽ phân phối sự kiện `'popup'` đến đúng trang mẹ đó.
+
+```text
+Trang Mẹ: Chi Tiết Đơn Hàng #103
+│
+├── [1] Click nút "In hóa đơn" (<a target="_blank">)
+│   └── ➔ MỞ TAB MỚI: /vi/admin/orders/103/invoice
+│          • Hiển thị: Tab thứ 2 trên thanh Tab bar.
+│          • Kiểu dữ liệu: Page
+│          • Cách đón bắt:
+│            - context.waitForEvent('page')   (Toàn cục trong Context)
+│            - page.waitForEvent('popup')      (Cục bộ từ Trang mẹ)
+│
+└── [2] Tại trang Hóa Đơn, click "Cửa sổ mới" (window.open 'width=800,height=900')
+    └── ➔ BẬT POPUP WINDOW RIÊNG BIỆT: /vi/admin/orders/103/invoice?popup=true
+           • Hiển thị: Cửa sổ OS bay nổi độc lập 800x900px, ẨN thanh Tab bar.
+           • Kiểu dữ liệu: Page
+           • Cách đón bắt:
+             - page.waitForEvent('popup')      (Chuẩn Senior nhất)
+```
+
+> [!WARNING]
+> **Khi Nào `page.waitForEvent('popup')` SẼ BỊ BẤT LỰC (TREO 30S TIMEOUT)?**  
+> Khi trang mới được sinh ra từ mã lệnh kiểm thử trong Node.js (ví dụ: `await context.newPage()`), trang mới này **không có trang mẹ (không có opener)**.  
+> Lúc này:
+> - `context.waitForEvent('page')` $\rightarrow$ **Bắt được 100%**.
+> - `page.waitForEvent('popup')` $\rightarrow$ **Treo vĩnh viễn đến khi timeout**, vì trang mẹ không hề thực hiện hành động sinh con!
 
 ---
 
@@ -687,8 +846,155 @@ Thay vì chỉ đưa ra cú pháp trừu tượng, phần này sẽ đưa trực
 └───────────────────┴──────────────────────────────────────────────────────────────┘
 ```
 
+#### 📍 Vị Trí File Mã Nguồn & Bảng Cú Pháp Terminal Chạy Từng Test Case
+
+Toàn bộ kịch bản kiểm thử trong bài học được tổ chức bài bản tại thư mục [`modules/2-api/NekoCoffee/lesson-25/`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-25):
+
+| Thành phần kiến trúc | Đường dẫn tệp tin mã nguồn | Trách nhiệm đảm nhiệm |
+|---|---|---|
+| **Native Specs** | [`01-native-tabs-and-popups.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-25/specs/01-native-tabs-and-popups.spec.ts) | 3 Test Case minh họa Native API (`waitForEvent('page')`, `waitForEvent('popup')`, `context.pages()`) |
+| **Enterprise Specs** | [`03-tab-manager-named-switch.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts) | 3 Test Case điều phối đa tab & popup theo tên, chuyển tiêu điểm, chịu lỗi & so sánh getPom() |
+| **Full Flow Specs** | [`02-invoice-order-workflow.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-25/specs/02-invoice-order-workflow.spec.ts) | Kịch bản E2E nghiệp vụ xuyên suốt Đơn hàng #103 ➔ In hóa đơn ➔ Popup POS |
+| **Tab Controller** | [`TabManager.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-25/helpers/TabManager.ts) | Lớp điều phối đóng gói toàn bộ logic `Map<string, Page>`, listener, atomic trigger, focus |
+| **Fixture & Hooks** | [`tab-gatekeeper.fixture.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-25/fixtures/tab-gatekeeper.fixture.ts) / [`tab-app.fixture.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-25/fixtures/tab-app.fixture.ts) | Tự động hóa snapshot auth, inject `tabManager` và teardown giải phóng tab rò rỉ |
+| **Cấu hình Runner** | [`configs/playwright.lesson25-tabs.config.ts`](file:///e:/playwright-pro/202603-PW_BASIC/configs/playwright.lesson25-tabs.config.ts) | Cấu hình chuyên biệt cho Lesson 25 (`workers: 1`, timeout 35s, html report) |
+
+---
+
+##### 💻 Cú Pháp Dòng Lệnh Chạy Từng Test Case Riêng Biệt (Per-TCS Execution)
+
+Kỹ sư có thể dùng cờ lọc `-g` (grep) của Playwright Test Runner để kích hoạt chính xác từng case mong muốn qua Terminal:
+
+```bash
+# ==============================================================================
+# 🎯 CHẠY RIÊNG TỪNG TEST CASE THEO NHU CẦU (LỌC THEO TÊN BẰNG CỜ -g)
+# ==============================================================================
+
+# 1️⃣ [TCS 1 - Native Tab] Mở Tab mới từ link <a target="_blank"> (Spec 01 - Test 01):
+npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/01-native-tabs-and-popups.spec.ts -g "01 - \[RACE-CONDITION FREE\]" --config=configs/playwright.lesson25-tabs.config.ts
+
+# 2️⃣ [TCS 2 - Native Popup] Mở Popup Window độc lập bằng window.open (Spec 01 - Test 02):
+npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/01-native-tabs-and-popups.spec.ts -g "02 - \[POPUP WINDOW\]" --config=configs/playwright.lesson25-tabs.config.ts
+
+# 3️⃣ [TCS 3 - Native Pages] Giám sát danh sách context.pages() đa tab (Spec 01 - Test 03):
+npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/01-native-tabs-and-popups.spec.ts -g "03 - \[CONTEXT PAGES TRACKING\]" --config=configs/playwright.lesson25-tabs.config.ts
+
+# 4️⃣ [TCS 4 - Enterprise Workflow] Luồng Đa Tab & Popup Trọn Gói (Spec 03 - Test 01):
+# (Bao gồm Case 1: Mở Tab, Case 2: Mở Popup, Case 3: Switch Tab, Case 4: Đóng 1 Tab, Case 6: Dọn dẹp)
+npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts -g "01 - \[NAMED MANAGEMENT\]" --config=configs/playwright.lesson25-tabs.config.ts
+
+# 5️⃣ [TCS 5 - Error Resilience] Kiểm Thử Bắt Lỗi An Toàn Khi Tab Không Tồn Tại / Bị Đóng (Spec 03 - Test 02):
+# (Chính là Case 5: Bắt Lỗi An Toàn trong bảng 6 Cases)
+npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts -g "02 - \[ERROR RESILIENCE\]" --config=configs/playwright.lesson25-tabs.config.ts
+
+# 6️⃣ [TCS 6 - Full E2E Workflow] Kịch bản nghiệp vụ Đơn hàng & Hóa đơn thực tế (Spec 02):
+npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/02-invoice-order-workflow.spec.ts -g "01 - \[FULL E2E WORKFLOW\]" --config=configs/playwright.lesson25-tabs.config.ts
+
+# 7️⃣ [TCS 7 - POM Comparison] So sánh khởi tạo POM thủ công vs tự động qua tabManager.getPom() (Spec 03 - Test 03):
+npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts -g "03 - \[GET POM COMPARISON\]" --config=configs/playwright.lesson25-tabs.config.ts
+```
+
+```bash
+# ==============================================================================
+# 🚀 CÁC LỆNH CHẠY TOÀN FILE VÀ CHẠY TOÀN BỘ SUITE BÀI 25
+# ==============================================================================
+
+# Chạy toàn bộ file Native Spec 01 (3 tests):
+npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/01-native-tabs-and-popups.spec.ts --config=configs/playwright.lesson25-tabs.config.ts
+
+# Chạy toàn bộ file Enterprise TabManager Spec 03 (2 tests):
+npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts --config=configs/playwright.lesson25-tabs.config.ts
+
+# Chạy TRỌN GÓI TOÀN BỘ Bài 25 qua npm script (10/10 tests):
+npm run test:lesson25-tabs
+```
+
+---
+
+##### 📋 Bằng Chứng Nhật Ký Đầu Ra Terminal Thực Tế (100% Passed)
+
+Nhật ký thực thi trực tiếp từ Terminal khi chạy file [`03-tab-manager-named-switch.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts) minh chứng rõ nét quy trình vận hành của TabManager:
+
+```text
+Running 2 tests using 1 worker
+
+[TAB WORKER 0] 🚀 Khởi tạo Staff RAM Snapshot: staff_tab_w0_1789219297406@nekocoffee.com
+🚀 [Test 01] Thao tác luồng đa tab hoàn toàn bằng TabManager...
+⏳ [TabManager] Đang đón bắt Tab mới với tên 'invoice'...
+[Click] In hóa đơn
+✅ [TabManager] Đã bắt thành công Tab 'invoice' | URL: https://coffee.autoneko.com/vi/admin/orders/103/invoice
+⏳ [TabManager] Đang đón bắt Popup Window 'invoice-popup' từ nguồn 'invoice'...
+[Click] Cửa sổ mới
+✅ [TabManager] Đã bắt thành công Popup 'invoice-popup' | URL: https://coffee.autoneko.com/vi/admin/orders/103/invoice?popup=true
+🔄 Chuyển tiêu điểm về 'main'...
+🎯 [TabManager] Đã chuyển đổi tiêu điểm sang Tab 'main' (https://coffee.autoneko.com/vi/admin/orders/103)
+🔄 Chuyển tiêu điểm về 'invoice'...
+🎯 [TabManager] Đã chuyển đổi tiêu điểm sang Tab 'invoice' (https://coffee.autoneko.com/vi/admin/orders/103/invoice)
+🔄 Chuyển tiêu điểm về 'invoice-popup'...
+🎯 [TabManager] Đã chuyển đổi tiêu điểm sang Tab 'invoice-popup' (https://coffee.autoneko.com/vi/admin/orders/103/invoice?popup=true)
+🗑️ Đóng tab 'invoice-popup'...
+🧹 [TabManager] Tab 'invoice-popup' đã đóng và được dọn khỏi danh bạ.
+🗑️ [TabManager] Đã đóng Tab 'invoice-popup'.
+🧹 Dọn dẹp đóng tất cả chỉ giữ 'main'...
+🧹 [TabManager] Bắt đầu đóng tất cả các Tab ngoại trừ 'main'...
+🧹 [TabManager] Tab 'invoice' đã đóng và được dọn khỏi danh bạ.
+🎯 [TabManager] Đã chuyển đổi tiêu điểm sang Tab 'main' (https://coffee.autoneko.com/vi/admin/orders/103)
+✅ [Test 01] TabManager điều phối hoàn hảo không tì vết!
+🧹 [TabManager] Bắt đầu đóng tất cả các Tab ngoại trừ 'main'...
+🎯 [TabManager] Đã chuyển đổi tiêu điểm sang Tab 'main' (https://coffee.autoneko.com/vi/admin/orders/103)
+🧹 [TabManager] Tab 'main' đã đóng và được dọn khỏi danh bạ.
+  ok 1 modules\2-api\NekoCoffee\lesson-25\specs\03-tab-manager-named-switch.spec.ts:22:7 › 📑 [LESSON 25] 03 - Enterprise TabManager Named Switching › 01 - [NAMED MANAGEMENT] Điều phối đa tab & popup theo tên bí danh trực quan (9.2s)
+
+🚀 [Test 02] Kiểm thử cơ chế bảo vệ lỗi của TabManager...
+⏳ [TabManager] Đang đón bắt Tab mới với tên 'temp_tab'...
+[Click] In hóa đơn
+✅ [TabManager] Đã bắt thành công Tab 'temp_tab' | URL: https://coffee.autoneko.com/vi/admin/orders/103/invoice
+🧹 [TabManager] Tab 'temp_tab' đã đóng và được dọn khỏi danh bạ.
+✅ [Test 02] Cơ chế bảo vệ và dọn dẹp lỗi kiểm chứng thành công!
+🧹 [TabManager] Bắt đầu đóng tất cả các Tab ngoại trừ 'main'...
+🎯 [TabManager] Đã chuyển đổi tiêu điểm sang Tab 'main' (https://coffee.autoneko.com/vi/admin/orders/103)
+🧹 [TabManager] Tab 'main' đã đóng và được dọn khỏi danh bạ.
+  ok 2 modules\2-api\NekoCoffee\lesson-25\specs\03-tab-manager-named-switch.spec.ts:89:7 › 📑 [LESSON 25] 03 - Enterprise TabManager Named Switching › 02 - [ERROR RESILIENCE] Bắt lỗi trực quan khi truy cập tab không tồn tại hoặc đã đóng (6.3s)
+[TAB WORKER 0] 📤 Giải phóng Staff RAM Snapshot
+
+  2 passed (17.5s)
+```
+
+Nhật ký thực thi từ Native Spec 01 ([`01-native-tabs-and-popups.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-25/specs/01-native-tabs-and-popups.spec.ts)):
+```text
+Running 3 tests using 1 worker
+
+[TAB WORKER 0] 🚀 Khởi tạo Staff RAM Snapshot: staff_tab_w0_1789219318669@nekocoffee.com
+🚀 [Test 01] Bắt đầu luồng kiểm thử mở Tab mới nguyên bản...
+📍 Đã tải trang Chi tiết đơn hàng #103
+🌟 Đã bắt được Tab mới thành công!
+🔗 URL của Tab mới: https://coffee.autoneko.com/vi/admin/orders/103/invoice
+✅ [Test 01] Đóng tab an toàn và kiểm tra số lượng page thành công!
+  ok 1 modules\2-api\NekoCoffee\lesson-25\specs\01-native-tabs-and-popups.spec.ts:17:7 › 📑 [LESSON 25] 01 - Native Tabs & Popups Fundamentals › 01 - [RACE-CONDITION FREE] Mở Tab mới từ thẻ <a target='_blank'> bằng context.waitForEvent('page') (6.5s)
+
+🚀 [Test 02] Bắt đầu kiểm thử Popup Window từ nút 'Cửa sổ mới'...
+🪟 Đã bắt được Popup Window: https://coffee.autoneko.com/vi/admin/orders/103/invoice?popup=true
+✅ [Test 02] Thao tác với Popup Window hoàn tất xuất sắc!
+  ok 2 modules\2-api\NekoCoffee\lesson-25\specs\01-native-tabs-and-popups.spec.ts:52:7 › 📑 [LESSON 25] 01 - Native Tabs & Popups Fundamentals › 02 - [POPUP WINDOW] Mở Popup Window độc lập bằng page.waitForEvent('popup') (5.5s)
+
+🚀 [Test 03] Kiểm tra quản lý mảng context.pages()...
+📊 Tổng số tab hiện có trong BrowserContext: 3
+✅ [Test 03] Hoàn tất điều phối đa tab native!
+  ok 3 modules\2-api\NekoCoffee\lesson-25\specs\01-native-tabs-and-popups.spec.ts:88:7 › 📑 [LESSON 25] 01 - Native Tabs & Popups Fundamentals › 03 - [CONTEXT PAGES TRACKING] Giám sát danh sách context.pages() khi mở nhiều tab (1.9s)
+[TAB WORKER 0] 📤 Giải phóng Staff RAM Snapshot
+
+  3 passed (16.8s)
+```
+
 #### 📌 Case 1: Mở và Đăng Ký 1 Tab Mới Từ Thẻ `<a target="_blank">`
 - **Tình huống**: Click liên kết "In hóa đơn" trên màn hình chi tiết đơn hàng, trình duyệt sinh ra một Tab mới.
+- **Lệnh chạy Terminal thực tế**:
+  ```bash
+  # Native:
+  npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/01-native-tabs-and-popups.spec.ts -g "01 - \[RACE-CONDITION FREE\]" --config=configs/playwright.lesson25-tabs.config.ts
+  # Enterprise TabManager:
+  npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts -g "01 - \[NAMED MANAGEMENT\]" --config=configs/playwright.lesson25-tabs.config.ts
+  ```
 - **Đối chiếu mã nguồn thực tế giữa 2 cách**:
 
 ```typescript
@@ -724,6 +1030,13 @@ await invoicePom.expectOnPage();
 
 #### 📌 Case 2: Mở và Đăng Ký 1 Popup Window Từ `window.open(...)`
 - **Tình huống**: Từ Tab hóa đơn, bấm nút "Cửa sổ mới" để mở cửa sổ POS nhỏ gọn phục vụ in bill (`?popup=true`).
+- **Lệnh chạy Terminal thực tế**:
+  ```bash
+  # Native:
+  npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/01-native-tabs-and-popups.spec.ts -g "02 - \[POPUP WINDOW\]" --config=configs/playwright.lesson25-tabs.config.ts
+  # Enterprise TabManager:
+  npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts -g "01 - \[NAMED MANAGEMENT\]" --config=configs/playwright.lesson25-tabs.config.ts
+  ```
 - **Đối chiếu mã nguồn thực tế giữa 2 cách**:
 
 ```typescript
@@ -761,6 +1074,10 @@ await popupPom.expectOnPage();
 
 #### 📌 Case 3: Chuyển Đổi Tiêu Điểm (Switching Focus) Giữa Các Cửa Sổ Bằng `switchTo`
 - **Tình huống**: Cần nhảy cóc kiểm tra dữ liệu qua lại giữa Đơn hàng gốc (`'main'`), Tab Hóa đơn (`'invoice'`) và Cửa sổ in (`'invoice-popup'`).
+- **Lệnh chạy Terminal thực tế**:
+  ```bash
+  npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts -g "01 - \[NAMED MANAGEMENT\]" --config=configs/playwright.lesson25-tabs.config.ts
+  ```
 - **Mã nguồn thực tế (Từ `03-tab-manager-named-switch.spec.ts: Dòng 61-73`)**:
 
 ```typescript
@@ -788,6 +1105,10 @@ expect(tabManager.getCurrentAlias()).toBe("invoice-popup");
 
 #### 📌 Case 4: Đóng 1 Tab Đơn Lẻ & Tự Động Điều Phối Tiêu Điểm Bằng `closeTab`
 - **Tình huống**: In xong hóa đơn trên popup, muốn đóng riêng cửa sổ popup mà không ảnh hưởng tới Tab Hóa đơn hay Tab chính.
+- **Lệnh chạy Terminal thực tế**:
+  ```bash
+  npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts -g "01 - \[NAMED MANAGEMENT\]" --config=configs/playwright.lesson25-tabs.config.ts
+  ```
 - **Mã nguồn thực tế (Từ `03-tab-manager-named-switch.spec.ts: Dòng 74-79`)**:
 
 ```typescript
@@ -805,6 +1126,10 @@ expect(tabManager.getCurrentAlias()).toBe("main");
 
 #### 📌 Case 5: Cơ Chế Chịu Lỗi Phòng Vệ Cho Từng Case Lỗi Đơn Lẻ (Error Resilience)
 - **Tình huống**: Kiểm thử khả năng chịu lỗi khi kiểm thử viên gọi nhầm tên tab hoặc khi tab bị đóng bất ngờ bởi mã ngoài.
+- **Lệnh chạy Terminal thực tế**:
+  ```bash
+  npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts -g "02 - \[ERROR RESILIENCE\]" --config=configs/playwright.lesson25-tabs.config.ts
+  ```
 - **Mã nguồn thực tế trọn vẹn (Từ `03-tab-manager-named-switch.spec.ts: Dòng 89-117`)**:
 
 ```typescript
@@ -844,6 +1169,10 @@ test("02 - [ERROR RESILIENCE] Bắt lỗi trực quan khi truy cập tab không 
 
 #### 📌 Case 6: Dọn Dẹp Sạch Toàn Bộ Tab Phụ Sau Test (Zero-Leak Teardown) Bằng `closeAllExcept`
 - **Tình huống**: Kết thúc kịch bản kiểm thử, hệ thống cần đóng toàn bộ các tab trung gian (`invoice`, `invoice-popup`), chỉ giữ lại tab gốc `'main'` để sẵn sàng cho test case kế tiếp.
+- **Lệnh chạy Terminal thực tế**:
+  ```bash
+  npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts -g "01 - \[NAMED MANAGEMENT\]" --config=configs/playwright.lesson25-tabs.config.ts
+  ```
 - **Mã nguồn thực tế (Từ `03-tab-manager-named-switch.spec.ts: Dòng 80-86`)**:
 
 ```typescript
@@ -1025,6 +1354,101 @@ test("01 - [NAMED MANAGEMENT] Điều phối đa tab & popup theo tên bí danh 
 
 ---
 
+#### 3️⃣ Kịch Bản So Sánh Trực Diện: Khởi Tạo POM Thủ Công (`new POM`) vs Tự Động Qua `tabManager.getPom()` ([`03-tab-manager-named-switch.spec.ts: Test 03`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts))
+
+Để giải quyết triệt để sự phân vân của kỹ sư giữa hai cách tiếp cận:
+- **Trường phái 1 (Khởi tạo thủ công)**: `new NekoInvoicePage(invoiceTab)` và `new NekoInvoicePage(popupWindow)`.
+- **Trường phái 2 (Enterprise getPom)**: `tabManager.getPom("invoice", NekoInvoicePage)` và `tabManager.getPom("invoice-popup", NekoInvoicePage)`.
+
+Mã nguồn thực tế trọn vẹn của **Test 03** đã được tích hợp trực tiếp vào tập tin [`03-tab-manager-named-switch.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts):
+
+```typescript
+test("03 - [GET POM COMPARISON] So sánh khởi tạo POM thủ công (new POM) vs tự động qua tabManager.getPom()", async ({
+  orderDetailPage,
+  tabManager,
+}) => {
+  console.log("🚀 [Test 03] Khởi động so sánh 2 trường phái khởi tạo Page Object Model...");
+
+  // BƯỚC 1: Vào trang chi tiết đơn hàng #103
+  await orderDetailPage.navigate(103);
+
+  // BƯỚC 2: Mở Tab Hóa đơn ('invoice') và Popup ('invoice-popup')
+  const invoiceTab = await tabManager.waitForNewTab("invoice", async () => {
+    await orderDetailPage.clickPrintInvoice();
+  });
+
+  const popupWindow = await tabManager.waitForPopup("invoice", "invoice-popup", async () => {
+    const invoiceTempPom = new NekoInvoicePage(invoiceTab);
+    await invoiceTempPom.clickOpenNewWindow();
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 1️⃣ TRƯỜNG PHÁI 1: KHỞI TẠO THỦ CÔNG (Manual Instantiation)
+  // ─────────────────────────────────────────────────────────────────────────
+  // Đặc điểm: Tester phải tự quản lý và truyền biến Page rời rạc (`invoiceTab`, `popupWindow`)
+  console.log("📐 [Cách 1] Khởi tạo thủ công bằng 'new NekoInvoicePage(page)'...");
+  const invoicePomManual = new NekoInvoicePage(invoiceTab);
+  const popupPomManual = new NekoInvoicePage(popupWindow);
+
+  await invoicePomManual.expectOnPage();
+  await popupPomManual.expectOnPage();
+
+  const manualInvoiceCode = await invoicePomManual.getInvoiceOrderCode();
+  const manualPopupCode = await popupPomManual.getInvoiceOrderCode();
+  expect(manualInvoiceCode).toMatch(/#B2C-/);
+  expect(manualPopupCode).toBe(manualInvoiceCode);
+  console.log(`✅ [Cách 1] Khởi tạo thủ công thành công: Mã = ${manualInvoiceCode}`);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 2️⃣ TRƯỜNG PHÁI 2: ENTERPRISE TỰ ĐỘNG QUA tabManager.getPom()
+  // ─────────────────────────────────────────────────────────────────────────
+  // Đặc điểm: Không cần giữ biến `Page`. TabManager tự tra cứu Map theo alias và khởi tạo POM!
+  console.log("⚡ [Cách 2] Khởi tạo tự động qua 'tabManager.getPom(alias, POM)'...");
+  const invoicePomAuto = tabManager.getPom("invoice", NekoInvoicePage);
+  const popupPomAuto = tabManager.getPom("invoice-popup", NekoInvoicePage);
+
+  await invoicePomAuto.expectOnPage();
+  await popupPomAuto.expectOnPage();
+
+  const autoInvoiceCode = await invoicePomAuto.getInvoiceOrderCode();
+  const autoPopupCode = await popupPomAuto.getInvoiceOrderCode();
+  expect(autoInvoiceCode).toBe(manualInvoiceCode);
+  expect(autoPopupCode).toBe(manualPopupCode);
+  console.log(`✅ [Cách 2] tabManager.getPom() đồng bộ hoàn hảo: Mã = ${autoInvoiceCode}`);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 3️⃣ KIỂM CHỨNG BẢO VỆ LỖI: Gọi getPom() với alias không tồn tại
+  // ─────────────────────────────────────────────────────────────────────────
+  // TabManager phát hiện ngay trước khi truyền vào POM, ném lỗi rõ ràng:
+  expect(() => tabManager.getPom("unknown_tab", NekoInvoicePage)).toThrow(
+    /Không tìm thấy Tab với bí danh 'unknown_tab'/,
+  );
+  console.log("🛡️ [Test 03] Cơ chế kiểm soát lỗi bí danh của getPom() hoạt động chuẩn xác!");
+
+  // BƯỚC 3: Dọn dẹp tab phụ, giữ lại 'main'
+  await tabManager.closeAllExcept("main");
+  expect(tabManager.getTabCount()).toBe(1);
+  console.log("✅ [Test 03] Hoàn tất bài test so sánh POM chuẩn Enterprise!");
+});
+```
+
+##### 💻 Lệnh Chạy Riêng Test Case So Sánh Này Trên Terminal:
+```bash
+npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts -g "03 - \[GET POM COMPARISON\]" --config=configs/playwright.lesson25-tabs.config.ts
+```
+
+##### 📊 Bảng So Sánh Kỹ Thuật Chuyên Sâu: `new POM(page)` vs `tabManager.getPom(alias, POM)`
+
+| Tiêu chí kỹ thuật | Khởi tạo thủ công (`new POM(page)`) | Khởi tạo qua `tabManager.getPom(alias, POM)` |
+|---|---|---|
+| **Truyền tham số biến `Page`** | Bắt buộc phải giữ và truyền biến `page` (dễ nhầm giữa các tab) | Hoàn toàn không cần biến `page`, chỉ cần gọi theo tên bí danh (`alias`) |
+| **Kiểm tra trạng thái tab** | Không tự kiểm tra: nếu tab đã bị đóng (`isClosed()`), POM vẫn tạo ra và chỉ crash khi gọi locator | Tự động kiểm tra: nếu tab chưa tạo hoặc đã đóng, ném exception rõ ràng ngay lập tức |
+| **Type Safety & Intellisense** | Hỗ trợ chuẩn TypeScript qua constructor | Hỗ trợ 100% Generic Type `<T>`: `tabManager.getPom(alias, POM)` tự động gợi ý toàn bộ method |
+| **Tính đóng gói (Encapsulation)**| Rò rỉ đối tượng Page tầng thấp ra ngoài test spec | Đóng gói hoàn toàn Page trong lòng TabManager, test spec chỉ làm việc với bí danh và POM |
+| **Dọn dẹp tài nguyên** | Phải tự nhớ đóng biến `popupWindow.close()` | Đồng bộ với vòng đời của bí danh, tự động dọn dẹp qua `tabManager.closeAllExcept('main')` |
+
+---
+
 #### 🚀 Hướng Dẫn Các Câu Lệnh Chạy Chi Tiết Trên Terminal (CLI Execution Guide)
 
 Dự án có nhiều thư mục bài học và nhiều file cấu hình Playwright khác nhau (như `playwright.config.ts`, `configs/playwright.neko-hybrid.config.ts`, `configs/playwright.lesson25-tabs.config.ts`). Để chạy chính xác kịch bản Full Flow của Bài 25 mà không bị xung đột, hãy sử dụng các câu lệnh sau:
@@ -1059,6 +1483,11 @@ npx playwright test --config=configs/playwright.lesson25-tabs.config.ts --ui
 # 6️⃣ CÁCH 6: Xem báo cáo HTML Report trực quan sau khi kiểm thử kết thúc
 # ─────────────────────────────────────────────────────────────────────────────
 npx playwright show-report playwright-report/lesson25-tabs
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 7️⃣ CÁCH 7: Chạy riêng biệt Test Case So Sánh Khởi Tạo POM (Test 03)
+# ─────────────────────────────────────────────────────────────────────────────
+npx playwright test modules/2-api/NekoCoffee/lesson-25/specs/03-tab-manager-named-switch.spec.ts -g "03 - \[GET POM COMPARISON\]" --config=configs/playwright.lesson25-tabs.config.ts
 ```
 
 ---

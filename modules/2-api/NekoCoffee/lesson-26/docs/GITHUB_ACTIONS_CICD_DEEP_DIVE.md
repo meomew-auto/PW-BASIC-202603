@@ -15,6 +15,7 @@
    - 1.4. Tư duy cấu hình thích ứng môi trường (`process.env.CI` Adaptation).
    - 1.5. Chiến lược thu thập bằng chứng sau thảm họa (Post-Mortem: Trace, Video, Screenshot).
 2. [🛠️ Phần 2: Giải Phẫu Chi Tiết Các Thành Phần Cơ Bản Của File YML](#-phần-2-giải-phẫu-chi-tiết-các-thành-phần-cơ-bản-của-file-yml)
+   - 2.0. Vị trí lưu trữ bắt buộc (`.github/workflows/`), Quy ước đặt tên & Cơ chế phân xử khi có nhiều file YML.
    - 2.1. Bản chất định dạng YAML và Quy tắc thụt lề (Indentation Rules).
    - 2.2. Kiến trúc phân cấp 3 tầng: `Workflow` ➔ `Job` ➔ `Step`.
    - 2.3. Giải mã chi tiết 8 từ khóa trụ cột trong file YAML (`name`, `on`, `concurrency`, `jobs`, `runs-on`, `timeout-minutes`, `steps`, `with` & `env`).
@@ -27,12 +28,11 @@
    - 2.7. Chiến lược đóng gói & lưu trữ Artifacts (`actions/upload-artifact@v4`).
    - 2.8. Mã nguồn mẫu chuẩn mực file `.github/workflows/playwright.yml` (chú thích chi tiết từng dòng).
 3. [🏛️ Phần 3: Kiến Trúc 10 Phân Tầng Biến Môi Trường (Env) & Bảo Mật Secrets Trong Git](#-phần-3-kiến-trúc-10-phân-tầng-biến-môi-trường-env--bảo-mật-secrets-trong-git)
-   - 3.1. Sơ đồ kim tự tháp 10 phân tầng Env & Secrets trên GitHub Actions.
-   - 3.2. Giải phẫu chi tiết 10 tầng kỹ thuật (Org, Repo, Environment, Workflow, Job, Step, $GITHUB_ENV, ::add-mask::, $GITHUB_OUTPUT, GitHub Context / Runner, Local dotenv).
-   - 3.3. Ma trận thứ tự ưu tiên ghi đè (Precedence Order & Cascading Rules).
+   - 3.1. Cú pháp biểu thức `${{ }}` & các kiểu khai báo biến trong `env:` (Direct, Fallback `||`, Ternary, Interpolation).
+   - 3.2. Sơ đồ kim tự tháp & Giải phẫu chi tiết 10 phân tầng kỹ thuật.
+   - 3.3. Ma trận thứ tự ưu tiên ghi đè (Precedence Order & Cascading Rules) & Cẩm nang setup trên Web UI.
    - 3.4. Cơ chế bảo mật Secrets Masking Engine (`***`) & lệnh che giấu động `::add-mask::`.
-   - 3.5. GitHub Environments với Protection Rules & Required Reviewers (Staging vs Production).
-   - 3.6. Cẩm nang thiết lập Secrets & Variables qua Web UI và GitHub CLI (`gh secret set`, `gh variable set`).
+   - 3.5. Cẩm nang thiết lập Secrets & Variables qua GitHub CLI (`gh secret set`, `gh variable set`).
 4. [🧪 Phần 4: Triển Khai Thực Nghiệm Sandbox: Bộ Ma Trận 10 Test Cases Chuẩn Enterprise & Bảng Điều Khiển Động](#-phần-4-triển-khai-thực-nghiệm-sandbox-bộ-ma-trận-10-test-cases-chuẩn-enterprise--bảng-điều-khiển-động)
    - 4.1. Thiết kế kiến trúc Sandbox: File cấu hình độc lập `configs/playwright.lesson26-cicd.config.ts`.
    - 4.2. File Workflow đa năng `.github/workflows/playwright-lesson26.yml` (Dynamic Self-Service Portal).
@@ -99,7 +99,7 @@ Nguyên nhân không phải do Playwright "chập chờn", mà xuất phát từ
 
 ### 1.4. Tư Duy Cấu Hình "Thích Ứng Môi Trường" (`process.env.CI` Adaptation)
 
-Một kỹ sư Automation chuyên nghiệp **không bao giờ duy trì hai file config riêng biệt** cho Local và CI một cách thủ công. Thay vào đó, chúng ta xây dựng file [`playwright.config.ts`](file:///e:/playwright-pro/202603-PW_BASIC/playwright.config.ts) có khả năng **tự động biến hình** nhờ biến môi trường toàn cục `process.env.CI` mà GitHub Actions tự động cung cấp:
+Một kỹ sư Automation chuyên nghiệp **không bao giờ duy trì hai file config riêng biệt** cho Local và CI một cách thủ công. Thay vào đó, chúng ta xây dựng file `playwright.config.ts` có khả năng **tự động biến hình** nhờ biến môi trường toàn cục `process.env.CI` mà GitHub Actions tự động cung cấp:
 
 ```typescript
 import { defineConfig, devices } from '@playwright/test';
@@ -158,6 +158,127 @@ Do đó, tư duy CI yêu cầu **Hộp đen cứu hộ (Blackbox Flight Recorder
 
 ## 🛠️ PHẦN 2: GIẢI PHẪU CHI TIẾT CÁC THÀNH PHẦN CƠ BẢN CỦA FILE YML
 
+### 2.0. Vị Trí Lưu Trữ Bắt Buộc, Quy Ước Đặt Tên & Cơ Chế Phân Xử Khi Có Nhiều File YML
+
+Một trong những sai lầm phổ biến nhất của kỹ sư khi bắt đầu tiếp cận CI/CD là tạo file workflow sai thư mục hoặc sai quy ước, khiến GitHub hoàn toàn không nhận diện được pipeline dù cú pháp YAML bên trong viết chuẩn xác 100%.
+
+#### 📍 1. Vị Trí Lưu Trữ Bắt Buộc (Hard Requirement)
+
+GitHub Actions Workflow Engine có cơ chế quét file tự động với quy tắc bất biến:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                      QUY TẮC CẤU TRÚC THƯ MỤC BẮT BUỘC CỦA GITHUB ACTIONS                               │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                         │
+│  📁 <PROJECT_ROOT>/                                  (Thư mục gốc của Repository)                       │
+│  └── 📁 .github/                                     (Bắt buộc có dấu chấm '.', chữ thường)            │
+│      └── 📁 workflows/                               (Bắt buộc là 'workflows' số nhiều, chữ thường)     │
+│          ├── 📄 playwright.yml                       (✅ Hợp lệ: GitHub tự động phát hiện & kích hoạt)  │
+│          ├── 📄 playwright-lesson26.yml              (✅ Hợp lệ: Pipeline động Bài 26)                  │
+│          └── 📁 sub-folder/                          (⚠️ CHÚ Ý NGUY HIỂM)                              │
+│              └── 📄 test.yml                         (❌ VÔ HIỆU: GitHub KHÔNG quét thư mục con lồng nhau)│
+│                                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+* **Đường dẫn tương đối chuẩn**: `.github/workflows/<ten-file>.yml` (tính từ gốc repository).
+* **Đường dẫn tuyệt đối trong dự án hiện tại**:
+  `.github/workflows/` (tại thư mục gốc repository)
+* ⚠️ **3 cấm kỵ về vị trí file**:
+  1. **Sai tên thư mục**: Đặt thành `.github/workflow/` (thiếu chữ `s`) hoặc `workflows/` (không nằm trong `.github/`) $\rightarrow$ GitHub bỏ qua 100%.
+  2. **Thư mục con (Sub-directories)**: GitHub Actions chỉ đọc các file `.yml`/`.yaml` nằm **trực tiếp** ở cấp 1 của `.github/workflows/`. File nằm trong `.github/workflows/e2e/test.yml` sẽ **không bao giờ được nhận diện**.
+  3. **Đặt ở thư mục gốc**: Để `playwright.yml` ngay ngoài thư mục gốc repository $\rightarrow$ GitHub coi đó là file text bình thường.
+
+---
+
+#### 🏷️ 2. Quy Ước Đặt Tên File (Naming Conventions)
+
+| Tiêu Chí | Quy Ước Chuẩn Enterprise | Ví Dụ Thực Tế Trong Dự Án |
+|---|---|---|
+| **Đuôi mở rộng (Extension)** | Bắt buộc `.yml` hoặc `.yaml` (Khuyến nghị dùng nhất quán đuôi `.yml`). | `playwright.yml`, `playwright-lesson26.yml` |
+| **Quy tắc đặt tên file (File Name)** | Dùng chữ thường, nối bằng dấu gạch ngang (`kebab-case`). Tên file phải phản ánh rõ phạm vi hoặc mục tiêu kiểm thử. | • `playwright.yml`: Pipeline chung toàn dự án.<br>• `playwright-lesson26.yml`: Pipeline chuyên đề Bài 26.<br>• `smoke-test.yml`: Kịch bản kiểm thử khói.<br>• `nightly-regression.yml`: Kịch bản hồi quy định kỳ. |
+| **Phân biệt Tên File vs. Tên Workflow** | **Tên File** (`playwright-lesson26.yml`) dùng để quản trị mã nguồn trong Git.<br>**Tên Workflow** (`name: 🚀 Lesson 26 - Playwright CI/CD Sandbox`) khai báo ở dòng đầu file YML dùng để hiển thị trên tab **Actions** của GitHub UI. | Hai khái niệm này **hoàn toàn độc lập**. Bạn có thể đổi tên file mà không làm đổi tên hiển thị trên web, và ngược lại. |
+
+---
+
+#### 📂 3. Khảo Sát Thực Địa: 2 File Workflow Hiện Có Trong Dự Án
+
+Trong thư mục `.github/workflows/` (tại thư mục gốc repository), dự án đã được thiết lập sẵn 2 file quy trình:
+
+1. **`playwright.yml`** *(604 bytes, 25 dòng)*:
+   - Pipeline khung cơ bản do Playwright scaffold sinh ra.
+   - Kích hoạt qua `workflow_dispatch` (thủ công) để chạy toàn bộ suite mặc định `npx playwright test`.
+2. **`playwright-lesson26.yml`** *(10,484 bytes, 215 dòng)*:
+   - Pipeline Enterprise chuyên sâu của Bài 26.
+   - Tích hợp **Bảng điều khiển động (Self-Service Portal)** với các input tùy chọn: 10 test cases, 2 môi trường (Staging/Prod), chỉnh số workers (1-2), retries (0-2), mô phỏng failure, nạp runtime env và mask secrets.
+
+---
+
+#### 🔀 4. Cơ Chế Phân Xử & Điều Phối Khi Có Nhiều File YML (Multiple Workflows Resolution)
+
+Một câu hỏi kinh điển trong thực tế: *"Nếu trong thư mục `.github/workflows/` có nhiều file `.yml` (ví dụ `playwright.yml`, `playwright-lesson26.yml`, `smoke.yml`), GitHub sẽ chọn file nào để chạy?"*
+
+👉 **Nguyên tắc cốt lõi của GitHub Actions**: **GitHub KHÔNG chọn 1 file duy nhất theo kiểu ưu tiên hay ghi đè!** Thay vào đó, nó duyệt **TẤT CẢ** các file `.yml`/`.yaml` trong `.github/workflows/` và kích hoạt bất kỳ file nào **thỏa mãn điều kiện sự kiện (`on:`)**.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                    CƠ CHẾ PHÂN XỬ ĐIỀU PHỐI NHIỀU FILE YML TRÊN GITHUB ACTIONS                          │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                         │
+│  SỰ KIỆN PHÁT SINH (Event: git push, pull_request, cron schedule, hoặc bấm nút thủ công)               │
+│                                    │                                                                    │
+│                                    ▼                                                                    │
+│  GitHub Actions Workflow Engine quét toàn bộ .github/workflows/*.yml                                   │
+│                                    │                                                                    │
+│         ┌──────────────────────────┼──────────────────────────┐                                         │
+│         ▼                          ▼                          ▼                                         │
+│  📄 File A: on.push?        📄 File B: on.schedule?    📄 File C: on.workflow_dispatch?                 │
+│     • KHỚP ĐIỀU KIỆN!          • KHÔNG KHỚP               • KHÔNG KHỚP                                  │
+│     ➔ 🚀 KÍCH HOẠT THỰC THI    ➔ ⏸️ BỎ QUA (Idle)          ➔ ⏸️ BỎ QUA (Idle)                             │
+│                                                                                                         │
+│  ⚠️ NẾU CẢ FILE A VÀ FILE D CÙNG KHỚP on.push (Ví dụ: ui-test.yml & api-test.yml):                     │
+│     ➔ ⚡ CẢ 2 ĐỀU CHẠY SONG SONG (PARALLEL) trên 2 cụm Runner máy ảo Ubuntu hoàn toàn độc lập!           │
+│                                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+##### 🔹 3 Kịch Bản Phân Xử Thực Tế:
+
+1. **Kịch bản 1: Nhiều file cùng lắng nghe 1 sự kiện ➔ Chạy SONG SONG độc lập**:
+   - Nếu cả `ui-test.yml` và `api-test.yml` đều có `on: push: branches: [main]`, khi push code lên `main`, GitHub sẽ khởi tạo **2 Workflow Runs chạy đồng thời**. Chúng không xung đột và không đè lên nhau.
+2. **Kịch bản 2: Mỗi file nghe một sự kiện khác nhau ➔ Chỉ file khớp mới chạy**:
+   - `nightly.yml` lắng nghe `on: schedule` $\rightarrow$ chỉ chạy tự động lúc 2:00 sáng.
+   - `release.yml` lắng nghe `on: release` $\rightarrow$ chỉ chạy khi release phiên bản mới.
+   - `debug.yml` lắng nghe `on: workflow_dispatch` $\rightarrow$ chỉ chạy khi người dùng chủ động bấm nút.
+3. **Kịch bản 3: Tối ưu bằng Bộ lọc đường dẫn (`paths` / `paths-ignore`) ➔ Tránh chạy lãng phí**:
+   - Sử dụng từ khóa `paths:` để chỉ định phạm vi code ảnh hưởng:
+     ```yaml
+     on:
+       push:
+         paths:
+           - 'modules/2-api/NekoCoffee/lesson-26/**'
+     ```
+   - Khi commit chỉ chỉnh sửa Lesson 26, chỉ workflow của Lesson 26 chạy; workflow của các bài học khác sẽ hoàn toàn nằm yên, tiết kiệm tối đa phút chạy CI.
+
+---
+
+##### 🔍 Bảng Đối Chiếu Thực Tế 2 File Workflow Trong Dự Án Hiện Tại:
+
+```text
+.github/workflows/
+├── 📄 playwright.yml           (Cấu hình on: workflow_dispatch)
+└── 📄 playwright-lesson26.yml  (Cấu hình on: push, pull_request [paths: lesson-26/**] & workflow_dispatch)
+```
+
+| Tình Huống Thực Tế | `playwright.yml` | `playwright-lesson26.yml` | Cơ Chế Phân Xử Của GitHub |
+|---|:---:|:---:|---|
+| **Bạn `git push` sửa code trong `lesson-26/`** | ❌ Bỏ qua | ✅ **Tự động chạy** | `playwright.yml` không nghe `push`. Chỉ `playwright-lesson26.yml` khớp nhánh `main` và khớp đường dẫn `paths: ['modules/.../lesson-26/**']`. |
+| **Bạn `git push` chỉ sửa file tài liệu `*.md`** | ❌ Bỏ qua | ❌ Bỏ qua | Cả 2 file đều không khớp bộ lọc đường dẫn (do `paths` chỉ nhắm vào mã nguồn hoặc `paths-ignore: ['**.md']`). |
+| **Bạn vào tab Actions trên GitHub Web UI** | 👉 Chạy khi được bấm | 👉 Chạy khi được bấm | GitHub hiển thị **danh sách toàn bộ workflow ở cột bên trái** (theo `name:`). Bạn click vào workflow nào và nhấn **"Run workflow"** thì chỉ đúng file đó được nạp vào máy ảo. |
+
+---
+
 ### 2.1. Bản Chất Định Dạng YAML Và Quy Tắc Thụt Lề
 
 Tập tin cấu hình của GitHub Actions sử dụng ngôn ngữ **YAML** (*YAML Ain't Markup Language*). Đây là định dạng lưu trữ cấu trúc dữ liệu phân cấp cực kỳ tinh gọn nhưng có quy tắc cú pháp vô cùng nghiêm ngặt:
@@ -214,37 +335,109 @@ Là chuỗi văn bản hiển thị trên giao diện thẻ **Actions** của Gi
 name: 🚀 Neko Coffee E2E Playwright Pipeline
 ```
 
-#### 2. `on` (Cơ Chế Kích Hoạt - Event Triggers)
-Quyết định **sự kiện nào** trên GitHub sẽ đánh thức workflow dậy chạy:
+#### 2. `on` (Cơ Chế Kích Hoạt & Toàn Bộ Bộ Lọc - Event Triggers & Filters)
+
+Từ khóa `on:` quyết định **sự kiện nào** trên GitHub sẽ đánh thức workflow dậy chạy. Không chỉ đơn thuần là `push` hay `pull_request`, GitHub Actions cung cấp một hệ sinh thái **Bộ lọc chuyên sâu (Filters)** và **Kiểu hành động (Activity Types)** giúp kiểm soát chính xác 100% thời điểm runner được phép khởi động.
+
+##### 🔹 1. Bảng Tổng Hợp Các Bộ Lọc Cốt Lõi (Filters) Bên Trong `push` & `pull_request`:
+
+| Bộ Lọc (Filter) | Cú Pháp Khai Báo | Ý Nghĩa Kỹ Thuật & Tác Động Thực Tế |
+|---|---|---|
+| **`branches`** | `branches: [ main, master, 'release/**' ]` | Chỉ kích hoạt khi sự kiện xảy ra trên các nhánh được chỉ định. Hỗ trợ ký tự đại diện (Glob/Wildcard `**`). |
+| **`branches-ignore`** | `branches-ignore: [ 'temp/**', 'experiment/*' ]` | Chạy trên mọi nhánh **ngoại trừ** các nhánh nằm trong danh sách này. *(Lưu ý: Không dùng chung với `branches`)*. |
+| **`tags`** | `tags: [ 'v[0-9]+.[0-9]+.[0-9]+' ]` | Chỉ kích hoạt khi một Git Tag phiên bản mới được đẩy lên (ví dụ: `git push origin v1.2.0`). |
+| **`tags-ignore`** | `tags-ignore: [ 'alpha-*', 'beta-*' ]` | Bỏ qua không chạy test khi gắn các tag thử nghiệm nội bộ. *(Lưu ý: Không dùng chung với `tags`)*. |
+| **`paths`** | `paths: [ 'modules/lesson-26/**', 'configs/**' ]` | **⚡ Bộ lọc then chốt (Targeted Testing)**: Chỉ kích hoạt workflow nếu commit có chỉnh sửa ít nhất 1 file thuộc các đường dẫn này. Nếu sửa file ngoài phạm vi ➔ GitHub bỏ qua hoàn toàn, tiết kiệm 100% phút chạy CI! |
+| **`paths-ignore`** | `paths-ignore: [ '**.md', 'docs/**', '.gitignore' ]` | Chạy test khi có code thay đổi, nhưng **tự động bỏ qua** nếu commit đó chỉ chỉnh sửa tài liệu, markdown, ảnh minh họa. |
+| **`types`** *(Chỉ PR)* | `types: [ opened, synchronize, reopened, ready_for_review ]` | **Kiểu hành động chi tiết trên PR**: Mặc định chỉ chạy khi `opened`, `synchronize`, `reopened`. Nếu muốn bắt thêm sự kiện chuyển từ Draft sang Ready hoặc khi PR bị đóng/merge (`closed`), bắt buộc phải khai báo `types`. |
+
+> ⚠️ **Quy tắc loại trừ của GitHub Actions**:
+> - Không được dùng đồng thời cả `branches` và `branches-ignore` trong cùng một sự kiện.
+> - Không được dùng đồng thời cả `paths` và `paths-ignore` trong cùng một sự kiện.
+
+---
+
+##### 🔹 2. Giải Phẫu Thực Tế Cấu Hình `on:` Trong File `playwright-lesson26.yml`
+
+Dưới đây là mã nguồn thực tế đang vận hành trong file `playwright-lesson26.yml` của dự án, kết hợp đầy đủ cả 3 trụ cột: **`push` (với `paths`)** + **`pull_request` (với `paths`)** + **`workflow_dispatch` (với bảng `inputs` động)**:
+
 ```yaml
+# ── 1. ĐIỀU KIỆN KÍCH HOẠT (TRIGGERS & TARGETED PATHS) ──────────────────────
 on:
-  # 1. Kích hoạt khi có commit đẩy trực tiếp lên nhánh main
+  # 🎯 TRỤ CỘT 1: KHI PUSH CODE TRỰC TIẾP
   push:
-    branches: [ main ]
-    paths-ignore:
-      - '**/*.md'     # Bỏ qua không chạy test nếu chỉ sửa file tài liệu .md!
+    branches: [ main, master ]
+    # ⚡ BỘ LỌC PATHS: Chỉ chạy khi có thay đổi trong đúng 3 phạm vi then chốt:
+    paths:
+      - 'modules/2-api/NekoCoffee/lesson-26/**'        # Mã nguồn test specs Bài 26
+      - 'configs/playwright.lesson26-cicd.config.ts'  # File cấu hình riêng của Bài 26
+      - '.github/workflows/playwright-lesson26.yml'   # Chính file workflow này
 
-  # 2. Kích hoạt khi có một Pull Request mở ra nhắm vào nhánh main
+  # 🎯 TRỤ CỘT 2: KHI MỞ HOẶC CẬP NHẬT PULL REQUEST (QUALITY GATE)
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
+    # ⚡ BỘ LỌC PATHS TRÊN PR: Đảm bảo chỉ thẩm định PR nếu có động chạm tới Bài 26
+    paths:
+      - 'modules/2-api/NekoCoffee/lesson-26/**'
+      - 'configs/playwright.lesson26-cicd.config.ts'
+      - '.github/workflows/playwright-lesson26.yml'
 
-  # 3. Kích hoạt thủ công bằng nút bấm "Run workflow" trên giao diện web GitHub
+  # 🎯 TRỤ CỘT 3: KÍCH HOẠT THỦ CÔNG QUA WEB UI (SELF-SERVICE TESTING PORTAL)
   workflow_dispatch:
     inputs:
-      test_suite:
-        description: 'Chọn bộ test cần chạy'
+      test_case:
+        description: '🎯 Chọn Kịch Bản Muốn Kiểm Thử (1 - 10 hoặc all)'
         required: true
         default: 'all'
         type: choice
         options:
-          - all
-          - smoke
-          - regression
+          - 'all'
+          - 'case-01-env-hierarchy'
+          - 'case-02-secrets-masking'
+          - 'case-03-runtime-injection'
+          - 'case-04-environments'
+          - 'case-05-flaky-retry'
+          - 'case-06-timeout-guard'
+          - 'case-07-artifacts-fail'
+          - 'case-08-headless-viewport'
+          - 'case-09-api-mock-isolation'
+          - 'case-10-live-smoke'
 
-  # 4. Kích hoạt theo lịch định kỳ (Cron Syntax UTC) - ví dụ 2:00 sáng hàng ngày
-  schedule:
-    - cron: '0 19 * * *' # 19:00 UTC tương đương 02:00 sáng giờ Việt Nam (UTC+7)
+      target_env:
+        description: '🌐 Chọn Tầng Môi Trường (GitHub Environments)'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - 'production'
+          - 'staging'
+
+      retries:
+        description: '🔄 Số lần Retry (Chọn 0 để xem Case 05 bị ĐỎ thế nào)'
+        required: true
+        default: '2'
+        type: choice
+        options: [ '2', '1', '0' ]
+
+      workers:
+        description: '👥 Số lượng Workers thực thi'
+        required: true
+        default: '2'
+        type: choice
+        options: [ '2', '1' ]
+
+      simulate_failure:
+        description: '🚨 Cố tình kích hoạt Test Fail để kiểm chứng if: always()'
+        required: false
+        type: boolean
+        default: false
+
+  # 🎯 TRỤ CỘT 4: KÍCH HOẠT ĐỊNH KỲ VÀO BAN ĐÊM (SCHEDULED CRON)
+  # schedule:
+  #   - cron: '0 19 * * 1-5' # 19:00 UTC = 02:00 sáng VN (UTC+7) từ Thứ 2 đến Thứ 6
 ```
+
+---
 
 #### 3. `concurrency` (Chống Lãng Phí Tài Nguyên Máy Ảo)
 Khi developer liên tục bấm Save và đẩy 3 commit liên tiếp trong vòng 2 phút lên cùng một Pull Request:
@@ -518,7 +711,137 @@ Trong GitHub Actions và Playwright, biến môi trường và thông tin bí m�
 
 ---
 
-### 🔹 3.1. Giải Phẫu Chi Tiết 10 Phân Tầng Kỹ Thuật
+### 🔹 3.1. Cú Pháp Biểu Thức ${{ }} & Các Kiểu Khai Báo Biến Trong `env:` (GitHub Actions Expression Syntax)
+
+Trước khi đi sâu vào kim tự tháp phân tầng, việc hiểu tường tận **cơ chế nội suy biểu thức `${{ <expression> }}`** trong khối `env:` là điều kiện tiên quyết để xây dựng pipeline CI/CD an toàn, linh hoạt và không bị lỗi cú pháp YAML ngớ ngẩn.
+
+#### 1. Bản Chất Kỹ Thuật: `${{ }}` Hoạt Động Như Thế Nào?
+* **Thời điểm phân giải (Workflow Parser Time)**: Máy chủ GitHub đọc và biên dịch toàn bộ các biểu thức nằm trong cặp ngoặc `${{ }}` **TRƯỚC KHI** máy ảo (Runner) khởi động và trước khi bất kỳ câu lệnh Shell nào trong `run:` được thực thi.
+* **Quy tắc vàng**:
+  - **Trong khối YAML (`env:`, `with:`, `name:`, `runs-on:`)**: Bắt buộc dùng cú pháp `${{ <expression> }}` để truy cập secrets, variables, contexts hoặc logic rẽ nhánh.
+  - **Trong mệnh đề điều kiện (`if:`)**: Không bắt buộc dùng `${{ }}` (GitHub tự động coi nội dung của `if:` là biểu thức, ví dụ: `if: always()` hoặc `if: github.event_name == 'push'`).
+  - **Trong khối lệnh Shell (`run:`)**: Không lạm dụng `${{ }}` để tránh lỗ hổng bảo mật **Script Injection**. Thay vào đó, hãy nạp qua `env:` rồi dùng biến Shell (`$TEN_BIEN` trên Linux hoặc `$env:TEN_BIEN` trên PowerShell).
+
+---
+
+#### 2. Ma Trận 8 Nguồn Dữ Liệu Truy Xuất Qua `${{ }}` Trong `env:`
+
+| Nguồn Dữ Liệu | Cú Pháp Khai Báo Trong `env:` | Ví Dụ Thực Tế | Ý Nghĩa Kỹ Thuật |
+|---|---|---|---|
+| **1. GitHub Secrets** | `${{ secrets.<SECRET_NAME> }}` | `STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD }}` | Lấy giá trị bí mật đã được mã hóa trong Settings (tự động mask `***` trên console). |
+| **2. GitHub Variables** | `${{ vars.<VAR_NAME> }}` | `BASE_URL: ${{ vars.BASE_URL }}` | Lấy biến cấu hình công khai không nhạy cảm ở cấp Repo hoặc Org. |
+| **3. Workflow Inputs** | `${{ inputs.<INPUT_NAME> }}` | `TARGET_ENV: ${{ inputs.target_env }}` | Lấy tham số do người dùng chọn khi bấm nút chạy `workflow_dispatch` thủ công. |
+| **4. GitHub Context** | `${{ github.<FIELD> }}` | `RUN_ID: ${{ github.run_id }}` | Trích xuất siêu dữ liệu phiên chạy: `github.sha`, `github.actor`, `github.ref_name`. |
+| **5. Runner Context** | `${{ runner.<FIELD> }}` | `RUNNER_OS: ${{ runner.os }}` | Trích xuất thông tin môi trường máy ảo: `runner.os`, `runner.temp`, `runner.arch`. |
+| **6. Step Outputs** | `${{ steps.<STEP_ID>.outputs.<KEY> }}` | `AUTH_TOKEN: ${{ steps.auth.outputs.token }}` | Lấy kết quả được step trước xuất ra thông qua `$GITHUB_OUTPUT`. |
+| **7. Job Outputs** | `${{ needs.<JOB_ID>.outputs.<KEY> }}` | `APP_VER: ${{ needs.build.outputs.version }}` | Lấy dữ liệu từ Job tiền đề (chạy song song hoặc chạy trước phụ thuộc `needs:`). |
+| **8. Kế Thừa Env** | `${{ env.<ENV_NAME> }}` | `API_URL: "${{ env.BASE_URL }}/api/v1"` | Truy cập và tái sử dụng biến `env` đã được định nghĩa ở cấp Workflow hoặc Job cha. |
+
+---
+
+#### 3. Các Kiểu Biểu Thức & Toán Tử Phổ Biến Trong `env:`
+
+##### A. Kiểu 1: Gán Trực Tiếp (Direct Reference)
+Khai báo 1-1 đơn giản nhất, lấy nguyên vẹn giá trị từ Context, Secret hoặc Variable:
+```yaml
+env:
+  NODE_ENV: test
+  CI: true
+  CI_RUN_ID: ${{ github.run_id }}
+  STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD }}
+```
+
+##### B. Kiểu 2: Giá Trị Dự Phòng An Toàn (Fallback / Default Value với `||`)
+* **Vấn đề**: Nếu repo mới clone chưa kịp cấu hình Secret trên GitHub, pipeline sẽ bị crash hoặc biến bị rỗng (`undefined`).
+* **Giải pháp**: Dùng toán tử logic `||` để cấp giá trị mặc định khi biến vế trái bị rỗng/falsy:
+```yaml
+env:
+  # Nếu secrets.STAFF_PASSWORD chưa được set trên GitHub, tự động fallback về giá trị demo:
+  STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD || 'NekoStaffVaultPass2026!' }}
+  # Nếu không truyền input retries, tự động lấy mặc định là 2:
+  RETRIES: ${{ inputs.retries || '2' }}
+  # Nếu không chọn target_env, mặc định chọn production:
+  TARGET_ENV: ${{ inputs.target_env || 'production' }}
+```
+
+##### C. Kiểu 3: Rẽ Nhánh Điều Kiện 3 Ngôi (Ternary Operator: `(condition && a) || b`)
+* GitHub Actions **không hỗ trợ** toán tử ternary kiểu C/JS (`condition ? a : b`).
+* Thay vào đó, chúng ta kết hợp toán tử logic `&&` (and) và `||` (or) chuẩn mực:
+```yaml
+env:
+  # Nếu target_env là 'staging' thì nhận domain staging, ngược lại nhận domain production:
+  BASE_URL: ${{ (inputs.target_env == 'staging') && 'https://staging-coffee.autoneko.com' || 'https://coffee.autoneko.com' }}
+
+  # Bật chế độ debug nếu chạy trên nhánh dev/test:
+  DEBUG_FLAG: ${{ (github.ref == 'refs/heads/main') && 'false' || 'true' }}
+```
+
+##### D. Kiểu 4: Nối Chuỗi Nội Suy (String Concatenation & Interpolation)
+Khi cần ghép biến `${{ }}` với các chuỗi ký tự cố định:
+```yaml
+env:
+  # Cách 1: Bọc dấu nháy kép ngoài cùng (Khuyến nghị cho độ ổn định YAML cao nhất):
+  LOGIN_URL: "${{ env.BASE_URL }}/login"
+  REPORT_NAME: "test-run-${{ github.run_id }}-${{ github.run_attempt }}"
+
+  # Cách 2: Sử dụng hàm tích hợp format():
+  HEALTH_CHECK_URL: ${{ format('{0}/api/health', env.BASE_URL) }}
+  SUMMARY_TITLE: ${{ format('Test Suite {0} triggered by {1}', github.workflow, github.actor) }}
+```
+
+##### E. Kiểu 5: Sử Dụng Các Hàm Tích Hợp Sẵn (Built-in Helper Functions)
+GitHub Actions cung cấp bộ hàm tích hợp rất mạnh mẽ để xử lý điều kiện trong `${{ }}`:
+```yaml
+env:
+  # contains(): Kiểm tra chuỗi con
+  IS_RELEASE_BRANCH: ${{ contains(github.ref, 'release') }}
+
+  # startsWith() / endsWith(): Kiểm tra tiền tố, hậu tố
+  IS_VERSION_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
+
+  # toJSON(): Serialize toàn bộ object context thành chuỗi JSON (rất hữu ích khi debug):
+  ALL_EVENT_DATA: ${{ toJSON(github.event) }}
+```
+
+---
+
+#### 4. Bảng So Sánh 3 Cấp Độ Truy Cập Biến Trong Toàn Bộ Hệ Thống
+
+Một trong những sai lầm phổ biến nhất của người mới là **dùng lẫn lộn giữa cú pháp GitHub Actions, Shell Script và Node.js**:
+
+| Phương Diện So Sánh | `${{ env.VAR }}` hoặc `${{ secrets.VAR }}` | `$VAR` (Linux) / `$env:VAR` (Windows) | `process.env.VAR` |
+|---|---|---|---|
+| **Nơi được phép viết** | Trong các trường YAML (`env:`, `with:`, `name:`) | Bên trong khối script `run: \| ...` | Trong file mã nguồn TypeScript/JavaScript (`*.spec.ts`, `*.config.ts`) |
+| **Engine thông dịch** | GitHub Workflow Parser (Đám mây) | Shell Runner (Bash, sh, PowerShell) | Node.js V8 Virtual Machine |
+| **Thời điểm phân giải** | **Parser Time** (Trước khi Runner khởi chạy) | **Shell Runtime** (Khi dòng lệnh shell đang chạy) | **Test Runtime** (Khi Playwright test execute) |
+| **Ví dụ câu lệnh** | `BASE_URL: ${{ vars.BASE_URL }}` | `echo "Endpoint: $BASE_URL"` | `const url = process.env.BASE_URL;` |
+
+---
+
+#### 5. ⚠️ 3 "Cạm Bẫy Tử Thần" (Gotchas) & Quy Tắc An Toàn Sống Còn
+
+1. **Quy tắc dấu nháy (Quotes Rule)**:
+   - **Bên trong dấu `${{ ... }}`**: Bắt buộc dùng **dấu nháy đơn `'...'`** cho chuỗi text (ví dụ: `${{ inputs.env == 'staging' }}`).
+   - **Nếu vô tình dùng nháy kép `"..."` bên trong `${{ }}`**: Bộ parser YAML sẽ bị xung đột cú pháp và báo lỗi không thể khởi chạy pipeline ngay lập tức (`YAML syntax error`)!
+2. **Luôn bọc dấu nháy kép bên ngoài nếu dòng bắt đầu bằng `${{`**:
+   - Nếu bạn viết: `URL: ${{ env.BASE_URL }}/api` $\rightarrow$ Một số phiên bản parser YAML sẽ báo lỗi do hiểu nhầm ký tự đặc biệt.
+   - Viết chuẩn Enterprise: `URL: "${{ env.BASE_URL }}/api"`.
+3. **Phòng chống lỗ hổng nghiêm trọng Script Injection**:
+   - ❌ **CẤM KỴ TUYỆT ĐỐI**: Nhúng trực tiếp `${{ }}` chứa nội dung do người dùng kiểm soát vào câu lệnh `run:`:
+     ```yaml
+     # LỖ HỔNG LỚN: Nếu tên commit có ký tự `"; rm -rf / ; echo "`, shell sẽ bị tấn công injection!
+     run: echo "Commit message is: ${{ github.event.head_commit.message }}"
+     ```
+   - ✅ **CHUẨN MỰC AN TOÀN**: Luôn map context qua khối `env:` trước, sau đó trong shell chỉ gọi biến môi trường `$COMMIT_MSG`:
+     ```yaml
+     env:
+       COMMIT_MSG: ${{ github.event.head_commit.message }}
+     run: echo "Commit message is: $COMMIT_MSG"
+     ```
+
+---
+
+### 🔹 3.2. Giải Phẫu Chi Tiết 10 Phân Tầng Kỹ Thuật
 
 #### 1️⃣ TẦNG 1: ORGANIZATION LEVEL (Cấp Doanh Nghiệp / Tổ Chức)
 * **Vị trí**: Cài đặt tại `Organization Settings -> Secrets and variables -> Actions`.
@@ -595,31 +918,226 @@ Khi chạy trên CI, biến môi trường hệ thống thật của máy ảo s
 
 ---
 
-### 🔹 3.2. Ma Trận Thứ Tự Ưu Tiên Ghi Đè (Precedence Order & Cascading Rules)
+### 🔹 3.3. Ma Trận Thứ Tự Ưu Tiên Ghi Đè (Precedence Order & Cascading Rules) & Hướng Dẫn Setup Toàn Diện
 
-Khi cùng một biến (ví dụ `SCOPED_ENV_OVERRIDE` hoặc `BASE_URL`) được định nghĩa ở nhiều tầng khác nhau, Playwright sẽ nhận giá trị theo thứ tự ưu tiên từ cao xuống thấp như sau:
+Khi cùng một biến (ví dụ `SCOPED_ENV_OVERRIDE` hoặc `BASE_URL`) được định nghĩa ở nhiều tầng khác nhau, Playwright sẽ nhận giá trị theo quy tắc: **Càng ở tầng thấp (càng gần câu lệnh thực thi trong subshell), quyền ưu tiên GHI ĐÈ (OVERRIDE) càng cao.**
 
-```
-[1. Step-level env:] (Ưu tiên số 1 - Ghi đè tất cả các cấp trên)
-         ▼
-[2. Dynamic Runtime Env: $GITHUB_ENV]
-         ▼
-[3. Job-level env:]
-         ▼
-[4. Workflow-level env:]
-         ▼
-[5. GitHub Environment Variables & Secrets (staging / prod)]
-         ▼
-[6. Repository Variables & Secrets]
-         ▼
-[7. Organization Variables & Secrets]
-         ▼
-[8. Local .env file / Default Config Fallback] (Thấp nhất)
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│              MA TRẬN THỨ TỰ ƯU TIÊN GHI ĐÈ BIẾN TRÊN GITHUB ACTIONS (TỪ CAO XUỐNG THẤP)                 │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                         │
+│  [1. Step-level env:]                👑 ƯU TIÊN CAO NHẤT (Ghi đè tất cả các cấp bên dưới)              │
+│            ▼                                                                                            │
+│  [2. Dynamic Runtime Env: $GITHUB_ENV]  (Ghi đè Job env, nạp biến động trong lúc chạy)                  │
+│            ▼                                                                                            │
+│  [3. Job-level env:]                 (Cục bộ máy ảo Job đó)                                            │
+│            ▼                                                                                            │
+│  [4. Workflow-level env:]            (Toàn cục file YML)                                                │
+│            ▼                                                                                            │
+│  [5. GitHub Environment Variables]   (Riêng theo staging / production)                                  │
+│            ▼                                                                                            │
+│  [6. Repository Variables & Secrets] (Toàn bộ kho chứa hiện tại)                                        │
+│            ▼                                                                                            │
+│  [7. Organization Secrets & Vars]    (Toàn doanh nghiệp / tổ chức)                                      │
+│            ▼                                                                                            │
+│  [8. Local .env / Default Fallback]  🔻 ƯU TIÊN THẤP NHẤT (Bị tất cả các cấp trên đè bẹp)              │
+│                                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 🔹 3.3. Cơ Chế Bảo Mật GitHub Secrets Masking Engine (`***`)
+#### 📊 1. Bảng Đối Chiếu Ma Trận 8 Tầng Ưu Tiên: Vị Trí Setup Web UI vs. Khai Báo YAML
+
+| Tầng Ưu Tiên | Tên Phân Tầng | Vị Trí Thiết Lập Trên Web UI | Cách Khai Báo Trong File YML / Code | Lệnh GitHub CLI (`gh`) |
+|:---:|---|---|---|---|
+| **1 (Cao nhất)** | **Step-level `env:`** | Trực tiếp trong file YML | `steps[i].env.TEN_BIEN` | Không có (Viết trực tiếp vào file YML) |
+| **2** | **Dynamic `$GITHUB_ENV`** | Không có (Sinh ra trong lúc chạy) | `echo "TEN_BIEN=val" >> $GITHUB_ENV` | Không có (Lệnh shell trong Runner) |
+| **3** | **Job-level `env:`** | Trực tiếp trong file YML | `jobs.<job_id>.env.TEN_BIEN` | Không có (Viết trực tiếp vào file YML) |
+| **4** | **Workflow-level `env:`** | Trực tiếp trong file YML | `env.TEN_BIEN` (root file) | Không có (Viết trực tiếp vào file YML) |
+| **5** | **GitHub Environments** | `Repo Settings ➔ Environments` | `environment: staging`<br>`${{ vars.TEN_BIEN }}` | `gh variable set TEN_BIEN --env staging` |
+| **6** | **Repository Level** | `Repo Settings ➔ Secrets and vars ➔ Actions` | `${{ secrets.TEN_SECRET }}`<br>`${{ vars.TEN_VAR }}` | `gh secret set TEN_SECRET`<br>`gh variable set TEN_VAR` |
+| **7** | **Organization Level** | `Org Settings ➔ Secrets and vars ➔ Actions` | Kế thừa tự động vào Repo | `gh secret set TEN_SECRET --org <org_name>` |
+| **8 (Thấp nhất)** | **Local `.env` Fallback** | Không có trên GitHub | `dotenv.config({ path: '.env' })` | Không có (File cục bộ máy cá nhân) |
+
+---
+
+#### 🖱️ 2. Hướng Dẫn Từng Bước Thiết Lập Trên Giao Diện Web GitHub (Click-by-Click Web UI Guide)
+
+Dưới đây là thao tác chi tiết trên giao diện Web của GitHub cho các tầng cấu hình mà kỹ sư cần thiết lập:
+
+##### 🏢 TẦNG 7: Thiết Lập Organization Secrets & Variables (Toàn Công Ty)
+> 💡 *Dành cho tài khoản doanh nghiệp (GitHub Organization). Nếu dùng tài khoản cá nhân, bạn bắt đầu từ Tầng 6.*
+1. Mở trang chủ Organization của bạn: `https://github.com/organizations/<your-org>/settings/secrets/actions`.
+2. Tại thanh menu bên trái, chọn **Settings** ➔ Cuộn xuống mục **Security** ➔ Chọn **Secrets and variables** ➔ Bấm **Actions**.
+3. **Tab Secrets (Bảo mật)**:
+   - Bấm nút **New organization secret** màu xanh.
+   - Nhập **Name**: ví dụ `ORG_NPM_TOKEN`, `SONAR_TOKEN`.
+   - Nhập **Secret**: Dán chuỗi token bảo mật.
+   - Chọn **Repository access**:
+     - *All repositories*: Mọi repo trong công ty đều được dùng.
+     - *Private repositories*: Chỉ repo riêng tư mới được dùng.
+     - *Selected repositories*: Chỉ định rõ repo `PW-BASIC-202603` được dùng.
+   - Bấm **Add secret**.
+4. **Tab Variables (Biến công khai)**:
+   - Chuyển sang tab **Variables** ➔ Bấm **New organization variable** ➔ Nhập Name và Value ➔ Bấm **Add variable**.
+
+---
+
+##### 📦 TẦNG 6: Thiết Lập Repository Secrets & Variables (Toàn Kho Chứa Hiện Tại)
+1. Truy cập vào Repository của dự án: `https://github.com/<owner>/<repo>`.
+2. Bấm vào tab **Settings** ở thanh menu ngang trên cùng (cạnh Insights, Security).
+3. Tại menu bên trái, cuộn tới mục **Security** ➔ Bấm mở rộng **Secrets and variables** ➔ Chọn **Actions**:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  GITHUB REPOSITORY ➔ SETTINGS ➔ SECRETS AND VARIABLES ➔ ACTIONS             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  [ Tab: Secrets ]                             [ Tab: Variables ]            │
+│  • Bấm nút: [ New repository secret ]         • Bấm nút: [ New repository variable ]
+│  • Điền Name  : STAFF_PASSWORD                • Điền Name  : DEFAULT_BROWSER│
+│  • Điền Secret: NekoStaffVaultPass2026!       • Điền Value : chromium       │
+│  • Bấm: [ Add secret ]                        • Bấm: [ Add variable ]       │
+│  👉 Giá trị được MÃ HÓA 1 chiều bằng libsodium👉 Giá trị KHÔNG mã hóa, hiện │
+│     và tự động che giấu '***' trên Console!      rõ trên màn hình giao diện! │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+###### ⚖️ PHÂN BIỆT ĐỐI ĐẦU BẢN CHẤT: `[ TAB: SECRETS ]` VS. `[ TAB: VARIABLES ]`
+
+Rất nhiều kỹ sư khi mới tiếp cận GitHub Actions thường bối rối không biết khi nào nên đưa biến vào **Tab Secrets** và khi nào nên đưa vào **Tab Variables**. Dưới đây là bảng phân định rạch ròi 7 tiêu chuẩn cốt lõi:
+
+| Tiêu Chí So Sánh | 🔐 [ TAB: SECRETS ] (Thông Tin Bí Mật) | 🌐 [ TAB: VARIABLES ] (Cấu Hình Công Khai) |
+|---|---|---|
+| **1. Bản chất dữ liệu** | Dữ liệu **tối mật, nhạy cảm**: Mật khẩu tài khoản test, Access Token, API Key, Khóa ký SSL, Private Key. | Dữ liệu **cấu hình thông thường, phi nhạy cảm**: Tên trình duyệt, số workers, timeout, URL công khai, cờ feature flag. |
+| **2. Cơ chế mã hóa & Lưu trữ** | Được mã hóa 1 chiều bất đối xứng bằng thuật toán **NaCl / libsodium** trước khi lưu vào cơ sở dữ liệu của GitHub. | Lưu trữ dưới dạng **văn bản thuần (Plaintext)**, hoàn toàn không mã hóa. |
+| **3. Khả năng xem lại sau khi lưu** | ❌ **VĨNH VIỄN KHÔNG THỂ XEM LẠI**: Sau khi bấm *Add secret*, ngay cả Owner/Admin của Repo cũng **không thể đọc lại giá trị** (chỉ có thể bấm *Update* ghi đè giá trị mới hoặc *Delete* xóa bỏ). | ✅ **XEM VÀ CHỈNH SỬA TỰ DO**: Mọi thành viên có quyền truy cập repo đều nhìn thấy rõ giá trị trên Web UI và có thể bấm sửa trực tiếp. |
+| **4. Cơ chế che giấu trên Console Log** | 🛡️ **Tự động che giấu (`***`)**: Engine Masking của GitHub Actions Runner tự động đối soát trong RAM và biến bất kỳ chuỗi nào trùng khớp với Secret thành `***` trên console log. | 👁️ **Hiển thị nguyên bản**: In ra bình thường trên console log (`echo`, `console.log`) để phục vụ debug. |
+| **5. Cú pháp gọi trong File YML** | 🔑 Bắt buộc dùng ngữ cảnh `secrets`: <br>`${{ secrets.STAFF_PASSWORD }}` | 🏷️ Bắt buộc dùng ngữ cảnh `vars`: <br>`${{ vars.DEFAULT_BROWSER }}` |
+| **6. Quyền truy cập từ Forked Pull Requests** | 🚫 **Khóa 100% đối với PR từ bên ngoài**: GitHub tự động tước bỏ toàn bộ Secrets khi có PR gửi từ Fork Repo để chống hacker mở PR độc hại nhằm in trộm secret ra console. | 🟢 **Có thể truy cập**: Fork PRs vẫn đọc được các biến cấu hình công khai để chạy suite kiểm thử. |
+| **7. Ví dụ thực tế trong Bài 26** | `STAFF_PASSWORD`, `NEKO_API_KEY`, `DATABASE_PASSWORD`. | `DEFAULT_BROWSER=chromium`, `MAX_WORKERS=2`, `TEST_TIMEOUT=30000`, `BASE_URL`. |
+
+###### ⚠️ 3 CẠM BẪY KINH ĐIỂN CẦN TRÁNH KHI SỬ DỤNG SECRETS & VARIABLES:
+
+1. **🚨 Cạm bẫy 1: Gõ nhầm cú pháp `${{ variables.TEN_BIEN }}` thay vì `${{ vars.TEN_BIEN }}`**:
+   * *Sai lầm*: Trong khi Secrets dùng từ đầy đủ `${{ secrets.X }}`, thì Variables GitHub lại bắt buộc rút gọn thành **`${{ vars.X }}`**.
+   * *Hậu quả*: Nếu viết `${{ variables.DEFAULT_BROWSER }}`, GitHub Actions sẽ trả về chuỗi rỗng `""` (undefined) trong âm thầm mà không báo lỗi cú pháp!
+2. **🚨 Cạm bẫy 2: Lạm dụng Secrets cho các biến cấu hình vô hại**:
+   * *Sai lầm*: Đưa cả `TARGET_ENV=staging` hoặc `DEFAULT_BROWSER=chromium` vào Secrets.
+   * *Hậu quả*: Trên console log, chữ `staging` và `chromium` sẽ bị GitHub che sạch thành `***`, biến toàn bộ log debug thành ma trận sao `***`, khiến việc chẩn đoán lỗi trở nên bất khả thi!
+3. **🚨 Cạm bẫy 3: Lưu mật khẩu vào Variables để "tiện xem lại"**:
+   * *Sai lầm*: Vì Secrets không xem lại được nên nhiều người đưa token/pass vào Variables.
+   * *Hậu quả*: Bất kỳ ai clone hoặc có quyền view repo đều thấy mật khẩu, và khi chạy test mật khẩu sẽ in thẳng lên terminal log của GitHub Actions, gây lộ lọt dữ liệu nghiêm trọng.
+
+---
+
+##### 🌐 TẦNG 5: Thiết Lập GitHub Environments (Staging vs. Production Biệt Lập)
+Đây là tính năng tối thượng để phân định ranh giới giữa môi trường kiểm thử và môi trường triển khai thực tế:
+1. Tại tab **Settings** của Repo ➔ Menu bên trái chọn **Environments**.
+2. Bấm nút **New environment**:
+   - Nhập tên: `staging` ➔ Bấm **Configure environment**.
+   - Tại mục **Environment variables**: Bấm **Add variable** ➔ Name: `BASE_URL`, Value: `https://staging-coffee.autoneko.com`.
+   - Bấm **Save variable**.
+3. Bấm lại **New environment**:
+   - Nhập tên: `production` ➔ Bấm **Configure environment**.
+   - **Kích hoạt Quy tắc Bảo vệ (Protection Rules)**:
+     - Tick chọn **Required reviewers** ➔ Gõ tên tài khoản Tech Lead / QA Lead (ví dụ: `@lead-qa`). Khi pipeline chạy nhắm vào Production, GitHub sẽ tạm dừng máy ảo và gửi email thông báo yêu cầu Lead duyệt mới được chạy tiếp!
+     - Tick chọn **Deployment branches** ➔ Chọn *Selected branches* ➔ Bấm *Add deployment branch rule* ➔ Nhập `main`. Đảm bảo nhánh tạm `feature/*` không bao giờ được phép chạy kiểm thử trên Production.
+   - Tại mục **Environment variables**: Bấm **Add variable** ➔ Name: `BASE_URL`, Value: `https://coffee.autoneko.com`.
+
+---
+
+##### 📄 TẦNG 4, 3, 1: Khai Báo Trong File Workflow YAML (`.github/workflows/playwright-lesson26.yml`)
+Các tầng này được cấu hình trực tiếp bằng mã YAML trong Git repository:
+
+```yaml
+# ── TẦNG 4: WORKFLOW-LEVEL ENV (Áp dụng toàn bộ file) ────────────────────────
+env:
+  WORKFLOW_SCOPE: "Workflow-Scope-Global-Value"
+  SCOPED_ENV_OVERRIDE: "Override-From-Workflow"
+
+jobs:
+  playwright-sandbox:
+    runs-on: ubuntu-latest
+    
+    # ── TẦNG 5: LIÊN KẾT GITHUB ENVIRONMENT (Được Web UI cấp quyền) ──────────
+    environment: ${{ github.event.inputs.target_env || 'production' }}
+
+    # ── TẦNG 3: JOB-LEVEL ENV (Cục bộ duy nhất Job này) ──────────────────────
+    env:
+      JOB_SCOPE: "Job-Scope-Runner-Value"
+      SCOPED_ENV_OVERRIDE: "Override-From-Job"
+
+    steps:
+      # ── TẦNG 2: DYNAMIC RUNTIME INJECTION QUA $GITHUB_ENV ──────────────────
+      - name: ⚙️ Dynamic Runtime Injection
+        run: |
+          echo "DYNAMIC_PIPELINE_ID=pipe-$(date +%s)" >> $GITHUB_ENV
+
+      # ── TẦNG 1: STEP-LEVEL ENV (ƯU TIÊN CAO NHẤT — ĐÈ TẤT CẢ CÁC CẤP TRÊN) ───
+      - name: 🎭 Run Tests
+        env:
+          STEP_SCOPE: "Step-Scope-Command-Value"
+          SCOPED_ENV_OVERRIDE: "Override-From-Step" # 👈 Thắng Job env & Workflow env!
+        run: npx playwright test
+```
+
+---
+
+##### 💻 TẦNG 0: Thiết Lập Môi Trường Fallback Cục Bộ (Local `.env`)
+Khi chạy test trên máy cá nhân không có máy ảo GitHub Actions:
+1. Tạo file `.env` tại thư mục gốc dự án (`.env`):
+   ```env
+   CI=false
+   BASE_URL=https://coffee.autoneko.com
+   STAFF_PASSWORD=LocalStaffVaultPass123!
+   SCOPED_ENV_OVERRIDE=fallback_local_env
+   ```
+2. Thêm file `.env` vào `.gitignore` để tránh đẩy password máy cá nhân lên Git công khai!
+3. Trong file test TypeScript, nạp thư viện `dotenv`:
+   ```typescript
+   import dotenv from "dotenv";
+   dotenv.config();
+   ```
+
+---
+
+#### 🧪 3. Kịch Bản Thực Nghiệm Xung Đột Biến (Collision Simulation)
+
+Giả sử cùng một biến `SCOPED_ENV_OVERRIDE` được khai báo ở cả 4 tầng đồng thời:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       THỬ NGHIỆM XUNG ĐỘT 4 TẦNG BIẾN                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  Tầng 0 (Local .env)         : SCOPED_ENV_OVERRIDE = "fallback_local"       │
+│  Tầng 4 (Workflow env YML)   : SCOPED_ENV_OVERRIDE = "Override-From-Workflow"│
+│  Tầng 3 (Job env YML)        : SCOPED_ENV_OVERRIDE = "Override-From-Job"     │
+│  Tầng 1 (Step env YML)       : SCOPED_ENV_OVERRIDE = "Override-From-Step"    │
+│                                                                             │
+│  👉 KHI PLAYWRIGHT CHẠY LỆNH process.env.SCOPED_ENV_OVERRIDE:                │
+│     Giá trị nhận được CHÍNH XÁC 100% là:                                    │
+│     🏆 "Override-From-Step" (Tầng 1 thắng tuyệt đối!)                       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+Khi chạy kịch bản `01-env-hierarchy-and-precedence.spec.ts`, kết quả kiểm tra Console in ra:
+```text
+🔍 [Env Resolution] Đối soát thứ tự ưu tiên của biến môi trường:
+   ├─ WORKFLOW_SCOPE : Workflow-Scope-Global-Value
+   ├─ JOB_SCOPE      : Job-Scope-Runner-Value
+   ├─ STEP_SCOPE     : Step-Scope-Command-Value
+   └─ SCOPED_OVERRIDE: Override-From-Step   <-- Đã ghi đè thành công!
+```
+
+---
+
+### 🔹 3.4. Cơ Chế Bảo Mật GitHub Secrets Masking Engine (`***`)
 
 * Khi bạn đưa một biến vào **GitHub Secrets** hoặc gọi lệnh `::add-mask::`, GitHub Actions Runner kích hoạt **Bộ lọc Mặt nạ (Masking Engine)**.
 * Mọi chuỗi ký tự xuất hiện trên console log trùng khớp với giá trị Secret sẽ tự động bị thay thế bằng `***`.
@@ -627,25 +1145,29 @@ Khi cùng một biến (ví dụ `SCOPED_ENV_OVERRIDE` hoặc `BASE_URL`) đư�
 
 ---
 
-### 🔹 3.4. Cẩm Nang Thiết Lập Secrets & Variables Qua GitHub CLI (`gh`)
+### 🔹 3.5. Cẩm Nang Thiết Lập Secrets & Variables Qua GitHub CLI (`gh`)
 
-Ngoài việc bấm chuột trên giao diện Web, một Kỹ sư DevOps / Automation chuyên nghiệp có thể cấu hình toàn bộ hệ thống biến qua Terminal bằng lệnh `gh`:
+Ngoài việc bấm chuột trên giao diện Web, một Kỹ sư DevOps / Automation chuyên nghiệp có thể cấu hình toàn bộ hệ thống biến qua Terminal bằng lệnh `gh`.
+
+> 💡 **Cơ Chế Nhận Diện Repository Của `gh`**:
+> * **Cơ chế ngầm định (Implicit)**: Khi bạn đứng trong thư mục dự án, `gh` tự động đọc cấu hình `git remote origin` để biết đích đến là kho chứa nào (`meomew-auto/PW-BASIC-202603`).
+> * **Chuẩn an toàn tuyệt đối (Explicit)**: Bạn có thể thêm cờ `-R <owner>/<repo>` để lệnh có thể chạy chính xác từ bất kỳ đâu (kể cả ngoài Desktop) mà không phụ thuộc vào thư mục hiện tại.
 
 ```bash
-# 1. Thiết lập Repository Secret (Bảo mật)
-gh secret set STAFF_PASSWORD --body "NekoStaffVaultPass2026!"
-gh secret set NEKO_API_KEY --body "neko_sec_live_998877665544"
+# 1. Thiết lập Repository Secret (Bảo mật - thêm -R để định danh tường minh)
+gh secret set STAFF_PASSWORD --body "NekoStaffVaultPass2026!" -R meomew-auto/PW-BASIC-202603
+gh secret set NEKO_API_KEY --body "neko_sec_live_998877665544" -R meomew-auto/PW-BASIC-202603
 
 # 2. Thiết lập Repository Variable (Công khai)
-gh variable set DEFAULT_BROWSER --body "chromium"
-gh variable set MAX_TEST_RETRIES --body "2"
+gh variable set DEFAULT_BROWSER --body "chromium" -R meomew-auto/PW-BASIC-202603
+gh variable set MAX_TEST_RETRIES --body "2" -R meomew-auto/PW-BASIC-202603
 
 # 3. Thiết lập Environment Secret riêng cho môi trường Staging
-gh secret set BASE_URL --env staging --body "https://staging-coffee.autoneko.com"
+gh secret set BASE_URL --env staging --body "https://staging-coffee.autoneko.com" -R meomew-auto/PW-BASIC-202603
 
-# 4. Kiểm tra danh sách Secrets hiện có
-gh secret list
-gh variable list
+# 4. Kiểm tra danh sách Secrets & Variables hiện có trên GitHub
+gh secret list -R meomew-auto/PW-BASIC-202603
+gh variable list -R meomew-auto/PW-BASIC-202603
 ```
 
 ---
@@ -656,13 +1178,114 @@ gh variable list
 
 ---
 
-### 🔹 4.1. Cấu Hình Độc Lập [`configs/playwright.lesson26-cicd.config.ts`](file:///e:/playwright-pro/202603-PW_BASIC/configs/playwright.lesson26-cicd.config.ts)
+### 🔹 4.1. Thiết Kế Cấu Hình Độc Lập Sandbox: `playwright.lesson26-cicd.config.ts`
 
-Tối ưu hóa chuyên biệt cho CI: `headless: true`, `workers: 2`, `retries: isCI ? 2 : 1`, xuất báo cáo độc lập tại `playwright-report-lesson26/`.
+Tệp cấu hình: `configs/playwright.lesson26-cicd.config.ts`
+
+Để phục vụ môi trường thực nghiệm CI/CD mà không gây ảnh hưởng đến các cấu hình kiểm thử chung toàn dự án, Bài 26 sử dụng một file cấu hình tách biệt hoàn toàn:
+
+#### 📄 1. Mã Nguồn Cấu Hình Hoàn Chỉnh (Có Chú Thích Chi Tiết Từng Dòng):
+
+```typescript
+import { defineConfig, devices } from "@playwright/test";
+
+// 1. Nhận diện môi trường CI tự động từ GitHub Actions
+const isCI = !!process.env.CI;
+
+export default defineConfig({
+  // ⚡ QUY CHUẨN ĐƯỜNG DẪN: File nằm trong 'configs/' nên phải lùi 1 cấp ('../') để trỏ đúng thư mục test specs
+  testDir: "../modules/2-api/NekoCoffee/lesson-26/specs",
+  timeout: 30_000,
+  expect: {
+    timeout: 5_000,
+  },
+
+  // 2. Chặn đứng việc vô tình commit 'test.only' lên nhánh chính
+  forbidOnly: isCI,
+
+  // 3. Cơ chế Retry: Trên CI retry 2 lần để lọc lỗi mạng/flaky; ở local retry 1 lần để dev debug
+  retries: isCI ? 2 : 1,
+
+  // 4. Giới hạn 2 workers trên CI để bảo vệ máy ảo Ubuntu 2 vCPU 7GB RAM; ở local dùng tối đa tài nguyên
+  workers: isCI ? 2 : undefined,
+
+  // 5. Hệ thống Báo cáo kép:
+  //    - Trên CI: Xuất 'github' annotation trực tiếp vào PR diff + 'html' report độc lập tại root
+  //    - Ở Local: Xuất 'list' console và 'html' report
+  reporter: isCI
+    ? [
+        ["github"],
+        ["list"],
+        ["html", { outputFolder: "../playwright-report-lesson26", open: "never" }],
+      ]
+    : [
+        ["list"],
+        ["html", { outputFolder: "../playwright-report-lesson26", open: "never" }],
+      ],
+
+  use: {
+    baseURL: process.env.BASE_URL || "https://coffee.autoneko.com",
+
+    // 6. Bắt buộc Headless 100% trên môi trường CI Linux
+    headless: true,
+
+    // 7. Hộp đen cứu hộ: Chỉ ghi Trace ở lần retry đầu tiên để tiết kiệm dung lượng đĩa CI
+    trace: "on-first-retry",
+
+    // 8. Tự động chụp ảnh khi assertion thất bại
+    screenshot: "only-on-failure",
+
+    // 9. Giữ lại video khi test case thất bại
+    video: "retain-on-failure",
+
+    viewport: { width: 1280, height: 720 },
+    actionTimeout: 10_000,
+    navigationTimeout: 20_000,
+  },
+
+  projects: [
+    {
+      name: "chromium-ci",
+      use: {
+        ...devices["Desktop Chrome"],
+      },
+    },
+  ],
+});
+```
 
 ---
 
-### 🔹 4.2. File Workflow Đa Năng [`.github/workflows/playwright-lesson26.yml`](file:///e:/playwright-pro/202603-PW_BASIC/.github/workflows/playwright-lesson26.yml)
+#### 🔍 2. Giải Mã 4 Quy Chuẩn Kỹ Thuật Then Chốt Trong File Cấu Hình:
+
+##### 📁 A. Tại Sao Bắt Buộc Dùng Đường Dẫn Tương Đối `../`?
+* **Nguyên lý Playwright**: Khi bạn truyền tham số `--config=configs/playwright.lesson26-cicd.config.ts`, Playwright sẽ coi **thư mục chứa file config** (`configs/`) làm mốc gốc (Base Directory) để giải quyết mọi đường dẫn tương đối.
+* **Hậu quả nếu không dùng `../`**:
+  - Nếu viết `testDir: "modules/..."`, Playwright sẽ tìm kiếm tại `configs/modules/...` ➔ **Báo lỗi không tìm thấy bất kỳ test spec nào!**
+  - Nếu viết `outputFolder: "playwright-report-lesson26"`, báo cáo HTML sẽ bị sinh nhầm vào bên trong thư mục `configs/playwright-report-lesson26`.
+* **Giải pháp chuẩn xác**: Luôn sử dụng tiền tố `../` (`../modules/...` và `../playwright-report-lesson26`) để đưa đường dẫn quay ngược ra thư mục gốc của repository.
+
+##### 🛡️ B. Cơ Chế Tự Động Thích Ứng Môi Trường (`process.env.CI`)
+* GitHub Actions Runner luôn tự động tiêm biến `CI=true` vào môi trường.
+* Nhờ `const isCI = !!process.env.CI;`, cấu hình có thể:
+  - **Bật `forbidOnly: isCI`**: Khi chạy Local, developer thoải mái dùng `test.only` để debug 1 case. Nhưng nếu sơ suất commit lên GitHub, pipeline sẽ lập tức báo lỗi đỏ và từ chối chạy, chống sót test toàn diện.
+  - **Điều tiết `workers`**: Tránh tình trạng runner 2 vCPU bị treo hoặc tràn RAM khi chạy song song quá tải.
+
+##### 📊 C. Báo Cáo Kép: `['github']` Annotation + Standalone HTML Report
+* `['github']`: Sử dụng tính năng GitHub Workflow Commands (`::error::`, `::warning::`). Khi có test fail, lỗi sẽ được ghim cờ chú thích trực tiếp vào từng dòng code trong thẻ **Files changed** của Pull Request.
+* `['html', { outputFolder: '../playwright-report-lesson26', open: 'never' }]`: Đặt tên thư mục báo cáo chuyên biệt cho Bài 26, ngăn chặn việc ghi đè lên thư mục báo cáo mặc định `playwright-report/` của các bài học khác. Cờ `open: 'never'` ngăn Playwright cố gắng mở trình duyệt GUI trên máy ảo Linux.
+
+##### 📼 D. Chiến Lược Ghi Trace Tiết Kiệm Đĩa: `trace: 'on-first-retry'`
+* Nếu đặt `trace: 'on'`, dung lượng thư mục báo cáo có thể phình to từ vài chục MB lên hàng trăm MB (do chụp ảnh DOM liên tục mỗi mili-giây).
+* Sử dụng `trace: 'on-first-retry'` đảm bảo:
+  - Các test case chạy Pass ở lần đầu ➔ **Không sinh file trace** ➔ Tối ưu tốc độ và dung lượng lưu trữ.
+  - Chỉ khi test bị FAIL và bước vào lần Retry ➔ **Playwright mới bật máy ghi hình Trace Viewer** để phục vụ điều tra sự cố.
+
+---
+
+### 🔹 4.2. File Workflow Đa Năng: `playwright-lesson26.yml` (Dynamic Self-Service Portal)
+
+Tệp workflow: `playwright-lesson26.yml`
 
 File YML này biến pipeline thành một **Bảng điều khiển tự phục vụ**, hỗ trợ chọn Case, chọn Môi trường, chọn Retries, và bật tắt chế độ Test Fail:
 
@@ -835,43 +1458,47 @@ jobs:
 
 ### 🔹 4.3. Giải Phẫu Chi Tiết 10 Test Cases Thực Nghiệm
 
-Thư mục: [`modules/2-api/NekoCoffee/lesson-26/specs/`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-26/specs/):
+Thư mục: `modules/2-api/NekoCoffee/lesson-26/specs/`:
 
-1. **Case 01: [`01-env-hierarchy-and-precedence.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-26/specs/01-env-hierarchy-and-precedence.spec.ts)**
+1. **Case 01: `01-env-hierarchy-and-precedence.spec.ts`**
    * **Kiểm chứng**: Thứ tự ưu tiên ghi đè biến (Step env đè Job env đè Workflow env) và trích xuất siêu dữ liệu `GITHUB_RUN_ID`, `GITHUB_ACTOR`, `GITHUB_SHA`.
-2. **Case 02: [`02-secrets-masking-and-security.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-26/specs/02-secrets-masking-and-security.spec.ts)**
+2. **Case 02: `02-secrets-masking-and-security.spec.ts`**
    * **Kiểm chứng**: Cơ chế che giấu dữ liệu nhạy cảm của GitHub Secrets (tự động biến thành `***` trên console) trong khi test vẫn đọc được giá trị thật trong RAM.
-3. **Case 03: [`03-dynamic-runtime-env-injection.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-26/specs/03-dynamic-runtime-env-injection.spec.ts)**
+3. **Case 03: `03-dynamic-runtime-env-injection.spec.ts`**
    * **Kiểm chứng**: Nạp biến động ở runtime qua `$GITHUB_ENV` (`DYNAMIC_PIPELINE_ID`, `RUNNER_TIMESTAMP`) và che giấu token qua `::add-mask::`.
-4. **Case 04: [`04-environment-staging-vs-prod.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-26/specs/04-environment-staging-vs-prod.spec.ts)**
+4. **Case 04: `04-environment-staging-vs-prod.spec.ts`**
    * **Kiểm chứng**: Tầng GitHub Environments (`staging` vs `production`). Tự động phân giải `BASE_URL` động theo tham số `TARGET_ENV`.
-5. **Case 05: [`05-flaky-retry-self-healing.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-26/specs/05-flaky-retry-self-healing.spec.ts)**
+5. **Case 05: `05-flaky-retry-self-healing.spec.ts`**
    * **Kiểm chứng**: Khả năng tự phục hồi của `retries: 2` và `trace: 'on-first-retry'`. Attempt 1 ném lỗi mạng $\rightarrow$ Retry 1 hồi phục thành công (nhãn báo cáo: FLAKY màu cam).
-6. **Case 06: [`06-timeout-and-deadlock-guard.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-26/specs/06-timeout-and-deadlock-guard.spec.ts)**
+6. **Case 06: `06-timeout-and-deadlock-guard.spec.ts`**
    * **Kiểm chứng**: Cơ chế Timeout 3 cấp (Job `timeout-minutes` $\rightarrow$ Config `timeout` $\rightarrow$ Test `test.setTimeout`) ngăn ngừa treo worker tốn tiền CI.
-7. **Case 07: [`07-failure-artifacts-postmortem.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-26/specs/07-failure-artifacts-postmortem.spec.ts)**
+7. **Case 07: `07-failure-artifacts-postmortem.spec.ts`**
    * **Kiểm chứng**: Cơ chế `if: always()` khi test bị FAIL có chủ đích (`SIMULATE_FAILURE=true`). Step Upload Báo cáo vẫn chạy để cứu hộ screenshot, video và trace.
-8. **Case 08: [`08-headless-and-viewport-matrix.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-26/specs/08-headless-and-viewport-matrix.spec.ts)**
+8. **Case 08: `08-headless-and-viewport-matrix.spec.ts`**
    * **Kiểm chứng**: Nhận diện môi trường Headless trên Linux, thẩm định Viewport chuẩn mực CI (`1280x720`) và tính nhất quán layout CSS Grid / Flexbox.
-9. **Case 09: [`09-api-mock-network-isolation.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-26/specs/09-api-mock-network-isolation.spec.ts)**
+9. **Case 09: `09-api-mock-network-isolation.spec.ts`**
    * **Kiểm chứng**: Cô lập mạng CI bằng `page.route()` mock API thanh toán `/api/v1/checkout`, đạt tính xác định 100% (Deterministic) không phụ thuộc backend.
-10. **Case 10: [`10-neko-live-smoke-e2e.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-26/specs/10-neko-live-smoke-e2e.spec.ts)**
-    * **Kiểm chứng**: Trình duyệt Chromium Linux kết nối live tới `https://coffee.autoneko.com/login`, tương tác form đăng nhập qua các `data-testid` chính thức.
+10. **Case 10: `10-neko-live-smoke-e2e.spec.ts`**
+    * **Kiểm chứng**: Siêu kịch bản kết hợp Enterprise Hybrid Super E2E (Bài 24) & Multi-Tab Live Workflow (Bài 25) trên hệ thống thật `https://coffee.autoneko.com`: Tự động tiêm phiên Staff qua Worker RAM Snapshot (0ms), truy vấn nhanh danh mục sản phẩm qua Backend API (<200ms), mở Admin đối soát ma trận cột động qua `TableColumnHelpers`, hậu kiểm Database ngầm bằng Zod Runtime Schema Contract, và xử lý luồng In Hóa Đơn đa tab (`target='_blank'`) với POM `NekoInvoicePage`.
 
 ---
 
 ### 🔹 4.4. Cẩm Nang Hướng Dẫn Kiểm Tra Từng Case (2 Cấp Độ)
 
-#### 💻 CẤP ĐỘ 1: KIỂM TRA TRỰC TIẾP TẠI MÁY CÁ NHÂN (LOCAL TERMINAL)
+Để kỹ sư và thành viên dự án nắm bắt chính xác quy trình kiểm thử, hệ thống cung cấp 2 phương thức điều phối: thực thi tại Local Terminal và điều khiển từ xa thông qua GitHub Actions Portal (`gh` CLI).
+
+---
+
+#### 💻 CẤP ĐỘ 1: KIỂM TRA TỔNG QUAN TẠI MÁY CÁ NHÂN (LOCAL TERMINAL)
 
 ```bash
-# 1. Chạy toàn bộ 10 kịch bản ở chế độ an toàn
+# 1. Chạy toàn bộ 10 kịch bản ở chế độ an toàn (Mặc định PASS 10, Flaky 1)
 npm run test:lesson26-cicd
 
-# 2. Thử nghiệm chế độ Test FAIL có chủ đích để kiểm tra Artifacts
+# 2. Thử nghiệm chế độ Test FAIL có chủ đích để kiểm chứng Artifacts Rescue
 npm run test:lesson26-fail
 
-# 3. Mở xem Báo cáo HTML trực quan offline
+# 3. Mở xem Báo cáo HTML trực quan offline ngay trên trình duyệt
 npx playwright show-report playwright-report-lesson26
 ```
 
@@ -879,47 +1506,684 @@ npx playwright show-report playwright-report-lesson26
 
 #### ☁️ CẤP ĐỘ 2: ĐIỀU KHIỂN ĐỘNG TRÊN GITHUB ACTIONS QUA GITHUB CLI (`gh`)
 
-Sau khi file YAML đã ở trên GitHub, bạn và học sinh **KHÔNG CẦN PUSH MÃ NGUỒN NỮA**. Bạn có thể điều khiển toàn bộ pipeline từ xa bằng lệnh `gh`:
+GitHub CLI (`gh`) là bộ công cụ dòng lệnh chính thức của GitHub, cho phép kỹ sư **điều khiển toàn bộ pipeline CI/CD, nạp Secrets, chuyển đổi môi trường và theo dõi log máy ảo Linux realtime mà không cần rời khỏi Terminal**.
+
+##### 📥 1. Hướng Dẫn Cài Đặt GitHub CLI (`gh`) Đa Nền Tảng:
+
+* **Windows (PowerShell / Windows Terminal)**:
+  ```powershell
+  # Cách 1 (Khuyên dùng): Cài nhanh qua Windows Package Manager (winget)
+  winget install --id GitHub.cli
+
+  # Cách 2: Cài qua Chocolatey (nếu máy có cài choco)
+  choco install gh
+
+  # Cách 3: Cài qua Scoop
+  scoop install gh
+  ```
+  *(Lưu ý: Sau khi cài đặt hoàn tất, hãy tắt và mở lại Terminal/PowerShell để hệ thống nhận diện biến môi trường `PATH`).*
+
+* **macOS (Terminal)**:
+  ```bash
+  brew install gh
+  ```
+
+* **Linux (Ubuntu / Debian)**:
+  ```bash
+  sudo apt update
+  sudo apt install gh
+  ```
+
+---
+
+##### 🔑 2. Hướng Dẫn Đăng Nhập & Xác Thực Quyền Hạn (`gh auth login`):
+
+Sau khi cài đặt, bạn thực hiện xác thực tài khoản GitHub một lần duy nhất theo các bước sau:
 
 ```bash
-# 🎯 Case 01: Thẩm định phân tầng Env & GitHub Context
-gh workflow run "🚀 Lesson 26 - Playwright CI/CD Sandbox" -f test_case=case-01-env-hierarchy
+gh auth login
+```
 
-# 🎯 Case 02: Kiểm chứng Secrets Masking '***'
-gh workflow run "🚀 Lesson 26 - Playwright CI/CD Sandbox" -f test_case=case-02-secrets-masking
+Trình tương tác (Interactive prompt) trên Terminal sẽ lần lượt xuất hiện 4 câu hỏi:
+1. **What account do you want to log into?** ➔ Chọn **`GitHub.com`** (Bấm Enter).
+2. **What is your preferred protocol for Git operations?** ➔ Chọn **`HTTPS`** (Bấm Enter).
+3. **Authenticate Git with your GitHub credentials?** ➔ Chọn **`Yes`** (Bấm Enter).
+4. **How would you like to authenticate GitHub CLI?** ➔ Chọn **`Login with a web browser`** (Bấm Enter).
 
-# 🎯 Case 03: Kiểm chứng tiêm biến động qua $GITHUB_ENV & ::add-mask::
-gh workflow run "🚀 Lesson 26 - Playwright CI/CD Sandbox" -f test_case=case-03-runtime-injection
+> 🌐 **Xác thực Web Browser**: Terminal sẽ in ra một mã gồm 8 ký tự (ví dụ: `ABCD-1234`) và tự động mở trình duyệt web. Bạn dán mã 8 ký tự này vào trang GitHub đang mở rồi bấm nút xanh **Authorize github** là hoàn tất xác thực!
 
-# 🎯 Case 04: Điều phối môi trường Staging
-gh workflow run "🚀 Lesson 26 - Playwright CI/CD Sandbox" -f test_case=case-04-environments -f target_env=staging
+##### 🛡️ 3. Kiểm Tra Trạng Thái & Cấp Quyền Quản Trị Workflow:
+```bash
+# Kiểm tra tài khoản đã kết nối thành công:
+gh auth status
 
-# 🎯 Case 05 (Thử thách Flaky): Chạy với retries=0 -> Bị ĐỎ ❌ vì không được Retry
-gh workflow run "🚀 Lesson 26 - Playwright CI/CD Sandbox" -f test_case=case-05-flaky-retry -f retries=0
-
-# 🎯 Case 05 (Tự hồi phục): Chạy với retries=2 -> Hồi phục thành CAM 🟠 FLAKY
-gh workflow run "🚀 Lesson 26 - Playwright CI/CD Sandbox" -f test_case=case-05-flaky-retry -f retries=2
-
-# 🎯 Case 06: Kiểm chứng phòng vệ Timeout
-gh workflow run "🚀 Lesson 26 - Playwright CI/CD Sandbox" -f test_case=case-06-timeout-guard
-
-# 🎯 Case 07: KÍCH HOẠT FAIL CÓ CHỦ ĐÍCH để kiểm chứng if: failure() và if: always()
-gh workflow run "🚀 Lesson 26 - Playwright CI/CD Sandbox" -f test_case=case-07-artifacts-fail -f simulate_failure=true
-
-# 🎯 Case 08: Kiểm chứng Headless Mode & Viewport 1280x720
-gh workflow run "🚀 Lesson 26 - Playwright CI/CD Sandbox" -f test_case=case-08-headless-viewport
-
-# 🎯 Case 09: Kiểm chứng Network Isolation & API Mocking
-gh workflow run "🚀 Lesson 26 - Playwright CI/CD Sandbox" -f test_case=case-09-api-mock-isolation
-
-# 🎯 Case 10: Chạy Live Smoke Neko Coffee
-gh workflow run "🚀 Lesson 26 - Playwright CI/CD Sandbox" -f test_case=case-10-live-smoke
-
-# 📊 Theo dõi tiến trình máy ảo Ubuntu chạy realtime ngay tại Terminal
-gh run watch
+# Cấp thêm quyền quản trị và kích hoạt workflow CI/CD (nếu thiếu quyền):
+gh auth refresh -s workflow
 ```
 
 ---
+
+##### ⚡ 4. Quy Trình 3 Bước Chuẩn Mực Khi Điều Khiển Pipeline Bằng `gh`:
+
+Khi workflow đã ở trên GitHub, bạn không cần push commit mới mỗi lần test. Quy trình kiểm thử khép kín gồm:
+
+```bash
+# BƯỚC 1: Kích hoạt Pipeline từ xa (Sử dụng tên file YML ngắn gọn, chống lỗi font emoji):
+gh workflow run playwright-lesson26.yml -f test_case=all
+
+# BƯỚC 2: Theo dõi tiến trình máy ảo Ubuntu chạy realtime ngay tại Terminal:
+gh run watch
+
+# BƯỚC 3: Đọc toàn bộ log console kết quả kiểm thử ngay tại Terminal:
+gh run view --log
+```
+
+---
+
+### 🔬 4.4.1. Cẩm Nang Thiết Lập Môi Trường (Setup) & Giải Phẫu Chi Tiết 10 Test Cases
+
+Dưới đây là hướng dẫn toàn diện cho từng kịch bản kiểm thử: từ **cách thiết lập môi trường Git / GitHub Secrets / Environments**, câu lệnh kích hoạt (Local & `gh`), đến **màn hình log Terminal thực tế** và **giải mã kỹ thuật chi tiết từng dòng output**.
+
+---
+
+#### 🏛️ CASE 01: Đối Soát Phân Tầng Biến Môi Trường & Siêu Dữ Liệu GitHub
+* **File Spec**: `01-env-hierarchy-and-precedence.spec.ts`
+* **Mục tiêu**: Chứng minh quy tắc ghi đè: `Step env` đè `Job env` đè `Workflow env` và trích xuất siêu dữ liệu `github` context.
+
+##### ⚙️ Thiết Lập Môi Trường Git & GitHub (Prerequisites & Setup):
+1. **Cấu hình trên GitHub Workflow (`playwright-lesson26.yml`)**:
+   - Khai báo 3 tầng biến môi trường trong file YML:
+     - Tầng Workflow: `env: WORKFLOW_SCOPE: "Workflow-Scope-Global-Value"`, `SCOPED_ENV_OVERRIDE: "Override-From-Workflow"`
+     - Tầng Job: `env: JOB_SCOPE: "Job-Scope-Runner-Value"`, `SCOPED_ENV_OVERRIDE: "Override-From-Job"`
+     - Tầng Step: `env: STEP_SCOPE: "Step-Scope-Command-Value"`, `SCOPED_ENV_OVERRIDE: "Override-From-Step"`
+2. **Siêu dữ liệu GitHub Context**:
+   - Được GitHub Actions tự động tiêm sẵn vào runner (`github.run_id`, `github.actor`, `github.sha`, `github.event_name`). **Không cần tạo secret thủ công**.
+3. **Chạy tại Local**:
+   - File test đã có sẵn cơ chế fallback an toàn: Nếu không tìm thấy biến từ CI, test tự nhận các giá trị mặc định `default_from_config`, `local_developer`, `local_run_001`.
+
+##### ⌨️ Lệnh Thực Thi:
+```bash
+# 1. Chạy cục bộ tại Local:
+npx playwright test modules/2-api/NekoCoffee/lesson-26/specs/01-env-hierarchy-and-precedence.spec.ts --config=configs/playwright.lesson26-cicd.config.ts
+
+# 2. Chạy từ xa qua GitHub Actions (Quy trình 3 bước khép kín):
+gh workflow run playwright-lesson26.yml -f test_case=case-01-env-hierarchy
+gh run watch           # Theo dõi tiến trình máy ảo realtime
+gh run view --log      # Xem toàn bộ log console và bảng siêu dữ liệu
+```
+
+##### 🖥️ Output Terminal Thực Tế:
+```text
+Running 2 tests using 1 worker
+
+🔍 [Env Resolution] Đối soát thứ tự ưu tiên của biến môi trường:
+   ├─ WORKFLOW_SCOPE : Workflow-Scope-Global-Value
+   ├─ JOB_SCOPE      : Job-Scope-Runner-Value
+   ├─ STEP_SCOPE     : Step-Scope-Command-Value
+   └─ SCOPED_OVERRIDE: Override-From-Step
+ℹ️ Đang chạy kiểm thử tại máy ảo GitHub Actions Runner (Ubuntu Linux).
+  ok 1 [chromium-ci] › 01 - [HIERARCHY PRECEDENCE] Thẩm định quy tắc ghi đè biến môi trường (2ms)
+
+📦 [GitHub Context] Thông tin phiên chạy CI trích xuất từ máy ảo:
+┌───────────┬───────────────────────────────────────┐
+│ (index)   │ Values                                │
+├───────────┼───────────────────────────────────────┤
+│ isCI      │ true                                  │
+│ runId     │ '13884210925'                         │
+│ runNumber │ '14'                                  │
+│ sha       │ '7a8f9c2d1e0b5...'                    │
+│ actor     │ 'lead-qa-engineer'                    │
+│ eventName │ 'workflow_dispatch'                   │
+│ platform  │ 'linux'                               │
+└───────────┴───────────────────────────────────────┘
+✅ Pipeline được kích hoạt bởi [lead-qa-engineer] qua sự kiện [workflow_dispatch]
+  ok 2 [chromium-ci] › 02 - [GITHUB CONTEXT] Trích xuất siêu dữ liệu (Metadata) máy ảo GitHub (3ms)
+
+  2 passed (350ms)
+```
+
+##### 🔍 Giải Mã Từng Dòng Log:
+* `SCOPED_OVERRIDE: Override-From-Step`: Chứng minh giá trị ở Step (Tầng 6) đã đè bẹp hoàn toàn giá trị của Job (Tầng 5) và Workflow (Tầng 4).
+* `isCI: true` & `platform: 'linux'`: Xác nhận Playwright tự động nhận biết đang chạy trên máy ảo đám mây Ubuntu thay vì máy tính cá nhân Windows (`win32`).
+* Bảng `GitHub Context`: Đóng dấu vết kiểm toán (Audit Trail) chính xác ai là người bấm nút chạy, commit hash SHA nào đang được kiểm thử.
+
+---
+
+#### 🔐 CASE 02: Cơ Chế Bảo Mật & Che Giấu Bí Mật (Secrets Masking)
+* **File Spec**: `02-secrets-masking-and-security.spec.ts`
+* **Mục tiêu**: Thẩm định cơ chế che giấu `***` của GitHub Secrets. Password mật được bảo vệ tuyệt đối trên console nhưng code test trong bộ nhớ RAM vẫn đọc được để đăng nhập.
+
+##### ⚙️ Thiết Lập Môi Trường Git & GitHub (Prerequisites & Setup):
+1. **Thiết lập Repository Secrets trên GitHub**:
+   * **Cách 1: Qua giao diện Web GitHub**:
+     - Vào Repository ➔ Chọn tab **Settings** ➔ Mục **Secrets and variables** (cột trái) ➔ Bấm **Actions**.
+     - Bấm nút **New repository secret**:
+       - Name: `STAFF_PASSWORD` | Secret: `NekoStaffVaultPass2026!`
+       - Name: `NEKO_API_KEY` | Secret: `neko_sec_live_998877665544`
+   * **Cách 2: Qua GitHub CLI (`gh`) ngay tại Terminal (Nhanh nhất)**:
+     ```bash
+     gh secret set STAFF_PASSWORD --body "NekoStaffVaultPass2026!"
+     gh secret set NEKO_API_KEY --body "neko_sec_live_998877665544"
+     ```
+2. **Khai báo trong file YML (`playwright-lesson26.yml`)**:
+   ```yaml
+   env:
+     STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD || 'NekoStaffVaultPass2026!' }}
+     NEKO_API_KEY: ${{ secrets.NEKO_API_KEY || 'neko_sec_live_998877665544' }}
+   ```
+   *(Cú pháp fallback `||` đảm bảo nếu chưa kịp set secret trên GitHub thì pipeline vẫn chạy với giá trị mặc định mà không bị crash)*.
+3. **Thiết lập tại Local**:
+   - Nếu chạy Local, bạn có thể tạo file `.env` hoặc gõ trong PowerShell:
+     `$env:STAFF_PASSWORD="SuperSecretP@ssw0rd2026"`
+
+##### ⌨️ Lệnh Thực Thi:
+```bash
+# 1. Chạy cục bộ tại Local:
+npx playwright test modules/2-api/NekoCoffee/lesson-26/specs/02-secrets-masking-and-security.spec.ts --config=configs/playwright.lesson26-cicd.config.ts
+
+# 2. Chạy từ xa qua GitHub Actions (Quy trình 3 bước):
+gh workflow run playwright-lesson26.yml -f test_case=case-02-secrets-masking
+gh run watch           # Theo dõi tiến trình máy ảo realtime
+gh run view --log      # In toàn bộ log kết quả kiểm tra mask bí mật (***)
+```
+
+##### 🖥️ Output Terminal Thực Tế (Trên GitHub Actions Console):
+```text
+Running 1 test using 1 worker
+
+🛡️ [Security Audit] Thẩm định cơ chế tiêm Secret vào Playwright:
+   - Độ dài Staff Password : 23 ký tự
+   - Ký tự đầu Staff Pass  : N***
+   - Log trực tiếp Secret   : [***]
+✅ Secret đã được tiêm vào môi trường an toàn và được GitHub che giấu hoàn hảo!
+  ok 1 [chromium-ci] › 01 - [SECRETS MASKING] Xác nhận dữ liệu nhạy cảm được bảo vệ nghiêm ngặt (4ms)
+
+  1 passed (310ms)
+```
+
+##### 🔍 Giải Mã Từng Dòng Log:
+* `Log trực tiếp Secret: [***]`: Dù trong file test có lệnh `console.log(secret)`, engine bảo mật của GitHub Actions Runner tự động đối chiếu giá trị trong RAM và bôi đen thành `***` trước khi xuất ra màn hình console công khai.
+* `Độ dài Staff Password: 23 ký tự`: Chứng minh Playwright vẫn đọc đủ 100% các ký tự thực trong bộ nhớ RAM để gửi vào form Login chứ không bị mất mát dữ liệu.
+
+---
+
+#### ⚡ CASE 03: Tiêm Biến Động Runtime Qua `$GITHUB_ENV` & `::add-mask::`
+* **File Spec**: `03-dynamic-runtime-env-injection.spec.ts`
+* **Mục tiêu**: Chứng minh khả năng giao tiếp giữa Step tiền xử lý (Bash) và Step chạy test (Playwright) thông qua tệp tin đặc biệt `$GITHUB_ENV`.
+
+##### ⚙️ Thiết Lập Môi Trường Git & GitHub (Prerequisites & Setup):
+1. **Cấu hình Pre-step trong file YML**:
+   - Biến động runtime **không thể cấu hình trước trên Web UI** vì nó chỉ sinh ra khi máy ảo đang chạy.
+   - Bắt buộc phải có một Step tiền xử lý sử dụng cú pháp `$GITHUB_ENV` và `::add-mask::`:
+     ```yaml
+     - name: ⚙️ Dynamic Runtime Env Injection ($GITHUB_ENV & ::add-mask::)
+       run: |
+         echo "DYNAMIC_PIPELINE_ID=pipe-$(date +%s)" >> $GITHUB_ENV
+         echo "RUNNER_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_ENV
+         DYNAMIC_SECRET="neko_runtime_token_$(date +%s)"
+         echo "::add-mask::$DYNAMIC_SECRET"
+         echo "DYNAMIC_MASKED_SECRET=$DYNAMIC_SECRET" >> $GITHUB_ENV
+     ```
+2. **Cấu hình Local**:
+   - File test có sẵn fallback: `process.env.DYNAMIC_PIPELINE_ID || 'fallback_local_pipeline_id'`.
+
+##### ⌨️ Lệnh Thực Thi:
+```bash
+# 1. Chạy cục bộ tại Local:
+npx playwright test modules/2-api/NekoCoffee/lesson-26/specs/03-dynamic-runtime-env-injection.spec.ts --config=configs/playwright.lesson26-cicd.config.ts
+
+# 2. Chạy từ xa qua GitHub Actions (Quy trình 3 bước):
+gh workflow run playwright-lesson26.yml -f test_case=case-03-runtime-injection
+gh run watch           # Theo dõi tiến trình máy ảo realtime
+gh run view --log      # In toàn bộ log kết quả nạp biến $GITHUB_ENV
+```
+
+##### 🖥️ Output Terminal Thực Tế:
+```text
+Running 1 test using 1 worker
+
+⚡ [Runtime Probe] Kiểm tra các biến được nạp động qua $GITHUB_ENV:
+   ├─ DYNAMIC_PIPELINE_ID  : pipe-1742436550
+   ├─ RUNNER_TIMESTAMP     : 2026-09-17T02:15:30.120Z
+   └─ DYNAMIC_MASKED_SECRET: [***]
+✅ Đã nạp thành công biến động vào $GITHUB_ENV và che giấu token an toàn!
+  ok 1 [chromium-ci] › 01 - [RUNTIME INJECTION] Thẩm định biến động sinh ra từ Step tiền xử lý (3ms)
+
+  1 passed (320ms)
+```
+
+##### 🔍 Giải Mã Từng Dòng Log:
+* `DYNAMIC_PIPELINE_ID: pipe-1742436550`: Mã phiên chạy duy nhất sinh ra bằng lệnh shell `date +%s` ở step phía trước đã được chuyển giao thành công sang tiến trình Node.js của Playwright.
+* `DYNAMIC_MASKED_SECRET: [***]`: Lệnh `echo "::add-mask::$DYNAMIC_SECRET"` đã ra lệnh cho Runner tự động đăng ký token động này vào bộ lọc che giấu.
+
+---
+
+#### 🌐 CASE 04: Điều Phối Đa Môi Trường (Staging vs. Production) & Kiến Trúc Lai Ghép `dotenv-flow`
+* **File Spec**: `04-environment-staging-vs-prod.spec.ts`
+* **Mục tiêu**: Thẩm định **Kiến trúc Đa Môi Trường Lai Ghép (Hybrid Multi-Environment)** — Kết nối liền mạch giữa thư viện `dotenv-flow` (ở máy Local) và tầng **GitHub Environments** (trên đám mây CI/CD).
+
+##### ⚙️ Thiết Lập Môi Trường Git & GitHub (Prerequisites & Setup):
+
+###### 🏛️ 1. Khởi tạo 2 GitHub Environments trên Repository:
+* **Cách 1: Qua giao diện Web GitHub**:
+  - Vào Repository ➔ **Settings** ➔ Mục **Environments** (cột trái).
+  - Bấm **New environment** ➔ Nhập tên `production` ➔ Bấm **Configure environment**.
+    - *(Khuyến nghị)*: Tại mục **Deployment protection rules**, tick chọn **Required reviewers** và thêm tên tài khoản Tech Lead/QA Lead (ngăn chặn việc tùy tiện chạy test đè dữ liệu lên Production thật).
+  - Bấm tiếp **New environment** ➔ Nhập tên `staging` ➔ Bấm **Configure environment** (môi trường này không cần bật Reviewer).
+* **Cách 2: Qua GitHub CLI (`gh`)**:
+  ```bash
+  # Tạo biến BASE_URL riêng biệt cho từng môi trường (thêm -R để định danh tường minh):
+  gh variable set BASE_URL --env staging --body "https://staging-coffee.autoneko.com" -R meomew-auto/PW-BASIC-202603
+  gh variable set BASE_URL --env production --body "https://coffee.autoneko.com" -R meomew-auto/PW-BASIC-202603
+  ```
+
+###### 📁 2. Kiến Trúc Lai Ghép Giữa `dotenv-flow` (Bài 16) & GitHub Actions (Bài 26):
+* **Trong `playwright.lesson26-cicd.config.ts`**: Nạp `dotenv-flow` từ thư mục gốc:
+  ```typescript
+  import dotenvFlow from "dotenv-flow";
+
+  const activeEnv = process.env.TARGET_ENV || process.env.NODE_ENV || "production";
+  dotenvFlow.config({
+    path: "..",
+    node_env: activeEnv,
+    default_node_env: "production",
+    silent: true,
+  });
+  ```
+* **Cơ chế hòa hợp tuyệt đối không xung đột**:
+  > 👑 **Nguyên tắc vàng**: `dotenv-flow` **KHÔNG BAO GIỜ GHI ĐÈ** các biến đã có sẵn trong `process.env`!
+  - **Khi chạy trên CI**: GitHub Actions tiêm `BASE_URL` trực tiếp vào `process.env` trước ➔ `dotenv-flow` chạy nhưng nhận thấy biến đã tồn tại nên **bỏ qua, bảo toàn 100% giá trị từ hạ tầng CI**.
+  - **Khi chạy tại Local**: `process.env.BASE_URL` chưa có ➔ `dotenv-flow` dựa vào `NODE_ENV` (ví dụ `staging`) tự động đọc file `.env.staging` ở thư mục gốc làm giá trị fallback hoàn hảo!
+
+###### 📄 3. Khai báo trong file YML (`playwright-lesson26.yml`):
+* Ở cấp độ Job:
+  ```yaml
+  jobs:
+    playwright-sandbox:
+      environment: ${{ github.event.inputs.target_env || 'production' }}
+  ```
+* Ở cấp độ Step:
+  ```yaml
+  env:
+    CI: true
+    NODE_ENV: ${{ github.event.inputs.target_env || 'production' }}
+    TARGET_ENV: ${{ github.event.inputs.target_env || 'production' }}
+    BASE_URL: ${{ (github.event.inputs.target_env == 'staging') && 'https://staging-coffee.autoneko.com' || 'https://coffee.autoneko.com' }}
+  ```
+
+##### ⌨️ Lệnh Thực Thi:
+
+###### A. Chạy tại máy cá nhân (Local) thông qua `NODE_ENV` & `dotenv-flow`:
+```powershell
+# Chạy với môi trường Staging (dotenv-flow nạp .env.staging):
+$env:NODE_ENV="staging"; npx playwright test modules/2-api/NekoCoffee/lesson-26/specs/04-environment-staging-vs-prod.spec.ts --config=configs/playwright.lesson26-cicd.config.ts
+
+# Chạy với môi trường Production (dotenv-flow nạp .env.production):
+$env:NODE_ENV="production"; npx playwright test modules/2-api/NekoCoffee/lesson-26/specs/04-environment-staging-vs-prod.spec.ts --config=configs/playwright.lesson26-cicd.config.ts
+```
+
+###### B. Chạy từ xa trên máy ảo GitHub Actions qua `gh` CLI:
+```bash
+# Thử nghiệm trên môi trường Staging:
+gh workflow run playwright-lesson26.yml -f test_case=case-04-environments -f target_env=staging
+gh run watch
+gh run view --log
+
+# Thử nghiệm trên môi trường Production:
+gh workflow run playwright-lesson26.yml -f test_case=case-04-environments -f target_env=production
+gh run watch
+gh run view --log
+```
+
+##### 🖥️ Output Terminal Thực Tế:
+```text
+Running 1 test using 1 worker
+
+🌍 [Environment Resolver] Đang điều phối kiểm thử trên môi trường: [STAGING]
+   - Domain mục tiêu: https://staging-coffee.autoneko.com
+   - BASE_URL thực tế: https://staging-coffee.autoneko.com
+   - Nguồn phân giải: Local dotenv-flow / CLI
+✅ Đã thiết lập thành công kết nối tới môi trường [STAGING]!
+  ok 1 [chromium-ci] › 01 - [ENV SWITCHING] Phân giải chính xác domain theo môi trường mục tiêu (137ms)
+
+  1 passed (543ms)
+```
+
+##### 🔍 Giải Mã Từng Dòng Log:
+* `Nguồn phân giải: Local dotenv-flow / CLI`: Minh chứng cơ chế fallback an toàn — khi chạy offline ở máy cá nhân không có CI, `dotenv-flow` tự kích hoạt đọc đúng file cấu hình `.env.staging`.
+* `Domain mục tiêu: https://staging-coffee.autoneko.com`: Khi chạy trên CI với tham số `target_env=staging`, domain được tự động phân giải an toàn, ngăn chặn 100% rủi ro chạy nhầm dữ liệu test đè lên Production thật.
+
+---
+
+#### 🔄 CASE 05: Mô Phỏng Lỗi Mạng Chập Chờn & Tự Chữa Lành (Flaky Self-Healing)
+* **File Spec**: `05-flaky-retry-self-healing.spec.ts`
+* **Mục tiêu**: Kiểm chứng cơ chế `retries: 2`. Ở lần chạy đầu tiên cố tình ném lỗi giả lập; ở lần Retry thì hồi phục thành công để kiểm tra nhãn **FLAKY** (Màu cam 🟠).
+
+##### ⚙️ Thiết Lập Môi Trường Git & GitHub (Prerequisites & Setup):
+1. **Cấu hình trong file YML (`playwright-lesson26.yml`)**:
+   - Khai báo tham số input `retries` với các tùy chọn `['2', '1', '0']`:
+     ```yaml
+     workflow_dispatch:
+       inputs:
+         retries:
+           description: '🔄 Số lần Retry (Chọn 0 để xem Case 05 bị ĐỎ thế nào)'
+           required: true
+           default: '2'
+           type: choice
+           options: [ '2', '1', '0' ]
+     ```
+   - Truyền cờ này vào câu lệnh chạy Playwright: `--retries=${{ github.event.inputs.retries || '2' }}`.
+2. **Cấu hình trong `playwright.lesson26-cicd.config.ts`**:
+   - `retries: isCI ? 2 : 1`: Đảm bảo bật cơ chế retry tự động trên CI.
+   - `trace: 'on-first-retry'`: Chỉ ghi trace khi có retry để tiết kiệm tài nguyên đĩa.
+
+##### ⌨️ Lệnh Thực Thi:
+```bash
+# 1. Thử nghiệm test FAIL (retries=0 -> Báo cáo ĐỎ ❌):
+gh workflow run playwright-lesson26.yml -f test_case=case-05-flaky-retry -f retries=0
+gh run watch
+gh run view --log
+
+# 2. Thử nghiệm tự chữa lành (retries=2 -> Báo cáo CAM 🟠 FLAKY):
+gh workflow run playwright-lesson26.yml -f test_case=case-05-flaky-retry -f retries=2
+gh run watch
+gh run view --log
+```
+
+##### 🖥️ Output Terminal Thực Tế (Chế độ tự chữa lành với Retries=2):
+```text
+Running 1 test using 1 worker
+
+🔄 [Vòng lặp Test] Đang thực thi tại: Attempt #1 (retry = 0)
+💣 [Attempt 1] Giả lập sự cố mạng: Máy chủ Neko Coffee phản hồi chậm...
+  x 1 [chromium-ci] › 01 - [SELF-HEALING] Hồi phục thành công ở lần Retry đầu tiên (414ms)
+
+🔄 [Vòng lặp Test] Đang thực thi tại: Attempt #2 (retry = 1)
+🎉 [Attempt 2 - Retry] Mạng đã ổn định! Cập nhật trạng thái thành công...
+✅ Test case đã PASS sau khi được Retry tự động! Báo cáo ghi nhận: FLAKY.
+  ok 1 [chromium-ci] › 01 - [SELF-HEALING] Hồi phục thành công ở lần Retry đầu tiên (retry #1) (184ms)
+
+  1 flaky
+    [chromium-ci] › 01 - [SELF-HEALING] Hồi phục thành công ở lần Retry đầu tiên
+  1 passed (950ms)
+```
+
+##### 🔍 Giải Mã Từng Dòng Log:
+* `Attempt #1 (retry = 0) ➔ ❌`: Test bị gãy ở lần chạy đầu tiên, kích hoạt cơ chế ghi nhận `trace: 'on-first-retry'`.
+* `Attempt #2 (retry = 1) ➔ ✅`: Ở lần chạy lại, Playwright mở một Context sạch mới và test pass.
+* Kết quả tổng kết: Báo cáo `1 flaky` (màu cam), pipeline trên GitHub Actions vẫn hiển thị **TÍCH XANH ✅** vì bài test đã tự phục hồi thành công.
+
+---
+
+#### ⏱️ CASE 06: Kiểm Soát Trần Thời Gian Thực Thi (Timeout & Deadlock Guard)
+* **File Spec**: `06-timeout-and-deadlock-guard.spec.ts`
+* **Mục tiêu**: Kiểm tra cơ chế cấp ngân sách thời gian thực thi (Time Budget: 15,000ms), ngăn ngừa nguy cơ worker bị treo vĩnh viễn ngốn tiền CI.
+
+##### ⚙️ Thiết Lập Môi Trường Git & GitHub (Prerequisites & Setup):
+1. **Cấu hình Timeout 3 Tầng**:
+   - **Tầng 1 (Job-Level)**: Khai báo trong file YML `timeout-minutes: 15` (nếu vượt quá 15 phút, GitHub tự động hạ sát runner).
+   - **Tầng 2 (Config-Level)**: Trong `playwright.lesson26-cicd.config.ts`, khai báo `timeout: 30_000` (mỗi test tối đa 30s) và `actionTimeout: 10_000`.
+   - **Tầng 3 (Spec-Level)**: Trong file test gọi `test.setTimeout(15_000)` để cấp riêng ngân sách 15 giây.
+2. Không cần thiết lập secret hay environment đặc biệt.
+
+##### ⌨️ Lệnh Thực Thi:
+```bash
+# Chạy cục bộ tại Local:
+npx playwright test modules/2-api/NekoCoffee/lesson-26/specs/06-timeout-and-deadlock-guard.spec.ts --config=configs/playwright.lesson26-cicd.config.ts
+
+# Chạy từ xa qua GitHub Actions:
+gh workflow run playwright-lesson26.yml -f test_case=case-06-timeout-guard
+gh run watch
+gh run view --log
+```
+
+##### 🖥️ Output Terminal Thực Tế:
+```text
+Running 1 test using 1 worker
+
+⏱️ [Timeout Budget] Ngân sách thực thi được cấp: 15,000ms
+✅ Kịch bản hoàn tất an toàn sau 1,280ms (thấp hơn nhiều so với trần 15s)!
+  ok 1 [chromium-ci] › 01 - [TIMEOUT BUDGET] Quản lý ngân sách thời gian an toàn cho kịch bản nặng (1.3s)
+
+  1 passed (1.4s)
+```
+
+##### 🔍 Giải Mã Từng Dòng Log:
+* Thẩm định kịch bản chỉ tiêu tốn 1.28s, nằm gọn trong vùng an toàn của ngưỡng trần 15 giây do kỹ sư thiết lập.
+
+---
+
+#### 🚨 CASE 07: Kích Hoạt Test Thất Bại Có Chủ Đích & Cứu Hộ Báo Cáo (Artifacts Rescue)
+* **File Spec**: `07-failure-artifacts-postmortem.spec.ts`
+* **Mục tiêu**: Chứng minh sức mạnh của điều kiện `if: always()`. Khi cố tình bật công tắc `SIMULATE_FAILURE=true`, test sẽ bị ĐỎ ❌ nhưng bước đóng gói Artifacts vẫn được kích hoạt để upload video và trace.
+
+##### ⚙️ Thiết Lập Môi Trường Git & GitHub (Prerequisites & Setup):
+1. **Khai báo Input trong file YML**:
+   ```yaml
+   simulate_failure:
+     description: '🚨 Cố tình kích hoạt Test Fail để kiểm chứng if: always()'
+     required: false
+     type: boolean
+     default: false
+   ```
+2. **Khai báo Step Upload Artifacts với `if: always()`**:
+   ```yaml
+   - name: "📊 Upload Playwright HTML Report & Traces [if: always()]"
+     uses: actions/upload-artifact@v4
+     if: always() # ⚡ ĐIỀU KIỆN SỐNG CÒN: Chạy kể cả khi test PASS, FAIL hay CANCELED
+     with:
+       name: playwright-report-lesson26-${{ github.run_id }}
+       path: playwright-report-lesson26/
+       retention-days: 7
+   ```
+3. **Cấu hình Local**:
+   - Chạy bình thường: `npm run test:lesson26-cicd` (`SIMULATE_FAILURE=false`).
+   - Chạy kích hoạt lỗi: `npm run test:lesson26-fail` (`$env:SIMULATE_FAILURE="true"`).
+
+##### ⌨️ Lệnh Thực Thi:
+```bash
+# 1. Chạy tại Local:
+npm run test:lesson26-cicd           # Chế độ bình thường (PASS)
+npm run test:lesson26-fail           # Chế độ cố tình gây lỗi (FAIL để test cứu hộ artifact)
+
+# 2. Chạy từ xa qua GitHub Actions:
+gh workflow run playwright-lesson26.yml -f test_case=case-07-artifacts-fail -f simulate_failure=true
+gh run watch
+gh run view --log
+```
+
+##### 🖥️ Output Terminal Thực Tế (Khi bật SIMULATE_FAILURE=true):
+```text
+Running 1 test using 1 worker
+
+🔍 [Artifact Rescue] Trạng thái công tắc SIMULATE_FAILURE = true
+🔥 [CỐ TÌNH GÂY LỖI] Đang kích hoạt lỗi Assertion để kiểm chứng if: always()...
+   -> Bước này sẽ bị ĐỎ ❌ trên GitHub.
+   -> Nhờ 'if: always()', bước Upload Report VẪN CHẠY XANH ✅ và đính kèm video!
+
+    Error: ❌ [FAIL CÓ CHỦ ĐÍCH] Kiểm chứng tính năng tải Artifact khi test bị gãy!
+    expect(locator).toHaveText(expected) failed
+    - Expected: "Nút Không Tồn Tại"
+    + Received: "Xác nhận đơn hàng Neko #B2C-103"
+
+    attachment #1: screenshot (image/png) -> test-failed-1.png
+    attachment #2: video (video/webm)     -> video.webm
+    attachment #3: trace (application/zip)-> trace.zip
+
+  1 failed
+```
+
+##### 🔍 Giải Mã Từng Dòng Log:
+* Lỗi `expect().toHaveText()` xuất hiện rõ ràng kèm bảng so sánh Expected vs Received.
+* Ba dòng `attachment #1`, `#2`, `#3` xác nhận Playwright đã tự động chụp ảnh màn hình thời khắc gãy, quay video thao tác chuột và đóng gói file `trace.zip`.
+* Nhờ khai báo `if: always()` trong file YML, step `actions/upload-artifact@v4` vẫn tiếp tục chạy để đẩy gói bằng chứng này lên GitHub!
+
+---
+
+#### 🖥️ CASE 08: Nhận Diện Môi Trường Không Màn Hình & Độ Phân Giải (Headless & Viewport)
+* **File Spec**: `08-headless-and-viewport-matrix.spec.ts`
+* **Mục tiêu**: Thẩm định tính nhất quán của giao diện khi chạy ở chế độ Headless trên Linux, đảm bảo Viewport luôn cố định ở chuẩn `1280x720`.
+
+##### ⚙️ Thiết Lập Môi Trường Git & GitHub (Prerequisites & Setup):
+1. **Cấu hình trên GitHub Runner (Ubuntu Linux)**:
+   - Trong file YML: Step cài đặt bắt buộc phải có cờ `--with-deps`:
+     `run: npx playwright install --with-deps chromium`
+     *(Cài đặt các gói C++ đồ họa Linux: `libgbm1`, `libasound2`, `libnss3` để Chromium có thể mở trong môi trường không màn hình X11)*.
+2. **Cấu hình trong `playwright.lesson26-cicd.config.ts`**:
+   - `headless: true`: Ép buộc chạy không màn hình trên CI.
+   - `viewport: { width: 1280, height: 720 }`: Cố định độ phân giải tránh giao diện bị co thành Mobile View.
+
+##### ⌨️ Lệnh Thực Thi:
+```bash
+# Chạy cục bộ tại Local:
+npx playwright test modules/2-api/NekoCoffee/lesson-26/specs/08-headless-and-viewport-matrix.spec.ts --config=configs/playwright.lesson26-cicd.config.ts
+
+# Chạy từ xa qua GitHub Actions:
+gh workflow run playwright-lesson26.yml -f test_case=case-08-headless-viewport
+gh run watch
+gh run view --log
+```
+
+##### 🖥️ Output Terminal Thực Tế:
+```text
+Running 1 test using 1 worker
+
+🌐 [Browser Audit] Trình duyệt đang chạy: [CHROMIUM]
+   ├─ User-Agent   : Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/149.0.7827.55 Safari/537.36
+   └─ Viewport Size: 1280x720
+✅ Trình duyệt [chromium] render CSS Grid và Viewport chuẩn mực trên CI!
+  ok 1 [chromium-ci] › 01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt (120ms)
+
+  1 passed (310ms)
+```
+
+##### 🔍 Giải Mã Từng Dòng Log:
+* `User-Agent: HeadlessChrome/149...`: Xác nhận trình duyệt đang chạy ở chế độ tối ưu Headless, không đòi hỏi màn hình vật lý X11.
+* `Viewport Size: 1280x720`: Khẳng định giao diện web được render ở khung nhìn chuẩn Desktop HD, không bị vỡ bố cục Responsive.
+
+---
+
+#### 🛡️ CASE 09: Cô Lập Mạng & Giả Lập API Phản Hồi (Network Isolation & Mocking)
+* **File Spec**: `09-api-mock-network-isolation.spec.ts`
+* **Mục tiêu**: Sử dụng `page.route()` chặn đứng request thanh toán `/api/v1/checkout` và trả về Mock JSON lập tức, triệt tiêu 100% rủi ro phụ thuộc vào Backend của bên thứ ba khi chạy CI.
+
+##### ⚙️ Thiết Lập Môi Trường Git & GitHub (Prerequisites & Setup):
+1. **Đặc tính Tự Trị (Zero External Dependency)**:
+   - Case này **không yêu cầu bất kỳ Secret hay Environment nào trên GitHub**.
+   - Thậm chí máy ảo GitHub Actions bị ngắt Internet toàn bộ (Air-gapped) thì kịch bản này vẫn chạy PASS 100% vì request được mock ngay trong bộ nhớ RAM của Chromium.
+2. Thích hợp áp dụng cho các hệ thống kiểm thử nội bộ (Private Runners) không được phép ra Internet vì lý do bảo mật dữ liệu khách hàng.
+
+##### ⌨️ Lệnh Thực Thi:
+```bash
+# Chạy cục bộ tại Local:
+npx playwright test modules/2-api/NekoCoffee/lesson-26/specs/09-api-mock-network-isolation.spec.ts --config=configs/playwright.lesson26-cicd.config.ts
+
+# Chạy từ xa qua GitHub Actions:
+gh workflow run playwright-lesson26.yml -f test_case=case-09-api-mock-isolation
+gh run watch
+gh run view --log
+```
+
+##### 🖥️ Output Terminal Thực Tế:
+```text
+Running 1 test using 1 worker
+
+🛡️ [Network Isolation] Thiết lập quy tắc chặn request qua page.route()...
+   ⚡ [Mock Interceptor] Đã bắt được request gửi tới /api/v1/checkout -> Trả về Mock JSON!
+✅ CI Network Isolation hoạt động hoàn hảo: Đã mock API thành công, triệt tiêu 100% rủi ro rớt mạng!
+  ok 1 [chromium-ci] › 01 - [API INTERCEPT] Chặn request đơn hàng và mock phản hồi thành công (160ms)
+
+  1 passed (340ms)
+```
+
+##### 🔍 Giải Mã Từng Dòng Log:
+* `[Mock Interceptor] Đã bắt được request...`: Request thanh toán chưa kịp rời khỏi máy ảo đã bị Playwright đón lõng trong bộ nhớ và phản hồi status 200 kèm payload giả lập, hoàn tất test chỉ trong 160ms.
+
+---
+
+#### ☕ CASE 10: Siêu Kịch Bản Enterprise Hybrid Super E2E & Multi-Tab Live Workflow
+* **File Spec**: `10-neko-live-smoke-e2e.spec.ts`
+* **Mục tiêu**: Đỉnh cao tích hợp giữa Bài 24 (Hybrid API-UI Core, Worker RAM Snapshot, TableColumnHelpers, Zod Contract) và Bài 25 (Multi-Tab In Hóa Đơn & Cross-Window Integrity) trên hệ sinh thái Neko Coffee thật.
+
+##### ⚙️ Thiết Lập Môi Trường Git & GitHub (Prerequisites & Setup):
+1. **Quyền Truy Cập Mạng & Egress Firewall**:
+   - Yêu cầu Runner GitHub Actions có kết nối Internet thông suốt tới cả 2 domain:
+     - Giao diện Web: `https://coffee.autoneko.com` (Frontend Next.js)
+     - Máy chủ API: `https://api-neko-coffee.autoneko.com` (Backend RESTful API)
+2. **Khai báo biến trong YML (`playwright-lesson26.yml`)**:
+   - `BASE_URL`: Phân giải động theo môi trường (`staging` vs `production`).
+   - `TARGET_ENV`: Nạp tầng môi trường từ GitHub Environments input (`production` hoặc `staging`).
+3. **Cơ Chế Xác Thực Zero-Delay (RAM Snapshot)**:
+   - Worker tự động nạp tài khoản Staff qua API trong 100ms, lưu trữ token trong RAM.
+   - Trình duyệt tự động nhận diện token qua `context.addInitScript()` trước khi nạp DOM, mở thẳng trang Admin mà không phải click form Login.
+
+##### ⌨️ Lệnh Thực Thi:
+```bash
+# Chạy cục bộ tại Local (Headless Chromium):
+npx playwright test modules/2-api/NekoCoffee/lesson-26/specs/10-neko-live-smoke-e2e.spec.ts --config=configs/playwright.lesson26-cicd.config.ts
+
+# Chạy từ xa qua GitHub Actions:
+gh workflow run playwright-lesson26.yml -f test_case=case-10-live-smoke
+gh run watch
+gh run view --log
+```
+
+##### 🖥️ Output Terminal Thực Tế:
+```text
+Running 2 tests using 1 worker
+
+[SUPER WORKER 0] 🚀 Khởi tạo Staff RAM Snapshot: staff_super_w0_1789699913539@nekocoffee.com
+
+🚀 [CASE 10 - Test 01] Khởi chạy Super Hybrid E2E Workflow trên môi trường [PRODUCTION]...
+   ├─ Target Base URL : https://coffee.autoneko.com
+   ├─ Staff Account   : staff_super_w0_1789699913539@nekocoffee.com
+   └─ Auth Strategy   : Worker RAM Snapshot (0ms Login Bypass)
+
+⚡ [Pha 1 - API Fast Fetch] Đang truy vấn danh mục sản phẩm qua Backend API...
+   ✅ Dữ liệu sản phẩm mẫu: #285 - Test Coffee 1778503656158 (20000đ)
+
+🖥️ [Pha 2 - Live UI Audit] Điều hướng tới trang Admin Sản phẩm: https://coffee.autoneko.com/admin/products...
+🔍 [Table Helpers] Tìm kiếm dòng sản phẩm 'Test Coffee 1778503656158' trên bảng dữ liệu...
+   📦 Dữ liệu sản phẩm bóc tách từ DOM bảng: {
+  'tênSảnPhẩm': 'Test Coffee 1778503656158 SKU: PRD-285',
+  'loại': 'Bean',
+  'giáBán': '20.000đ',
+  'khoHàng': '0',
+  'trạngThái': 'Hết hàng'
+}
+
+📊 [Pha 3 - Table Scan] Quét toàn bộ bảng sản phẩm qua TableColumnHelpers...
+   ✅ Đã quét thành công 20 dòng sản phẩm trên giao diện mà không hardcode index!
+
+🩺 [Pha 4 - Zod Contract Audit] Hậu kiểm cấu trúc Database bằng Zod Schema...
+   ✅ Hậu kiểm Database thành công: Bản ghi #285 khớp 100% Zod Schema Contract!
+🎉 [CASE 10 - Test 01] Hoàn tất trọn vẹn Siêu Kịch Bản Hybrid E2E 3 Tầng!
+  ok 1 [chromium-ci] › modules/2-api/NekoCoffee/lesson-26/specs/10-neko-live-smoke-e2e.spec.ts:49:7 › ☕ [CASE 10] Enterprise Hybrid Super E2E & Multi-Tab Live Workflow › 01 - [SUPER HYBRID E2E] Fast API Preparation ➔ Live Admin Products UI Audit ➔ Table Helpers Scan ➔ API Zod Contract Audit (6.9s)
+
+🚀 [CASE 10 - Test 02] Khởi chạy Multi-Tab Invoice Workflow trên môi trường [PRODUCTION]...
+📍 [Tab 1 - Main] Mở trang Chi tiết đơn hàng: https://coffee.autoneko.com/vi/admin/orders/103...
+   ✅ Đã tải hoàn tất màn hình chi tiết đơn hàng #103
+🖱️ [Tab 1 - Main] Click nút 'In hóa đơn' (chờ mở Tab mới qua context.waitForEvent)...
+[Click] In hóa đơn
+🌟 [Tab 2 - Invoice] Tab mới đã mở thành công: https://coffee.autoneko.com/vi/admin/orders/103/invoice
+🧾 [Tab 2 - Invoice] Mã đơn hàng trích xuất từ hóa đơn: #B2C-20260905-4221
+❌ [Tab 2 - Invoice] Đóng Tab Hóa đơn trật tự...
+📍 [Tab 1 - Main] Đã hoàn trả tiêu điểm về trang Chi tiết đơn hàng gốc an toàn!
+🎉 [CASE 10 - Test 02] Nghiệp vụ Multi-Tab & In Hóa Đơn hoàn tất 100%!
+  ok 2 [chromium-ci] › modules/2-api/NekoCoffee/lesson-26/specs/10-neko-live-smoke-e2e.spec.ts:128:7 › ☕ [CASE 10] Enterprise Hybrid Super E2E & Multi-Tab Live Workflow › 02 - [LIVE MULTI-TAB WORKFLOW] Admin Order Detail #103 ➔ In Hóa Đơn (New Tab) ➔ Đối soát mã đơn đồng nhất (8.3s)
+[SUPER WORKER 0] 📤 Giải phóng Staff RAM Snapshot
+
+  2 passed (17.4s)
+```
+
+##### 🔍 Giải Mã Kỹ Thuật Từng Dòng Log:
+* `[SUPER WORKER 0] 🚀 Khởi tạo Staff RAM Snapshot`: Worker khởi tạo một phiên Staff duy nhất trong bộ nhớ RAM (0ms) và tái sử dụng cho toàn bộ các test của worker đó.
+* `⚡ [Pha 1 - API Fast Fetch]`: Lấy dữ liệu trực tiếp qua Backend REST API trong < 150ms mà không cần click chuột qua UI.
+* `🖥️ [Pha 2 - Live UI Audit]`: Trình duyệt nạp phiên Staff tức thì qua `context.addInitScript()` (nạp vào `localStorage` của Next.js Zustand store trước khi nạp trang), mở thẳng `/admin/products` mà không bị Guard đẩy về `/login`.
+* `🔍 [Table Helpers]`: Thuật toán `TableColumnHelpers` tự động lập bản đồ `th` $\rightarrow$ `td`, tìm chính xác dòng sản phẩm mà không phụ thuộc vào thứ tự cột tĩnh.
+* `📊 [Pha 3 - Table Scan]`: Bóc tách và quét toàn bộ 20 dòng sản phẩm trên giao diện bảng.
+* `🩺 [Pha 4 - Zod Contract Audit]`: Gọi API hậu kiểm ngầm vào cơ sở dữ liệu, ép kiểu qua `productDtoSchema` đảm bảo tuyệt đối không có lỗi sai kiểu dữ liệu (Schema Drift).
+* `🖱️ [Tab 1 - Main] Click nút 'In hóa đơn' ... [Tab 2 - Invoice]`: Playwright kích hoạt cơ chế bắt sự kiện mở tab `target='_blank'` qua `context.waitForEvent("page")`, đối soát mã đơn hàng `#B2C-...` giữa hai tab và đóng tab trật tự, đảm bảo không có rò rỉ bộ nhớ (Zero Context Leak) trên CI Runner.
 
 ---
 

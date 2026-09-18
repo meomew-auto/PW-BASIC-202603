@@ -221,7 +221,7 @@ test.describe("🚪 [LESSON 24] 05 - Neko Coffee Login Screen Interception", () 
     await page.fill("#username", "spammer_user");
     await page.fill("#password", "spam_pass");
     await page.click("#btn-login");
-
+    await page.pause();
     const alert = page.locator("#alert-box");
     await expect(alert).toBeVisible();
     await expect(alert).toHaveClass(/alert-warning/);

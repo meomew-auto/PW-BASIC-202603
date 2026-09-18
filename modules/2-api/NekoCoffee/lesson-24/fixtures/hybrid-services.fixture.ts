@@ -1,4 +1,4 @@
-import { test as base } from "@playwright/test";
+import { test as base, type APIRequestContext } from "@playwright/test";
 import { AuthApiClient } from "../../lesson-23/clients/auth.api-client";
 import { ProductApiClient } from "../../lesson-23/clients/product.api-client";
 import { EchoApiClient } from "../../lesson-23/clients/echo.api-client";
@@ -21,19 +21,19 @@ export interface HybridServicesFixtures {
 
 export const hybridServicesFixtures = {
   authApi: async (
-    { request }: any,
+    { request }: { request: APIRequestContext },
     use: (r: AuthApiClient) => Promise<void>,
   ) => {
     await use(new AuthApiClient(request));
   },
   productApi: async (
-    { request }: any,
+    { request }: { request: APIRequestContext },
     use: (r: ProductApiClient) => Promise<void>,
   ) => {
     await use(new ProductApiClient(request));
   },
   echoApi: async (
-    { request }: any,
+    { request }: { request: APIRequestContext },
     use: (r: EchoApiClient) => Promise<void>,
   ) => {
     await use(new EchoApiClient(request));

@@ -58,7 +58,9 @@ export class TabManager {
           ? "main"
           : (this.tabs.keys().next().value ?? null);
       }
-      console.log(`🧹 [TabManager] Tab '${alias}' đã đóng và được dọn khỏi danh bạ.`);
+      console.log(
+        `🧹 [TabManager] Tab '${alias}' đã đóng và được dọn khỏi danh bạ.`,
+      );
     });
   }
 
@@ -129,7 +131,9 @@ export class TabManager {
     const page = this.getPage(alias);
     await page.bringToFront();
     this.activeAlias = alias;
-    console.log(`🎯 [TabManager] Đã chuyển đổi tiêu điểm sang Tab '${alias}' (${page.url()})`);
+    console.log(
+      `🎯 [TabManager] Đã chuyển đổi tiêu điểm sang Tab '${alias}' (${page.url()})`,
+    );
     return page;
   }
 
@@ -178,7 +182,9 @@ export class TabManager {
     if (!this.activeAlias || !this.hasTab(this.activeAlias)) {
       const firstOpen = this.tabs.keys().next().value;
       if (!firstOpen) {
-        throw new Error("❌ [TabManager] Hiện không có bất kỳ Tab nào đang mở!");
+        throw new Error(
+          "❌ [TabManager] Hiện không có bất kỳ Tab nào đang mở!",
+        );
       }
       this.activeAlias = firstOpen;
     }
@@ -210,7 +216,9 @@ export class TabManager {
    * 🛡️ Đóng toàn bộ các Tab phụ, chỉ giữ lại một Tab chỉ định (mặc định là 'main')
    */
   public async closeAllExcept(keepAlias: string = "main"): Promise<void> {
-    console.log(`🧹 [TabManager] Bắt đầu đóng tất cả các Tab ngoại trừ '${keepAlias}'...`);
+    console.log(
+      `🧹 [TabManager] Bắt đầu đóng tất cả các Tab ngoại trừ '${keepAlias}'...`,
+    );
     for (const [alias, page] of Array.from(this.tabs.entries())) {
       if (alias !== keepAlias && !page.isClosed()) {
         await page.close();
@@ -233,7 +241,9 @@ export class TabManager {
    * 📋 Liệt kê danh sách tất cả các bí danh tab hiện tại
    */
   public getAllAliases(): string[] {
-    return Array.from(this.tabs.keys()).filter((alias) => !this.tabs.get(alias)?.isClosed());
+    return Array.from(this.tabs.keys()).filter(
+      (alias) => !this.tabs.get(alias)?.isClosed(),
+    );
   }
 
   /**
@@ -242,11 +252,15 @@ export class TabManager {
   public attachAutoTracker(): void {
     this.context.on("page", (newPage) => {
       // Kiểm tra xem trang này đã được đăng ký thủ công chưa
-      const isAlreadyRegistered = Array.from(this.tabs.values()).includes(newPage);
+      const isAlreadyRegistered = Array.from(this.tabs.values()).includes(
+        newPage,
+      );
       if (!isAlreadyRegistered) {
         const autoAlias = `auto_tab_${this.autoIndex++}`;
         this.register(autoAlias, newPage);
-        console.log(`👀 [TabManager AutoTracker] Tự động phát hiện và đăng ký Tab: '${autoAlias}'`);
+        console.log(
+          `👀 [TabManager AutoTracker] Tự động phát hiện và đăng ký Tab: '${autoAlias}'`,
+        );
       }
     });
   }

@@ -37,7 +37,7 @@
    - 5.1. Bản chất "Đi tắt đón đầu": Vì sao Pure UI 100% là sự lãng phí?
    - 5.2. Mô hình chiếc bánh kẹp (Sandwich Model 3 lớp).
    - 5.3. So sánh thực tế: Kiểm tra tính năng Thanh toán (Pure UI 30s vs Hybrid 3s).
-   - 5.4. ⚖️ Phân Tích Hai Con Đường Xác Thực Hybrid: Cách 1 (File Đĩa & Setup) vs Cách 2 (Tiêm Phiên Động & addInitScript).
+   - 5.4. ⚖️ Toàn Cảnh Hệ Phổ Xác Thực Hybrid & "Bộ Ba Quyền Lực" Của Siêu App (Setup + Worker Scope RAM + addInitScript).
    - 5.5. 🏰 Nâng Tầm Lên Kiến Trúc "SIÊU APP AUTOMATION" (Unified Hybrid Super Framework).
    - 5.6. 💡 Giải Mã: "Tiêm Phiên Trình Duyệt Siêu Tốc" vs "Đăng Nhập Form UI" & Phối Hợp 2 Tầng Auth.
    - 5.7. 🛠️ Tích Hợp `TableColumnHelpers.ts` Cho Bảng Admin Tiếng Việt (Tầng UI POM).
@@ -194,6 +194,7 @@ Khi một gói tin mạng kích hoạt sự kiện `Network.requestIntercepted`,
   | `'internetdisconnected'` | Máy tính bị mất mạng hoàn toàn                     | Giả lập người dùng bị ngắt WiFi / 4G (Offline Mode).     |
 
 - **Ví dụ thực chiến**:
+
   ```typescript
   // Chặn toàn bộ ảnh để trang web tải trong 50ms:
   await page.route("**/*.{png,jpg,jpeg,webp,svg}", async (route) => {
@@ -232,6 +233,7 @@ Khi một gói tin mạng kích hoạt sự kiện `Network.requestIntercepted`,
   - `url?: string`: Bẻ lái (Redirect) request sang một URL máy chủ khác.
 
 - **Ví dụ thực chiến**:
+
   ```typescript
   await page.route("**/api/**", async (route) => {
     // 1. Lấy toàn bộ Header hiện tại của trình duyệt
@@ -270,6 +272,7 @@ Khi một gói tin mạng kích hoạt sự kiện `Network.requestIntercepted`,
   | **Khả năng bị chặn lại** | Không thể bị chặn lại bởi các handler khác.      | Handler tiếp theo có thể gọi `fulfill()` hoặc `abort()`.       |
 
 - **Ví dụ thực chiến chuỗi Router đa tầng (Middleware Pipeline)**:
+
   ```typescript
   // Trạm 1: Middleware toàn cục - Chuyên tiêm Trace ID cho mọi request
   await page.route("**/*", async (route) => {
@@ -751,7 +754,7 @@ Phân định ranh giới kỹ thuật giữa hành vi kiểm thử giao diện 
 ```
 
 > ❓ **CÂU HỎI KINH ĐIỂN CỦA KỸ SƯ KIỂM THỬ**:  
-> *"Thế là Mock 200 OK ở API Đăng nhập thì vào được màn Dashboard, nhưng hễ bấm F5 (Refresh) hoặc `page.reload()` là mất trắng và bị đá văng ra Login à?"*
+> _"Thế là Mock 200 OK ở API Đăng nhập thì vào được màn Dashboard, nhưng hễ bấm F5 (Refresh) hoặc `page.reload()` là mất trắng và bị đá văng ra Login à?"_
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -776,15 +779,14 @@ Phân định ranh giới kỹ thuật giữa hành vi kiểm thử giao diện 
 ### 🔹 2.6. Showroom Thực Chiến: 5 Siêu Năng Lực Của `page.route()` Trên Ứng Dụng Next.js (`https://coffee.autoneko.com/vi/lab/route-mock`)
 
 > 🏛️ **KIẾN TRÚC TÁCH BIỆT CHUẨN DOANH NGHIỆP (SEPARATION OF CONCERNS)**:
-> 
-> * **1. Ứng dụng giao diện kiểm thử (Frontend SUT - System Under Test)**:  
+>
+> - **1. Ứng dụng giao diện kiểm thử (Frontend SUT - System Under Test)**:  
 >   Hệ thống ứng dụng web thực tế được triển khai trên môi trường Production tại `https://coffee.autoneko.com/vi/lab/route-mock`. Đây là nơi Frontend dựng sẵn các component hiển thị, form nhập, spinner loading, và các bẫy trạng thái lỗi sẵn sàng đón nhận dữ liệu.
-> 
-> * **2. Bộ Kiểm Thử Tự Động Độc Lập (Centralized Automation Test Suite)**:  
+> - **2. Bộ Kiểm Thử Tự Động Độc Lập (Centralized Automation Test Suite)**:  
 >   Toàn bộ kịch bản kiểm thử E2E và can thiệp tầng mạng được quản lý độc lập trong Automation Test Framework của dự án (`modules/2-api/NekoCoffee/lesson-24/specs/09-nextjs-route-mock-showroom.spec.ts`), tách biệt hoàn toàn với mã nguồn của ứng dụng web.  
 >   Lệnh chạy kiểm thử: **`npm run test:lesson24-showroom`**  
->   *(hoặc chạy qua npx: `npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/09-nextjs-route-mock-showroom.spec.ts --config=configs/playwright.lesson24-network.config.ts`)*  
->   *(Tại sao lại tách biệt? Vì trong thực tế doanh nghiệp, đội ngũ QA/QE vận hành Test Framework độc lập, kiểm thử ứng dụng từ góc nhìn người dùng bên ngoài mà không can thiệp hay sửa đổi trực tiếp mã nguồn Frontend của lập trình viên!)*
+>   _(hoặc chạy qua npx: `npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/09-nextjs-route-mock-showroom.spec.ts --config=configs/playwright.lesson24-network.config.ts`)_  
+>   _(Tại sao lại tách biệt? Vì trong thực tế doanh nghiệp, đội ngũ QA/QE vận hành Test Framework độc lập, kiểm thử ứng dụng từ góc nhìn người dùng bên ngoài mà không can thiệp hay sửa đổi trực tiếp mã nguồn Frontend của lập trình viên!)_
 
 Showroom được thiết kế thành **8 Panel tương tác trực tiếp đỉnh cao**, phản ánh trọn vẹn sự chuyển dịch từ **những bế tắc của cách test truyền thống** sang **giải pháp bứt phá với Playwright CDP Interception**:
 
@@ -830,24 +832,27 @@ Showroom được thiết kế thành **8 Panel tương tác trực tiếp đỉ
 #### 🕹️ Mổ Xẻ Hiện Tượng Thực Tế Trên UI: Tại Sao Click Bằng Tay Thấy Báo 401 / 404, Còn Playwright Test Lại Ra 200 OK Xanh Mướt?
 
 > ❓ **CÂU HỎI KINH ĐIỂN CỦA HỌC VIÊN & TESTER THỰC CHIẾN**:  
-> *"Tại sao khi tôi mở trình duyệt thông thường (Chrome/Edge) vào https://coffee.autoneko.com/vi/lab/route-mock, bấm vào nút 'Thành công' thì màn hình lại hiện khung đỏ báo lỗi: `HTTP 401 - Token xác thực không được cung cấp`? Nút ghi là Thành Công cơ mà? Có phải code web bị lỗi không?"*
+> _"Tại sao khi tôi mở trình duyệt thông thường (Chrome/Edge) vào https://coffee.autoneko.com/vi/lab/route-mock, bấm vào nút 'Thành công' thì màn hình lại hiện khung đỏ báo lỗi: `HTTP 401 - Token xác thực không được cung cấp`? Nút ghi là Thành Công cơ mà? Có phải code web bị lỗi không?"_
 
 ##### 1. Bản Chất Thiết Kế Tuyệt Vời Của Showroom: Gọi API Thật, KHÔNG Hardcode Mock Trong Code Web!
-* Rất nhiều trang lab dạy học nghiệp dư chọn cách *hardcode mảng dữ liệu giả sẵn bên trong mã nguồn React*. Khi người dùng click nút, React chỉ đơn giản `setProducts(fakeData)`. Cách làm đó là **"hàng mã"**, hoàn toàn vô nghĩa đối với kiểm thử tự động, vì nó không phản ánh cách một ứng dụng web sản xuất vận hành!
-* Trang Lab của chúng ta được xây dựng chuẩn mực doanh nghiệp:
-  * Khi bạn click bất kỳ nút nào (ví dụ nút *"Thành công"*), hàm `runGet()` trong component xử lý giao diện trang Lab phát lệnh gọi mạng native `fetch()` thật sự:
+
+- Rất nhiều trang lab dạy học nghiệp dư chọn cách _hardcode mảng dữ liệu giả sẵn bên trong mã nguồn React_. Khi người dùng click nút, React chỉ đơn giản `setProducts(fakeData)`. Cách làm đó là **"hàng mã"**, hoàn toàn vô nghĩa đối với kiểm thử tự động, vì nó không phản ánh cách một ứng dụng web sản xuất vận hành!
+- Trang Lab của chúng ta được xây dựng chuẩn mực doanh nghiệp:
+  - Khi bạn click bất kỳ nút nào (ví dụ nút _"Thành công"_), hàm `runGet()` trong component xử lý giao diện trang Lab phát lệnh gọi mạng native `fetch()` thật sự:
     ```typescript
     const res = await fetch(`${API_URL}/api/products?demo=success&limit=2`, {
-      headers: { "Accept": "application/json" },
+      headers: { Accept: "application/json" },
     });
     ```
-  * `API_URL` ở môi trường production trỏ thẳng về máy chủ backend thật: `https://api-neko-coffee.autoneko.com`.
+  - `API_URL` ở môi trường production trỏ thẳng về máy chủ backend thật: `https://api-neko-coffee.autoneko.com`.
 
 ##### 2. Điều Gì Xảy Ra Khi Bạn Click Bằng Tay Trên Trình Duyệt Thường? (Không Chạy Playwright)
-* **Kịch Bản 1 - Click Nút "Thành công" (Panel 1)**:
-  * Gói tin HTTP rời máy tính bạn, bay qua Internet đến máy chủ backend thật `api-neko-coffee.autoneko.com`.
-  * Máy chủ kiểm tra route `/api/products`: Đây là API nội bộ được bảo vệ bởi lớp phân quyền JWT Authentication.
-  * Vì bạn click chay trên browser mà chưa login hoặc không truyền header `Authorization: Bearer <token>`, máy chủ thật lập tức từ chối và ném về mã lỗi:
+
+- **Kịch Bản 1 - Click Nút "Thành công" (Panel 1)**:
+  - Gói tin HTTP rời máy tính bạn, bay qua Internet đến máy chủ backend thật `api-neko-coffee.autoneko.com`.
+  - Máy chủ kiểm tra route `/api/products`: Đây là API nội bộ được bảo vệ bởi lớp phân quyền JWT Authentication.
+  - Vì bạn click chay trên browser mà chưa login hoặc không truyền header `Authorization: Bearer <token>`, máy chủ thật lập tức từ chối và ném về mã lỗi:
+
     ```http
     HTTP/1.1 401 Unauthorized
     Content-Type: application/json; charset=utf-8
@@ -858,19 +863,22 @@ Showroom được thiết kế thành **8 Panel tương tác trực tiếp đỉ
       "message": "Token xác thực không được cung cấp"
     }
     ```
-  * Frontend nhận phản hồi `res.status === 401`, lập tức render hộp màu đỏ báo lỗi: `HTTP 401 - Token xác thực không được cung cấp`. **ĐÂY LÀ HÀNH VI 100% ĐÚNG ĐẮN CỦA ỨNG DỤNG THẬT!**
-* **Kịch Bản 2 - Click Nút "AI Sommelier" (Panel 6)**:
-  * Gói tin bay ra máy chủ thật tìm route `/api/v2/ai/drink-recommendation`.
-  * Backend thật chưa hề code tính năng này ➔ Máy chủ trả về:
+
+  - Frontend nhận phản hồi `res.status === 401`, lập tức render hộp màu đỏ báo lỗi: `HTTP 401 - Token xác thực không được cung cấp`. **ĐÂY LÀ HÀNH VI 100% ĐÚNG ĐẮN CỦA ỨNG DỤNG THẬT!**
+
+- **Kịch Bản 2 - Click Nút "AI Sommelier" (Panel 6)**:
+  - Gói tin bay ra máy chủ thật tìm route `/api/v2/ai/drink-recommendation`.
+  - Backend thật chưa hề code tính năng này ➔ Máy chủ trả về:
     ```http
     HTTP/1.1 404 Not Found
     ```
-  * Frontend nhận 404 và hiển thị hộp cảnh báo *"Chưa tìm thấy API AI trên máy chủ"*.
-* ➔ **KẾT LUẬN TEST THỦ CÔNG**: Tester bị bế tắc hoàn toàn! Không có cách nào kiểm tra giao diện hiển thị 200 OK nếu chưa có tài khoản/token, không kiểm tra được tính năng AI nếu Backend chưa code xong, và không thể ép server thật tự lăn ra chết để test lỗi 500!
+  - Frontend nhận 404 và hiển thị hộp cảnh báo _"Chưa tìm thấy API AI trên máy chủ"_.
+- ➔ **KẾT LUẬN TEST THỦ CÔNG**: Tester bị bế tắc hoàn toàn! Không có cách nào kiểm tra giao diện hiển thị 200 OK nếu chưa có tài khoản/token, không kiểm tra được tính năng AI nếu Backend chưa code xong, và không thể ép server thật tự lăn ra chết để test lỗi 500!
 
 ---
 
 ##### 3. Điều Gì Xảy Ra Khi Kịch Bản Playwright Tự Động Chạy (`page.route`)?
+
 Khi kịch bản kiểm thử tự động `npm run test:lesson24-showroom` được kích hoạt từ Test Automation Framework:
 
 ```text
@@ -893,7 +901,7 @@ Khi kịch bản kiểm thử tự động `npm run test:lesson24-showroom` đư
     [ REACT NHẬN STATUS 200 OK + DỮ LIỆU GIẢ ] ➔ RENDER XANH MƯỚT TRONG 1.8s!
 ```
 
-* **Vì sao hoàn toàn KHÔNG CÒN BỊ LỖI 401 HAY 404 NỮA?**
+- **Vì sao hoàn toàn KHÔNG CÒN BỊ LỖI 401 HAY 404 NỮA?**
   1. **Triệt tiêu lỗi 401 Unauthorized**: Vì request đã bị Playwright chặn đứng ngay trong bộ nhớ RAM của Chromium trước khi kịp rời card mạng. Gói tin không hề chạm tới máy chủ xác thực backend thật, nên máy chủ thật không có cơ hội ném ra lỗi 401!
   2. **Triệt tiêu lỗi 404 Not Found**: Endpoint AI Sommelier chưa tồn tại trên backend nhưng Playwright đã đón đầu tại tầng CDP và trả về đúng JSON Schema đã thỏa thuận ➔ UI render Thẻ AI 98% Match hoàn hảo!
   3. **Tốc độ ánh sáng**: Thay vì chờ gói tin bay vòng quanh Internet mất hàng trăm mili-giây, Playwright trả dữ liệu từ RAM chỉ trong `1ms - 5ms`.
@@ -902,22 +910,22 @@ Khi kịch bản kiểm thử tự động `npm run test:lesson24-showroom` đư
 
 ##### 4. Bảng Ma Trận Đối Chiếu Chi Tiết Toàn Bộ 8 Panel: Click Bằng Tay vs Playwright `page.route()`
 
-| Panel / Tác Vụ | Thao Tác Click | Click Bằng Tay Trên Browser (Không Mock) | Chạy Tự Động Bằng Playwright `page.route()` |
-| :--- | :--- | :--- | :--- |
-| **Panel 1: Products** | Nút *"Thành công"* | ❌ Hiện khung đỏ `HTTP 401: Token xác thực không được cung cấp`. | ✅ **200 OK**: Render *"Cà phê mock Espresso"* trong `< 800ms`. |
-| **Panel 1: Products** | Nút *"Mạng chậm"* | ❌ Bị 401 hoặc mạng thật quá nhanh (~30ms) không kịp thấy Spinner. | ✅ **200 OK có delay**: Bơm trễ 2000ms, Spinner xoay rõ ràng rồi biến mất. |
-| **Panel 1: Products** | Nút *"Backend sập"* | ❌ Server thật đang sống khỏe mạnh ➔ Không thể test mã 500! | ✅ **500 Crash**: Giả lập sập server an toàn, assert bố cục không vỡ. |
-| **Panel 1: Products** | Nút *"Mất kết nối"* | ❌ Thiết bị đang có Internet ➔ Vẫn gửi được request đi. | ✅ **route.abort()**: Cắt đứt socket TCP, UI bắt lỗi mạng văn minh. |
-| **Panel 1: Products** | Nút *"Dữ liệu rỗng"* | ❌ Bị 401, không thể kiểm tra Empty State giao diện. | ✅ **200 OK rỗng**: Mớm `data: []`, UI báo *"Không có sản phẩm nào"*. |
-| **Panel 1: Products** | Nút *"Dữ liệu lớn"* | ❌ Bị 401, hoặc phải insert thủ công 500 dòng vào DB thật. | ✅ **200 OK 500 items**: Sinh 500 items trong RAM, badge `500` hiện mượt. |
-| **Panel 1: Products** | Nút *"Bảo mật XSS"* | ❌ WAF/Backend chặn 400 Bad Request, script không tới được UI. | ✅ **Bypass an toàn**: Đưa `<script>` thẳng vào UI, assert React escape an toàn. |
-| **Panel 2: Rate Limit** | Nút *"POST Thử nghiệm"* | ❌ API trả về 404 hoặc 401, không thể test bộ đếm ngược. | ✅ **429 Rate Limit**: Tiêm `Retry-After: 300`, UI đếm ngược 300s về 298s. |
-| **Panel 3: Media/Tracking** | Nút *"Nạp Media"* | ❌ Tải ảnh 4K nặng 5MB, Google Analytics gửi beacon bẩn data. | ✅ **route.abort()**: Chặn ảnh & tracker, UI hiện fallback nhẹ, tăng tốc 300%. |
-| **Panel 4: Profile VIP** | Nút *"Kiểm tra User"* | ❌ Trả về User thường (0% giảm giá), muốn VIP phải sửa DB. | ✅ **Tampering**: Lấy data thật nhưng sửa `is_vip: true` ➔ Hóa Thẻ VIP GOLD 50%. |
-| **Panel 5: Header Flag** | Nút *"Gửi Header"* | ❌ Browser thường không tự gắn header `X-Feature-Flag` được. | ✅ **route.continue()**: Tiêm Custom Header ➔ Banner thử nghiệm tím bật sáng. |
-| **Panel 6: Shift-Left AI** | Nút *"Gợi ý AI"* | ❌ Máy chủ thật trả về `HTTP 404 Not Found` (chưa code API). | ✅ **Contract Mock**: Đóng thế đúng Schema ➔ Thẻ AI Sommelier render 98% Match! |
-| **Panel 7: Ví Neko Pay** | Nút *"Kiểm tra số dư"* | ❌ Nhận số dư gốc 50.000 ₫ ➔ UI hiện Thẻ Tiêu Chuẩn `STANDARD` màu xám tro. | ✅ **Tampering 1 Tỷ**: Tráo `balance: 999999999` ➔ Thẻ Holographic VIP Platinum sáng rực, chip mạ vàng! |
-| **Panel 8: Trạm Đo Ping** | Nút *"Đo tốc độ"* | ❌ Ping thật quá nhanh (< 50ms) ➔ Không thể test trạng thái mạng nghẽn và thanh progress bar. | ✅ **Bơm trễ 1000ms**: Khóa nút `disabled` chống click đúp, progress bar xung điện, hiện badge cảnh báo đỏ! |
+| Panel / Tác Vụ              | Thao Tác Click          | Click Bằng Tay Trên Browser (Không Mock)                                                      | Chạy Tự Động Bằng Playwright `page.route()`                                                                 |
+| :-------------------------- | :---------------------- | :-------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------- |
+| **Panel 1: Products**       | Nút _"Thành công"_      | ❌ Hiện khung đỏ `HTTP 401: Token xác thực không được cung cấp`.                              | ✅ **200 OK**: Render _"Cà phê mock Espresso"_ trong `< 800ms`.                                             |
+| **Panel 1: Products**       | Nút _"Mạng chậm"_       | ❌ Bị 401 hoặc mạng thật quá nhanh (~30ms) không kịp thấy Spinner.                            | ✅ **200 OK có delay**: Bơm trễ 2000ms, Spinner xoay rõ ràng rồi biến mất.                                  |
+| **Panel 1: Products**       | Nút _"Backend sập"_     | ❌ Server thật đang sống khỏe mạnh ➔ Không thể test mã 500!                                   | ✅ **500 Crash**: Giả lập sập server an toàn, assert bố cục không vỡ.                                       |
+| **Panel 1: Products**       | Nút _"Mất kết nối"_     | ❌ Thiết bị đang có Internet ➔ Vẫn gửi được request đi.                                       | ✅ **route.abort()**: Cắt đứt socket TCP, UI bắt lỗi mạng văn minh.                                         |
+| **Panel 1: Products**       | Nút _"Dữ liệu rỗng"_    | ❌ Bị 401, không thể kiểm tra Empty State giao diện.                                          | ✅ **200 OK rỗng**: Mớm `data: []`, UI báo _"Không có sản phẩm nào"_.                                       |
+| **Panel 1: Products**       | Nút _"Dữ liệu lớn"_     | ❌ Bị 401, hoặc phải insert thủ công 500 dòng vào DB thật.                                    | ✅ **200 OK 500 items**: Sinh 500 items trong RAM, badge `500` hiện mượt.                                   |
+| **Panel 1: Products**       | Nút _"Bảo mật XSS"_     | ❌ WAF/Backend chặn 400 Bad Request, script không tới được UI.                                | ✅ **Bypass an toàn**: Đưa `<script>` thẳng vào UI, assert React escape an toàn.                            |
+| **Panel 2: Rate Limit**     | Nút _"POST Thử nghiệm"_ | ❌ API trả về 404 hoặc 401, không thể test bộ đếm ngược.                                      | ✅ **429 Rate Limit**: Tiêm `Retry-After: 300`, UI đếm ngược 300s về 298s.                                  |
+| **Panel 3: Media/Tracking** | Nút _"Nạp Media"_       | ❌ Tải ảnh 4K nặng 5MB, Google Analytics gửi beacon bẩn data.                                 | ✅ **route.abort()**: Chặn ảnh & tracker, UI hiện fallback nhẹ, tăng tốc 300%.                              |
+| **Panel 4: Profile VIP**    | Nút _"Kiểm tra User"_   | ❌ Trả về User thường (0% giảm giá), muốn VIP phải sửa DB.                                    | ✅ **Tampering**: Lấy data thật nhưng sửa `is_vip: true` ➔ Hóa Thẻ VIP GOLD 50%.                            |
+| **Panel 5: Header Flag**    | Nút _"Gửi Header"_      | ❌ Browser thường không tự gắn header `X-Feature-Flag` được.                                  | ✅ **route.continue()**: Tiêm Custom Header ➔ Banner thử nghiệm tím bật sáng.                               |
+| **Panel 6: Shift-Left AI**  | Nút _"Gợi ý AI"_        | ❌ Máy chủ thật trả về `HTTP 404 Not Found` (chưa code API).                                  | ✅ **Contract Mock**: Đóng thế đúng Schema ➔ Thẻ AI Sommelier render 98% Match!                             |
+| **Panel 7: Ví Neko Pay**    | Nút _"Kiểm tra số dư"_  | ❌ Nhận số dư gốc 50.000 ₫ ➔ UI hiện Thẻ Tiêu Chuẩn `STANDARD` màu xám tro.                   | ✅ **Tampering 1 Tỷ**: Tráo `balance: 999999999` ➔ Thẻ Holographic VIP Platinum sáng rực, chip mạ vàng!     |
+| **Panel 8: Trạm Đo Ping**   | Nút _"Đo tốc độ"_       | ❌ Ping thật quá nhanh (< 50ms) ➔ Không thể test trạng thái mạng nghẽn và thanh progress bar. | ✅ **Bơm trễ 1000ms**: Khóa nút `disabled` chống click đúp, progress bar xung điện, hiện badge cảnh báo đỏ! |
 
 ---
 
@@ -929,55 +937,59 @@ Dưới đây là bản mổ xẻ chi tiết từng năng lực theo cấu trúc
 
 ##### 1️⃣ Siêu Năng Lực 1: Giả Lập Dữ Liệu Biên & Trạng Thái Giao Diện (Data Edge Cases & UI States)
 
-* **Thực tế hiện tại khi test (Pure UI / Real API)**:
-  * Để test giao diện danh sách sản phẩm, tester phải đăng nhập, tạo dữ liệu sẵn trong Database hoặc gọi API thật để nạp dữ liệu.
-  * Khi cần kiểm thử các tình huống biên (Edge Cases):
-    * **Empty State (Dữ liệu rỗng)**: Tester phải tạo một tài khoản mới tinh chưa có đơn hàng nào, hoặc phải chạy script xóa sạch dữ liệu trong DB.
-    * **Big Data (500 - 1000 sản phẩm)**: Tester phải chạy vòng lặp insert 1000 dòng vào database staging ➔ làm phình to DB chung, làm chậm các worker test khác đang chạy song song, và sau khi test xong phải tốn công viết code teardown để dọn dẹp.
-    * **Bảo mật XSS**: Tester cố gắng đặt tên sản phẩm là `<script>alert('xss')</script>`. Tuy nhiên, Backend validation hoặc tường lửa Web Application Firewall (WAF) của công ty lập tức chặn lại với mã lỗi 400 Bad Request, khiến tester **không tài nào đưa được chuỗi payload này đến tầng hiển thị của Frontend** để kiểm tra năng lực escape mã độc của React!
-    * **Mã lỗi hiểm (500 Server Crash, 429 Rate Limit)**: Tester không thể bắt máy chủ Backend thật tự lăn ra chết (500), càng không thể spam 1000 request thật để tự DDoS sập cụm Redis/API Gateway chỉ để xem nút bấm có hiện dòng chữ đếm ngược Retry-After hay không!
-* **Khó khăn & Bế tắc**:
-  * Tốn hàng giờ đồng hồ cho việc chuẩn bị dữ liệu (Data Setup & Teardown).
-  * Làm ô nhiễm môi trường Database staging dùng chung của cả dự án (Shared Database Contamination).
-  * Không có cách nào giả lập lỗi máy chủ hiểm hóc theo ý muốn một cách an toàn và có thể tái lặp (Deterministic).
-* **Playwright Mock Intercept giải quyết triệt để**:
-  * `route.fulfill({ status: 200, json: BIG_DATA_PRODUCTS })`: Playwright sinh ngay 500 items trong RAM trong đúng `5ms`, mớm thẳng vào trình duyệt. UI render mượt mà, assert huy hiệu `Tổng cộng: 500 sản phẩm`, test xong RAM tự giải phóng, Database thật sạch 100%!
-  * `route.fulfill({ status: 200, json: XSS_PRODUCTS })`: Bypass hoàn toàn lớp phòng thủ của Backend, đưa trực tiếp chuỗi `<script>` vào React Component. Playwright lắng nghe sự kiện `page.on('dialog')` để khẳng định 100% React đã escape an toàn thành chuỗi văn bản thông thường, không hề có popup alert nào bị kích hoạt.
-  * `route.fulfill({ status: 500 })` và `route.fulfill({ status: 429, headers: { 'Retry-After': '300' } })`: Giả lập server sập và rate limit 300 giây chỉ trong 3 dòng code, test hoàn tất trong `160ms` mà không ảnh hưởng bất kỳ server nào!
+- **Thực tế hiện tại khi test (Pure UI / Real API)**:
+  - Để test giao diện danh sách sản phẩm, tester phải đăng nhập, tạo dữ liệu sẵn trong Database hoặc gọi API thật để nạp dữ liệu.
+  - Khi cần kiểm thử các tình huống biên (Edge Cases):
+    - **Empty State (Dữ liệu rỗng)**: Tester phải tạo một tài khoản mới tinh chưa có đơn hàng nào, hoặc phải chạy script xóa sạch dữ liệu trong DB.
+    - **Big Data (500 - 1000 sản phẩm)**: Tester phải chạy vòng lặp insert 1000 dòng vào database staging ➔ làm phình to DB chung, làm chậm các worker test khác đang chạy song song, và sau khi test xong phải tốn công viết code teardown để dọn dẹp.
+    - **Bảo mật XSS**: Tester cố gắng đặt tên sản phẩm là `<script>alert('xss')</script>`. Tuy nhiên, Backend validation hoặc tường lửa Web Application Firewall (WAF) của công ty lập tức chặn lại với mã lỗi 400 Bad Request, khiến tester **không tài nào đưa được chuỗi payload này đến tầng hiển thị của Frontend** để kiểm tra năng lực escape mã độc của React!
+    - **Mã lỗi hiểm (500 Server Crash, 429 Rate Limit)**: Tester không thể bắt máy chủ Backend thật tự lăn ra chết (500), càng không thể spam 1000 request thật để tự DDoS sập cụm Redis/API Gateway chỉ để xem nút bấm có hiện dòng chữ đếm ngược Retry-After hay không!
+- **Khó khăn & Bế tắc**:
+  - Tốn hàng giờ đồng hồ cho việc chuẩn bị dữ liệu (Data Setup & Teardown).
+  - Làm ô nhiễm môi trường Database staging dùng chung của cả dự án (Shared Database Contamination).
+  - Không có cách nào giả lập lỗi máy chủ hiểm hóc theo ý muốn một cách an toàn và có thể tái lặp (Deterministic).
+- **Playwright Mock Intercept giải quyết triệt để**:
+  - `route.fulfill({ status: 200, json: BIG_DATA_PRODUCTS })`: Playwright sinh ngay 500 items trong RAM trong đúng `5ms`, mớm thẳng vào trình duyệt. UI render mượt mà, assert huy hiệu `Tổng cộng: 500 sản phẩm`, test xong RAM tự giải phóng, Database thật sạch 100%!
+  - `route.fulfill({ status: 200, json: XSS_PRODUCTS })`: Bypass hoàn toàn lớp phòng thủ của Backend, đưa trực tiếp chuỗi `<script>` vào React Component. Playwright lắng nghe sự kiện `page.on('dialog')` để khẳng định 100% React đã escape an toàn thành chuỗi văn bản thông thường, không hề có popup alert nào bị kích hoạt.
+  - `route.fulfill({ status: 500 })` và `route.fulfill({ status: 429, headers: { 'Retry-After': '300' } })`: Giả lập server sập và rate limit 300 giây chỉ trong 3 dòng code, test hoàn tất trong `160ms` mà không ảnh hưởng bất kỳ server nào!
 
 ---
 
 ##### 2️⃣ Siêu Năng Lực 2: Chặn Tài Nguyên Rác Tăng Tốc Test 300% (`route.abort`)
 
-* **Thực tế hiện tại khi test**:
-  * Mỗi khi truy cập trang web, trình duyệt phải tải về hàng loạt tài nguyên tĩnh: hình ảnh banner 4K (mỗi tấm 2MB - 5MB), video nền quảng cáo, tệp font chữ lớn, cùng hàng tá script theo dõi của bên thứ ba (Google Analytics, Facebook Pixel, Hotjar, Sentry, TikTok Pixel...).
-* **Khó khăn & Bế tắc**:
-  * **Tốc độ test rùa bò**: Một test case đơn giản mất từ 5s - 10s chỉ để chờ ảnh và tracker tải xong qua mạng. Nhân lên 500 test cases trên hệ thống CI/CD (GitHub Actions / GitLab CI) ➔ thời gian chạy mất tới 45 phút, gây tốn kém chi phí máy chủ và chậm trễ quá trình release phần mềm.
-  * **Ô nhiễm dữ liệu phân tích doanh nghiệp (Data Pollution)**: Hàng nghìn lượt request tự động của bot test bắn liên tục về Google Analytics làm sai lệch nghiêm trọng báo cáo số lượng người dùng thật và tỷ lệ chuyển đổi (Conversion Rate) của phòng Marketing!
-  * **Flakiness do bên thứ ba**: Nếu máy chủ của Google Analytics hoặc CDN của Font chữ gặp sự cố mạng, test case của bạn sẽ bị timeout và Fail oan uổng mặc dù mã nguồn web của bạn hoàn toàn không có lỗi!
-* **Playwright Mock Intercept giải quyết triệt để**:
+- **Thực tế hiện tại khi test**:
+  - Mỗi khi truy cập trang web, trình duyệt phải tải về hàng loạt tài nguyên tĩnh: hình ảnh banner 4K (mỗi tấm 2MB - 5MB), video nền quảng cáo, tệp font chữ lớn, cùng hàng tá script theo dõi của bên thứ ba (Google Analytics, Facebook Pixel, Hotjar, Sentry, TikTok Pixel...).
+- **Khó khăn & Bế tắc**:
+  - **Tốc độ test rùa bò**: Một test case đơn giản mất từ 5s - 10s chỉ để chờ ảnh và tracker tải xong qua mạng. Nhân lên 500 test cases trên hệ thống CI/CD (GitHub Actions / GitLab CI) ➔ thời gian chạy mất tới 45 phút, gây tốn kém chi phí máy chủ và chậm trễ quá trình release phần mềm.
+  - **Ô nhiễm dữ liệu phân tích doanh nghiệp (Data Pollution)**: Hàng nghìn lượt request tự động của bot test bắn liên tục về Google Analytics làm sai lệch nghiêm trọng báo cáo số lượng người dùng thật và tỷ lệ chuyển đổi (Conversion Rate) của phòng Marketing!
+  - **Flakiness do bên thứ ba**: Nếu máy chủ của Google Analytics hoặc CDN của Font chữ gặp sự cố mạng, test case của bạn sẽ bị timeout và Fail oan uổng mặc dù mã nguồn web của bạn hoàn toàn không có lỗi!
+- **Playwright Mock Intercept giải quyết triệt để**:
   ```typescript
   // 🚀 Tăng tốc test gấp 3 lần và bảo vệ dữ liệu Analytics
   await page.route("**/*.png*", (route) => route.abort("blockedbyclient"));
-  await page.route("**/google-analytics.com/**", (route) => route.abort("blockedbyclient"));
+  await page.route("**/google-analytics.com/**", (route) =>
+    route.abort("blockedbyclient"),
+  );
   ```
-  * Playwright can thiệp tại tầng Chromium CDP, chặn đứng ngay tại chỗ các request ảnh nặng và tracking script. Trình duyệt không tốn 1 byte băng thông nào ra Internet.
-  * UI kích hoạt lớp fallback nhẹ, test case hoàn thành trong vài trăm mili-giây, số liệu Google Analytics hoàn toàn sạch sẽ, loại bỏ 100% nguy cơ test fail do mạng bên thứ ba!
+
+  - Playwright can thiệp tại tầng Chromium CDP, chặn đứng ngay tại chỗ các request ảnh nặng và tracking script. Trình duyệt không tốn 1 byte băng thông nào ra Internet.
+  - UI kích hoạt lớp fallback nhẹ, test case hoàn thành trong vài trăm mili-giây, số liệu Google Analytics hoàn toàn sạch sẽ, loại bỏ 100% nguy cơ test fail do mạng bên thứ ba!
 
 ---
 
 ##### 3️⃣ Siêu Năng Lực 3: Bắt Gói Tin Thật & Tráo Đổi Dữ Liệu Trên Đường Truyền (`route.fetch` + Tampering)
 
-* **Thực tế hiện tại khi test**:
-  * Khi cần kiểm thử giao diện phân quyền cho các cấp bậc tài khoản đặc thù (ví dụ: Hội viên Kim Cương VIP Gold được giảm giá 50%, Giám đốc chi nhánh có quyền xem doanh thu bảo mật):
-  * Tester phải tạo một tài khoản VIP riêng trong Database, hoặc phiền đội Backend vào sửa database thủ công.
-  * Sau khi test xong lại phải nhớ hoàn tác (rollback) quyền hạn về như cũ để tránh xung đột dữ liệu.
-  * Nếu tự viết mock dữ liệu giả 100% từ đầu: Rất dễ bị lỗi thời (Stale Schema) khi Backend cập nhật thêm các trường mới (`avatar_url`, `loyalty_points`, `tax_id`...) khiến mock lệch chuẩn so với API thật.
-* **Khó khăn & Bế tắc**:
-  * Tốn công sức và quy trình quản trị tài khoản phân quyền trên staging.
-  * Mocking toàn phần từ đầu đòi hỏi chi phí bảo trì payload rất lớn.
-* **Playwright Mock Intercept giải quyết triệt để**:
-  * Sử dụng kỹ thuật **Response Tampering (Bắt gói tin thật — Tráo đổi thuộc tính giữa đường)**:
+- **Thực tế hiện tại khi test**:
+  - Khi cần kiểm thử giao diện phân quyền cho các cấp bậc tài khoản đặc thù (ví dụ: Hội viên Kim Cương VIP Gold được giảm giá 50%, Giám đốc chi nhánh có quyền xem doanh thu bảo mật):
+  - Tester phải tạo một tài khoản VIP riêng trong Database, hoặc phiền đội Backend vào sửa database thủ công.
+  - Sau khi test xong lại phải nhớ hoàn tác (rollback) quyền hạn về như cũ để tránh xung đột dữ liệu.
+  - Nếu tự viết mock dữ liệu giả 100% từ đầu: Rất dễ bị lỗi thời (Stale Schema) khi Backend cập nhật thêm các trường mới (`avatar_url`, `loyalty_points`, `tax_id`...) khiến mock lệch chuẩn so với API thật.
+- **Khó khăn & Bế tắc**:
+  - Tốn công sức và quy trình quản trị tài khoản phân quyền trên staging.
+  - Mocking toàn phần từ đầu đòi hỏi chi phí bảo trì payload rất lớn.
+- **Playwright Mock Intercept giải quyết triệt để**:
+  - Sử dụng kỹ thuật **Response Tampering (Bắt gói tin thật — Tráo đổi thuộc tính giữa đường)**:
+
   ```typescript
   await page.route("**/api/users/profile*", async (route) => {
     // 1. Lấy response thật từ server backend
@@ -993,19 +1005,20 @@ Dưới đây là bản mổ xẻ chi tiết từng năng lực theo cấu trúc
     await route.fulfill({ status: 200, json });
   });
   ```
-  * **Kết quả**: 99% cấu trúc dữ liệu và các field phụ trợ đều là dữ liệu thật từ máy chủ, nhưng thuộc tính quyền hạn đã được Playwright biến hóa thành VIP GOLD ngay trên đường truyền. Giao diện lập tức render Thẻ Hội Viên Vàng lấp lánh và áp dụng chiết khấu 50% mà không cần chạm vào 1 dòng nào trong Database!
+
+  - **Kết quả**: 99% cấu trúc dữ liệu và các field phụ trợ đều là dữ liệu thật từ máy chủ, nhưng thuộc tính quyền hạn đã được Playwright biến hóa thành VIP GOLD ngay trên đường truyền. Giao diện lập tức render Thẻ Hội Viên Vàng lấp lánh và áp dụng chiết khấu 50% mà không cần chạm vào 1 dòng nào trong Database!
 
 ---
 
 ##### 4️⃣ Siêu Năng Lực 4: Tiêm Custom Header & Feature Flag Động (`route.continue`)
 
-* **Thực tế hiện tại khi test**:
-  * Trong các hệ thống hiện đại, nhiều tính năng mới được triển khai dưới dạng **Feature Flag** hoặc **A/B Testing** (ví dụ: chỉ bật giao diện mới khi request có kèm Header `X-Feature-Flag: experimental-dark-v2`).
-  * Ngoài ra, hệ thống microservices yêu cầu client phải gửi kèm các Header kỹ thuật như Trace ID (`X-Custom-Security-Trace`), Device ID, Client Version để phục vụ log và tracing.
-* **Khó khăn & Bế tắc**:
-  * Làm sao để kiểm thử giao diện của tính năng thử nghiệm mà không cần cấu hình phức tạp trên server hoặc không cần sửa mã nguồn web Frontend?
-  * Nếu sửa trực tiếp mã nguồn Frontend để hardcode Header phục vụ test, nguy cơ cao lập trình viên sẽ sơ suất commit đoạn code đó lên nhánh production!
-* **Playwright Mock Intercept giải quyết triệt để**:
+- **Thực tế hiện tại khi test**:
+  - Trong các hệ thống hiện đại, nhiều tính năng mới được triển khai dưới dạng **Feature Flag** hoặc **A/B Testing** (ví dụ: chỉ bật giao diện mới khi request có kèm Header `X-Feature-Flag: experimental-dark-v2`).
+  - Ngoài ra, hệ thống microservices yêu cầu client phải gửi kèm các Header kỹ thuật như Trace ID (`X-Custom-Security-Trace`), Device ID, Client Version để phục vụ log và tracing.
+- **Khó khăn & Bế tắc**:
+  - Làm sao để kiểm thử giao diện của tính năng thử nghiệm mà không cần cấu hình phức tạp trên server hoặc không cần sửa mã nguồn web Frontend?
+  - Nếu sửa trực tiếp mã nguồn Frontend để hardcode Header phục vụ test, nguy cơ cao lập trình viên sẽ sơ suất commit đoạn code đó lên nhánh production!
+- **Playwright Mock Intercept giải quyết triệt để**:
   ```typescript
   // Tiêm header động vào request đang bay ra
   await page.route("**/public/test/echo*", async (route) => {
@@ -1019,24 +1032,25 @@ Dưới đây là bản mổ xẻ chi tiết từng năng lực theo cấu trúc
     await route.fulfill({ response, json });
   });
   ```
-  * Playwright can thiệp trực tiếp vào Request đang bay đi tại tầng mạng, tự động tiêm thêm Custom Header mà mã nguồn web không hề bị thay đổi một dòng nào.
-  * UI phát hiện cờ thử nghiệm và kích hoạt ngay Banner tính năng thử nghiệm màu tím nổi bật, đảm bảo an toàn tuyệt đối cho codebase!
+
+  - Playwright can thiệp trực tiếp vào Request đang bay đi tại tầng mạng, tự động tiêm thêm Custom Header mà mã nguồn web không hề bị thay đổi một dòng nào.
+  - UI phát hiện cờ thử nghiệm và kích hoạt ngay Banner tính năng thử nghiệm màu tím nổi bật, đảm bảo an toàn tuyệt đối cho codebase!
 
 ---
 
 ##### 5️⃣ Siêu Năng Lực 5: Shift-Left Testing — Mock API Mới Khi Backend Chưa Xong (Contract-First)
 
-* **Thực tế hiện tại khi test**:
-  * Trong mô hình Agile Sprint 2 tuần truyền thống:
-    * Tuần 1: Đội Backend thiết kế DB, viết migrations, triển khai business logic API.
-    * Cuối tuần 2: Backend mới deploy xong API lên server Staging.
-    * Tester và Frontend phải **ngồi chờ tới những ngày cuối cùng của Sprint mới có API thật để bắt đầu tích hợp và viết test tự động**.
-* **Khó khăn & Bế tắc**:
-  * **Hiệu ứng nút cổ chai (Waterfall in Agile)**: Toàn bộ áp lực tích hợp và test dồn vào 2 ngày cuối Sprint ➔ Đội ngũ phải tăng ca, test vội vàng, tỷ lệ sót lỗi nghiêm trọng (escaped defects) lên production rất cao.
-  * Nếu Backend bị trễ hạn chỉ 1 ngày ➔ Cả Sprint bị vỡ kế hoạch (Sprint Failure) do không kịp kiểm thử.
-* **Playwright Mock Intercept giải quyết triệt để (Shift-Left Testing)**:
-  * Ngay ngày đầu tiên của Sprint, Frontend và Backend cùng ngồi lại thống nhất bản hợp đồng JSON Schema (API Contract), ví dụ endpoint AI Sommelier: `GET /api/v2/ai/drink-recommendation`.
-  * Tester và Frontend không cần đợi Backend viết code xong! Playwright lập tức đóng thế đúng bản hợp đồng đã chốt:
+- **Thực tế hiện tại khi test**:
+  - Trong mô hình Agile Sprint 2 tuần truyền thống:
+    - Tuần 1: Đội Backend thiết kế DB, viết migrations, triển khai business logic API.
+    - Cuối tuần 2: Backend mới deploy xong API lên server Staging.
+    - Tester và Frontend phải **ngồi chờ tới những ngày cuối cùng của Sprint mới có API thật để bắt đầu tích hợp và viết test tự động**.
+- **Khó khăn & Bế tắc**:
+  - **Hiệu ứng nút cổ chai (Waterfall in Agile)**: Toàn bộ áp lực tích hợp và test dồn vào 2 ngày cuối Sprint ➔ Đội ngũ phải tăng ca, test vội vàng, tỷ lệ sót lỗi nghiêm trọng (escaped defects) lên production rất cao.
+  - Nếu Backend bị trễ hạn chỉ 1 ngày ➔ Cả Sprint bị vỡ kế hoạch (Sprint Failure) do không kịp kiểm thử.
+- **Playwright Mock Intercept giải quyết triệt để (Shift-Left Testing)**:
+  - Ngay ngày đầu tiên của Sprint, Frontend và Backend cùng ngồi lại thống nhất bản hợp đồng JSON Schema (API Contract), ví dụ endpoint AI Sommelier: `GET /api/v2/ai/drink-recommendation`.
+  - Tester và Frontend không cần đợi Backend viết code xong! Playwright lập tức đóng thế đúng bản hợp đồng đã chốt:
     ```typescript
     await page.route("**/api/v2/ai/drink-recommendation*", async (route) => {
       await route.fulfill({
@@ -1050,32 +1064,32 @@ Dưới đây là bản mổ xẻ chi tiết từng năng lực theo cấu trúc
       });
     });
     ```
-  * **Kết quả**: Toàn bộ giao diện người dùng, hiệu ứng animation, validation form và kịch bản E2E kiểm thử tự động được Frontend & Tester hoàn thành **ngay trong tuần đầu tiên của Sprint**! Đến tuần 2 khi Backend hoàn tất API, hệ thống chỉ việc tắt mock là khớp nối hoàn hảo 100%!
+  - **Kết quả**: Toàn bộ giao diện người dùng, hiệu ứng animation, validation form và kịch bản E2E kiểm thử tự động được Frontend & Tester hoàn thành **ngay trong tuần đầu tiên của Sprint**! Đến tuần 2 khi Backend hoàn tất API, hệ thống chỉ việc tắt mock là khớp nối hoàn hảo 100%!
 
 ---
 
-#### 📊 Bảng Ma Trận 12 Kịch Bản Kiểm Thử E2E Tại `modules/2-api/NekoCoffee/lesson-24/specs/09-nextjs-route-mock-showroom.spec.ts`:
+#### 📊 Bảng Ma Trận 14 Kịch Bản Kiểm Thử E2E Tại `modules/2-api/NekoCoffee/lesson-24/specs/09-nextjs-route-mock-showroom.spec.ts`:
 
-| # | Kịch Bản Kiểm Thử | Năng Lực Tương Ứng | Phương Thức Playwright | Mục Tiêu Assert Chính |
-| :---: | :--- | :--- | :--- | :--- |
-| **1** | Mock 200 OK tức thì | Siêu Năng Lực 1 | `route.fulfill(200)` | Dữ liệu hiển thị trong `< 500ms`. |
-| **2** | Mock mạng chậm 2000ms | Siêu Năng Lực 1 | `setTimeout(2000)` | Spinner `visible` ➔ `hidden`, data về sau. |
-| **3** | Mock backend sập 500 | Siêu Năng Lực 1 | `route.fulfill(500)` | Báo lỗi 500 đúng vùng dữ liệu, layout không vỡ. |
-| **4** | Mock mất kết nối mạng | Siêu Năng Lực 1 | `route.abort("connectionrefused")` | Ứng dụng bắt lỗi mạng an toàn, không crash. |
-| **5** | Mock dữ liệu rỗng | Siêu Năng Lực 1 | `route.fulfill({ data: [] })` | UI chuyển sang Empty State, ẩn Spinner. |
-| **6** | Mock 429 Rate Limiting | Siêu Năng Lực 1 | `route.fulfill(429, Retry-After)` | Đếm ngược từ 300s về 298s, khóa nút gửi. |
-| **7** | **Mock Big Data 500 items** | Siêu Năng Lực 1 | `route.fulfill(500 items)` | Render danh sách + badge `Tổng cộng: 500`. |
-| **8** | **Mock chuỗi độc hại XSS** | Siêu Năng Lực 1 | `route.fulfill(payload XSS)` | Text escape an toàn, không có alert dialog. |
-| **9** | **Chặn ảnh nặng & Analytics** | **Siêu Năng Lực 2** | `route.abort("blockedbyclient")` | Fallback ảnh hiện ra, Analytics bị chặn an toàn. |
-| **10**| **Tráo đổi dữ liệu thật** | **Siêu Năng Lực 3** | `route.fetch()` + sửa `is_vip: true` | Biến Customer thành Thẻ VIP GOLD giảm 50%. |
-| **11**| **Tiêm Header Feature Flag** | **Siêu Năng Lực 4** | `route.continue({ headers })` | Banner tính năng `[experimental-dark-v2]` hiện. |
-| **12**| **Shift-Left AI Contract** | **Siêu Năng Lực 5** | `route.fulfill(200, Contract)` | Thẻ AI Sommelier render 98% match chuẩn xác. |
-| **13**| **Ví Neko Pay Tampering 1 Tỷ** | **Phần 4 Nâng Cao** | `route.fetch()` + `balance: 1B` | Biến số dư 50k thành 1 TỶ ĐỒNG Platinum VIP. |
-| **14**| **Đo Độ Trễ Mạng Ping Meter** | **Phần 4 Nâng Cao** | `setTimeout(1000)` + `Progress`| Kim đo nhảy >= 950ms, Progress Bar mượt mà. |
+|   #    | Kịch Bản Kiểm Thử              | Năng Lực Tương Ứng  | Phương Thức Playwright               | Mục Tiêu Assert Chính                            |
+| :----: | :----------------------------- | :------------------ | :----------------------------------- | :----------------------------------------------- |
+| **1**  | Mock 200 OK tức thì            | Siêu Năng Lực 1     | `route.fulfill(200)`                 | Dữ liệu hiển thị trong `< 500ms`.                |
+| **2**  | Mock mạng chậm 2000ms          | Siêu Năng Lực 1     | `setTimeout(2000)`                   | Spinner `visible` ➔ `hidden`, data về sau.       |
+| **3**  | Mock backend sập 500           | Siêu Năng Lực 1     | `route.fulfill(500)`                 | Báo lỗi 500 đúng vùng dữ liệu, layout không vỡ.  |
+| **4**  | Mock mất kết nối mạng          | Siêu Năng Lực 1     | `route.abort("connectionrefused")`   | Ứng dụng bắt lỗi mạng an toàn, không crash.      |
+| **5**  | Mock dữ liệu rỗng              | Siêu Năng Lực 1     | `route.fulfill({ data: [] })`        | UI chuyển sang Empty State, ẩn Spinner.          |
+| **6**  | Mock 429 Rate Limiting         | Siêu Năng Lực 1     | `route.fulfill(429, Retry-After)`    | Đếm ngược từ 300s về 298s, khóa nút gửi.         |
+| **7**  | **Mock Big Data 500 items**    | Siêu Năng Lực 1     | `route.fulfill(500 items)`           | Render danh sách + badge `Tổng cộng: 500`.       |
+| **8**  | **Mock chuỗi độc hại XSS**     | Siêu Năng Lực 1     | `route.fulfill(payload XSS)`         | Text escape an toàn, không có alert dialog.      |
+| **9**  | **Chặn ảnh nặng & Analytics**  | **Siêu Năng Lực 2** | `route.abort("blockedbyclient")`     | Fallback ảnh hiện ra, Analytics bị chặn an toàn. |
+| **10** | **Tráo đổi dữ liệu thật**      | **Siêu Năng Lực 3** | `route.fetch()` + sửa `is_vip: true` | Biến Customer thành Thẻ VIP GOLD giảm 50%.       |
+| **11** | **Tiêm Header Feature Flag**   | **Siêu Năng Lực 4** | `route.continue({ headers })`        | Banner tính năng `[experimental-dark-v2]` hiện.  |
+| **12** | **Shift-Left AI Contract**     | **Siêu Năng Lực 5** | `route.fulfill(200, Contract)`       | Thẻ AI Sommelier render 98% match chuẩn xác.     |
+| **13** | **Ví Neko Pay Tampering 1 Tỷ** | **Phần 4 Nâng Cao** | `route.fetch()` + `balance: 1B`      | Biến số dư 50k thành 1 TỶ ĐỒNG Platinum VIP.     |
+| **14** | **Đo Độ Trễ Mạng Ping Meter**  | **Phần 4 Nâng Cao** | `setTimeout(1000)` + `Progress`      | Kim đo nhảy >= 950ms, Progress Bar mượt mà.      |
 
 ---
 
-#### 🔬 Phân Tích Mã Nguồn Chi Tiết Toàn Bộ 12 Kịch Bản Kiểm Thử Thực Chiến (Code Walkthrough & Deep-Dive)
+#### 🔬 Phân Tích Mã Nguồn Chi Tiết Toàn Bộ 14 Kịch Bản Kiểm Thử Thực Chiến (Code Walkthrough & Deep-Dive)
 
 Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp từ file kiểm thử `modules/2-api/NekoCoffee/lesson-24/specs/09-nextjs-route-mock-showroom.spec.ts`, kèm theo giải phẫu kỹ thuật chuyên sâu về cơ chế can thiệp mạng cấp độ CDP và các tiêu chí assertion tương ứng trên giao diện:
 
@@ -1083,12 +1097,19 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
 
 ##### 🧪 Kịch Bản 01: [MOCK 200 OK] Dữ Liệu Giả Về Tức Thì (< 500ms)
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Kiểm tra giao diện render danh sách sản phẩm bình thường khi API trả về trạng thái 200 OK.
-  * Đảm bảo thời gian phản hồi cực nhanh (< 800ms) nhờ loại bỏ hoàn toàn độ trễ mạng Internet và truy vấn cơ sở dữ liệu thật.
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 1: Danh Sách Sản Phẩm (Products Panel)** (`data-testid="mock-demo-panel-get"`)
+- **🔘 Nút bấm & testid tương tác**: Nút *"Thành công"* (`data-testid="mock-demo-get-success"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Màn hình danh sách sản phẩm là tính năng sống còn của ứng dụng bán hàng. Khi khách hàng mở trang, hệ thống cần tải danh mục đồ uống và hiển thị lên màn hình ngay tức khắc.
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: Nếu gọi API backend thật, bài test bị phụ thuộc vào tốc độ mạng Internet và bắt buộc cơ sở dữ liệu phải có sẵn dữ liệu mẫu. Nếu ai đó vô tình xóa sạch DB thì test fail oan, và độ trễ mạng chập chờn sẽ khiến bộ test chạy lúc nhanh lúc chậm (Flaky Test).
+  - 💥 **Rủi ro nếu bỏ sót**: Lập trình viên Frontend có thể map sai cấu trúc JSON mảng, không hiển thị được tên món hoặc xử lý render kém tối ưu gây giật lag giao diện.
+  - 🎯 **Mục tiêu kiểm định Playwright**: Bơm trực tiếp dữ liệu 2 sản phẩm mẫu từ bộ nhớ RAM thông qua `route.fulfill({ status: 200 })`, chứng minh Frontend render chuẩn xác "Cà phê mock Espresso" với tốc độ siêu thanh (`< 800ms`), độc lập 100% với backend.
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("01 - [MOCK 200 OK] Dữ liệu giả về tức thì, UI render bình thường", async ({ page }) => {
+  test("01 - [MOCK 200 OK] Dữ liệu giả về tức thì, UI render bình thường", async ({
+    page,
+  }) => {
     await page.route("**/api/products*", async (route) => {
       await route.fulfill({
         status: 200,
@@ -1100,29 +1121,39 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
     await page.goto(LAB_URL);
     const started = Date.now();
     await page.getByTestId("mock-demo-get-success").click();
-    await expect(page.getByTestId("mock-demo-get-result")).toContainText("Cà phê mock Espresso");
+    await expect(page.getByTestId("mock-demo-get-result")).toContainText(
+      "Cà phê mock Espresso",
+    );
     const elapsed = Date.now() - started;
     expect(elapsed).toBeLessThan(800);
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * Playwright kích hoạt event `Network.setRequestInterception` trên giao thức Chrome DevTools Protocol.
-  * Khi người dùng click nút, request `GET /api/products` được trình duyệt phát đi.
-  * Trạm kiểm soát Playwright chặn đứng request ngay trong RAM máy trạm và lập tức phản hồi thông qua `route.fulfill()` với HTTP Status `200` và body chứa đối tượng `FAKE_PRODUCTS`. Không một gói tin TCP nào thoát ra ngoài mạng thật.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * Giao diện nhận mảng 2 sản phẩm và hiển thị tên sản phẩm "Cà phê mock Espresso".
-  * Assertion `toContainText("Cà phê mock Espresso")` pass ngay lập tức, và biến thời gian `elapsed` được xác nhận `< 800ms`.
+
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - Playwright kích hoạt event `Network.setRequestInterception` trên giao thức Chrome DevTools Protocol.
+  - Khi người dùng click nút, request `GET /api/products` được trình duyệt phát đi.
+  - Trạm kiểm soát Playwright chặn đứng request ngay trong RAM máy trạm và lập tức phản hồi thông qua `route.fulfill()` với HTTP Status `200` và body chứa đối tượng `FAKE_PRODUCTS`. Không một gói tin TCP nào thoát ra ngoài mạng thật.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - Giao diện nhận mảng 2 sản phẩm và hiển thị tên sản phẩm "Cà phê mock Espresso".
+  - Assertion `toContainText("Cà phê mock Espresso")` pass ngay lập tức, và biến thời gian `elapsed` được xác nhận `< 800ms`.
 
 ---
 
 ##### 🧪 Kịch Bản 02: [LATENCY INJECTION] Mock Mạng Chậm 2000ms — Spinner Bắt Buộc Hiển Thị
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Bắt quả tang trạng thái Loading Spinner của giao diện người dùng (UX). Trong điều kiện mạng thật, thời gian tải thường quá nhanh (~30ms) khiến Spinner chỉ nháy chớp nhoáng, không thể kiểm thử tự động.
-  * Đảm bảo Spinner xuất hiện trong suốt quá trình chờ và tự động biến mất khi có dữ liệu.
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 1: Danh Sách Sản Phẩm (Products Panel)** (`data-testid="mock-demo-panel-get"`)
+- **🔘 Nút bấm & testid tương tác**: Nút *"Mạng chậm"* (`data-testid="mock-demo-get-slow"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Người dùng ngồi quán cà phê dùng 3G/4G chập chờn hoặc mạng lag, request cần 2-3 giây mới hoàn tất. Giao diện bắt buộc phải hiển thị vòng xoay (Spinner) để báo hiệu cho khách biết "hệ thống đang tải", tránh khách tưởng web bị đơ.
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: Trên môi trường Localhost hoặc Dev Server nội bộ, mạng phản hồi quá nhanh (~20-30ms). Vòng xoay Spinner chỉ nháy lên 0.03 giây rồi tắt, mắt thường không thấy và script automation không thể nào kịp `expect(spinner).toBeVisible()`.
+  - 💥 **Rủi ro nếu bỏ sót**: Lập trình viên quên gắn biến cờ `isLoading = true` hoặc đặt sai vị trí spinner. Người dùng bấm nút không thấy phản hồi gì sẽ mất kiên nhẫn, bấm liên tục 5-10 lần làm spam request và treo ứng dụng.
+  - 🎯 **Mục tiêu kiểm định Playwright**: Sử dụng kỹ thuật **Latency Injection** (`setTimeout(2000)`) để chủ động "đóng băng" thời gian chờ đúng 2 giây. Khẳng định chắc chắn 2 trạng thái UX: (1) Trong 2 giây chờ: Spinner **bắt buộc phải hiển thị**; (2) Khi có dữ liệu về: Spinner **phải tự động biến mất**.
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("02 - [LATENCY INJECTION] Mock mạng chậm 2000ms — Spinner hiện trong lúc chờ", async ({ page }) => {
+  test("02 - [LATENCY INJECTION] Mock mạng chậm 2000ms — Spinner hiện trong lúc chờ", async ({
+    page,
+  }) => {
     await page.route("**/api/products*", async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await route.fulfill({
@@ -1139,27 +1170,37 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
     await expect(page.getByTestId("mock-demo-get-spinner")).toBeVisible();
 
     // Sau ~2s, dữ liệu về và Spinner biến mất
-    await expect(page.getByTestId("mock-demo-get-result")).toContainText("Cà phê mock Latte");
+    await expect(page.getByTestId("mock-demo-get-result")).toContainText(
+      "Cà phê mock Latte",
+    );
     await expect(page.getByTestId("mock-demo-get-spinner")).toBeHidden();
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * Sử dụng kỹ thuật **Latency Injection (Bơm độ trễ chủ động)** bằng `await new Promise(resolve => setTimeout(resolve, 2000))` ngay bên trong callback của `page.route()`.
-  * Kỹ thuật này giữ request ở trạng thái *Pending* đúng 2 giây mà không làm đơ trình duyệt hay phải chỉnh cấu hình throttling của browser context.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * Khi click nút `mock-demo-get-slow`, React đặt `isLoading = true` ➔ assertion `mock-demo-get-spinner` là `toBeVisible()` thỏa mãn.
-  * Sau đúng 2 giây, Playwright gọi `route.fulfill()` ➔ React nhận dữ liệu, đặt `isLoading = false` ➔ assert kết quả chứa "Cà phê mock Latte" và spinner chuyển sang `toBeHidden()`.
+
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - Sử dụng kỹ thuật **Latency Injection (Bơm độ trễ chủ động)** bằng `await new Promise(resolve => setTimeout(resolve, 2000))` ngay bên trong callback của `page.route()`.
+  - Kỹ thuật này giữ request ở trạng thái _Pending_ đúng 2 giây mà không làm đơ trình duyệt hay phải chỉnh cấu hình throttling của browser context.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - Khi click nút `mock-demo-get-slow`, React đặt `isLoading = true` ➔ assertion `mock-demo-get-spinner` là `toBeVisible()` thỏa mãn.
+  - Sau đúng 2 giây, Playwright gọi `route.fulfill()` ➔ React nhận dữ liệu, đặt `isLoading = false` ➔ assert kết quả chứa "Cà phê mock Latte" và spinner chuyển sang `toBeHidden()`.
 
 ---
 
 ##### 🧪 Kịch Bản 03: [RESILIENCE 500] Mock Backend Sập 500 — Giao Diện Xử Lý Lỗi Văn Minh, Không Vỡ Khung
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Kiểm thử khả năng chịu lỗi (Resilience) và bảo toàn bố cục trang (Layout Integrity) khi máy chủ backend gặp lỗi nghiêm trọng HTTP 500 Internal Server Error.
-  * Ngăn ngừa hoàn toàn nguy cơ màn hình trắng (White Screen of Death) hoặc vỡ khung layout sang các component xung quanh.
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 1: Danh Sách Sản Phẩm (Products Panel)** (`data-testid="mock-demo-panel-get"`)
+- **🔘 Nút bấm & testid tương tác**: Nút *"Backend sập"* (`data-testid="mock-demo-get-error-500"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Máy chủ Backend gặp sự cố ngoài ý muốn (cháy CPU, lỗi cú pháp database, dịch vụ microservice chết đột ngột) và trả về mã lỗi nghiêm trọng HTTP 500 Internal Server Error.
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: Máy chủ Backend thật của dự án đang chạy bình thường. Tester không thể yêu cầu Admin tắt server hoặc cố tình phá sập cơ sở dữ liệu công ty chỉ để xem giao diện phản ứng thế nào với mã 500!
+  - 💥 **Rủi ro nếu bỏ sót**: Nếu Frontend không viết khối `try...catch` hoặc không kiểm tra `!res.ok`, lỗi unhandled exception từ JavaScript sẽ làm toàn bộ ứng dụng sập nguồn thành **Màn Hình Trắng Chết Chóc (White Screen of Death)**, phá hỏng toàn bộ menu và các chức năng xung quanh.
+  - 🎯 **Mục tiêu kiểm định Playwright**: Chủ động tiêm HTTP 500 từ Playwright để kiểm thử khả năng chịu lỗi (Resilience): Đảm bảo giao diện hiện hộp cảnh báo lỗi màu đỏ lịch sự, đồng thời **bảo toàn 100% bố cục trang web** (`mock-demo-title`, `mock-demo-panel-get`, `mock-demo-panel-post`) không bị vỡ hay biến mất.
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("03 - [RESILIENCE 500] Mock backend sập 500 — hiện thông báo lỗi, layout không vỡ", async ({ page }) => {
+  test("03 - [RESILIENCE 500] Mock backend sập 500 — hiện thông báo lỗi, layout không vỡ", async ({
+    page,
+  }) => {
     await page.route("**/api/products*", async (route) => {
       await route.fulfill({
         status: 500,
@@ -1181,24 +1222,34 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
     await expect(page.getByTestId("mock-demo-panel-post")).toBeVisible();
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * Trả về HTTP status `500` kèm JSON payload chuẩn: `{ message: "Internal Server Error (mock)" }`.
-  * Kiểm tra xem lớp mạng Frontend (`fetch / axios`) có bắt đúng mã phản hồi `!response.ok` hay không.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * Hộp cảnh báo lỗi màu đỏ xuất hiện trong panel, hiển thị rõ ràng mã lỗi "500" và thông điệp mô tả.
-  * Assert quan trọng: Toàn bộ cấu trúc giao diện chính (`mock-demo-title`, `mock-demo-panel-get`, `mock-demo-panel-post`) vẫn hiển thị đầy đủ (`toBeVisible()`), chứng minh lỗi được đóng gói an toàn trong vùng component cục bộ.
+
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - Trả về HTTP status `500` kèm JSON payload chuẩn: `{ message: "Internal Server Error (mock)" }`.
+  - Kiểm tra xem lớp mạng Frontend (`fetch / axios`) có bắt đúng mã phản hồi `!response.ok` hay không.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - Hộp cảnh báo lỗi màu đỏ xuất hiện trong panel, hiển thị rõ ràng mã lỗi "500" và thông điệp mô tả.
+  - Assert quan trọng: Toàn bộ cấu trúc giao diện chính (`mock-demo-title`, `mock-demo-panel-get`, `mock-demo-panel-post`) vẫn hiển thị đầy đủ (`toBeVisible()`), chứng minh lỗi được đóng gói an toàn trong vùng component cục bộ.
 
 ---
 
 ##### 🧪 Kịch Bản 04: [NETWORK DISCONNECT] Mock Mất Kết Nối Mạng (Socket Abort)
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Giả lập tình huống thiết bị người dùng bị mất mạng đột ngột (rớt Wi-Fi, đứt cáp mạng, máy chủ từ chối kết nối TCP Socket).
-  * Đảm bảo ứng dụng web bắt được ngoại lệ `Network Error / Failed to fetch` và hiển thị hướng dẫn người dùng kiểm tra kết nối, thay vì đứng hình.
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 1: Danh Sách Sản Phẩm (Products Panel)** (`data-testid="mock-demo-panel-get"`)
+- **🔘 Nút bấm & testid tương tác**: Nút *"Mất kết nối"* (`data-testid="mock-demo-get-abort"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Khách hàng đang lướt ứng dụng trên điện thoại thì đi vào thang máy mất sóng 4G, hoặc dây cáp mạng LAN bị tuột đột ngột làm đứt kết nối Internet hoàn toàn.
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: Máy tính của Tester hoặc máy chủ CI/CD luôn có kết nối mạng ổn định. Bạn không thể rút dây cáp mạng bằng tay vì sẽ làm sập luôn tiến trình chạy test và ngắt kết nối remote của máy trạm.
+  - 💥 **Rủi ro nếu bỏ sót**: Trình duyệt ném ngoại lệ native `TypeError: Failed to fetch`. Nếu không có cơ chế bẫy lỗi mạng, nút bấm sẽ bị kẹt cứng ở trạng thái xoay vòng vô tận (Infinite Loading Spinner), khiến người dùng không biết lý do vì sao.
+  - 🎯 **Mục tiêu kiểm định Playwright**: Sử dụng `route.abort("connectionrefused")` phá hủy kết nối ở tầng TCP Socket. Chứng minh Frontend bắt được ngoại lệ và hiển thị thông báo lỗi mạng rõ ràng ("Network error" / "lỗi mạng") để người dùng biết kiểm tra lại kết nối.
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("04 - [NETWORK DISCONNECT] Mock mất kết nối (abort) — báo lỗi mạng thay vì crash", async ({ page }) => {
-    await page.route("**/api/products*", (route) => route.abort("connectionrefused"));
+  test("04 - [NETWORK DISCONNECT] Mock mất kết nối (abort) — báo lỗi mạng thay vì crash", async ({
+    page,
+  }) => {
+    await page.route("**/api/products*", (route) =>
+      route.abort("connectionrefused"),
+    );
 
     await page.goto(LAB_URL);
     await page.getByTestId("mock-demo-get-abort").click();
@@ -1208,23 +1259,31 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
     await expect(result).toContainText("Network error");
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * `route.abort("connectionrefused")`: Khác hoàn toàn với HTTP 500 (vẫn có kết nối TCP và HTTP response header), `abort` phá hủy kết nối ở tầng socket giao vận.
-  * Trình duyệt không nhận được bất kỳ byte HTTP nào, hàm native `fetch()` lập tức ném ngoại lệ `TypeError: Failed to fetch`.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * Khối xử lý `try...catch` của Frontend bắt được ngoại lệ và đưa chuỗi thông báo lỗi mạng vào UI.
-  * Assertion kiểm tra phần tử kết quả hiển thị từ khóa tiếng Việt `"mạng"` hoặc tiếng Anh `"Network error"`.
+
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - `route.abort("connectionrefused")`: Khác hoàn toàn với HTTP 500 (vẫn có kết nối TCP và HTTP response header), `abort` phá hủy kết nối ở tầng socket giao vận.
+  - Trình duyệt không nhận được bất kỳ byte HTTP nào, hàm native `fetch()` lập tức ném ngoại lệ `TypeError: Failed to fetch`.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - Khối xử lý `try...catch` của Frontend bắt được ngoại lệ và đưa chuỗi thông báo lỗi mạng vào UI.
+  - Assertion kiểm tra phần tử kết quả hiển thị từ khóa tiếng Việt `"mạng"` hoặc tiếng Anh `"Network error"`.
 
 ---
 
 ##### 🧪 Kịch Bản 05: [EMPTY STATE] Mock Dữ Liệu Rỗng — Giao Diện Trạng Thái Trống
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Kiểm thử giao diện trạng thái trống (Empty State UI) khi API trả về danh sách không có sản phẩm nào (`data: []`).
-  * Tránh lỗi kinh điển của lập trình viên: truy cập thuộc tính mảng rỗng (`data[0].name`) gây crash runtime (`Cannot read properties of undefined`).
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 1: Danh Sách Sản Phẩm (Products Panel)** (`data-testid="mock-demo-panel-get"`)
+- **🔘 Nút bấm & testid tương tác**: Nút *"Dữ liệu rỗng"* (`data-testid="mock-demo-get-empty"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Một danh mục sản phẩm mới thành lập chưa có đồ uống nào, hoặc khách hàng tìm kiếm một từ khóa không tồn tại và nhận về mảng rỗng `[]`.
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: Để test trên DB thật, tester phải vào xóa sạch sản phẩm trong bảng cơ sở dữ liệu (làm ảnh hưởng các thành viên khác trong nhóm) hoặc phải tạo một chuyên mục ảo rồi canh chừng không cho ai thêm sản phẩm vào.
+  - 💥 **Rủi ro nếu bỏ sót**: Lỗi sơ đẳng nhưng cực kỳ tai hại của lập trình viên là viết code `data[0].name` mà không kiểm tra độ dài mảng. Khi mảng rỗng, ứng dụng lập tức ném lỗi runtime chí mạng `Cannot read properties of undefined (reading 'name')` và làm đứng hình toàn bộ trang!
+  - 🎯 **Mục tiêu kiểm định Playwright**: Giả lập API trả về `{ data: [] }` từ Playwright. Xác nhận giao diện hiển thị thông báo thân thiện "Không có sản phẩm nào", tự động ẩn spinner và không phát sinh bất kỳ lỗi runtime nào trong Console.
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("05 - [EMPTY STATE] Mock dữ liệu rỗng — UI vào trạng thái rỗng, không treo", async ({ page }) => {
+  test("05 - [EMPTY STATE] Mock dữ liệu rỗng — UI vào trạng thái rỗng, không treo", async ({
+    page,
+  }) => {
     await page.route("**/api/products*", async (route) => {
       await route.fulfill({
         status: 200,
@@ -1241,22 +1300,30 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
     await expect(page.getByTestId("mock-demo-get-spinner")).toBeHidden();
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * Cung cấp payload chuẩn giao thức: `{ data: [], pagination: { total_items: 0 } }`.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * Giao diện phát hiện `data.length === 0` và chuyển sang chế độ hiển thị thông báo "Không có sản phẩm nào".
-  * Khẳng định spinner tải dữ liệu đã tắt hoàn toàn (`toBeHidden()`).
+
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - Cung cấp payload chuẩn giao thức: `{ data: [], pagination: { total_items: 0 } }`.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - Giao diện phát hiện `data.length === 0` và chuyển sang chế độ hiển thị thông báo "Không có sản phẩm nào".
+  - Khẳng định spinner tải dữ liệu đã tắt hoàn toàn (`toBeHidden()`).
 
 ---
 
 ##### 🧪 Kịch Bản 06: [RATE LIMIT 429] Mock Giới Hạn Tần Suất & Đếm Ngược Theo Header `Retry-After: 300`
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Kiểm thử cơ chế phòng vệ chống spam (Rate Limiting) của hệ thống.
-  * Đảm bảo Frontend đọc được Response Header chuẩn `Retry-After: 300` từ máy chủ, khởi động đồng hồ đếm ngược từng giây và tạm khóa tương tác gửi tiếp.
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 2: Giới Hạn Tần Suất (Rate Limit Panel)** (`data-testid="mock-demo-panel-post"`)
+- **🔘 Nút bấm & testid tương tác**: Nút *"POST Thử nghiệm"* (`data-testid="mock-demo-post-button"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Hệ thống áp dụng cơ chế phòng vệ chống spam và tấn công DDoS (Rate Limiting). Khi người dùng hoặc bot gửi request quá nhanh, API Gateway sẽ chặn lại với mã HTTP 429 và gửi kèm header `Retry-After: 300` yêu cầu đợi 300 giây.
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: Muốn kích hoạt lỗi 429 thật trên môi trường Staging, tester phải chạy script spam hàng nghìn request liên tục. Việc này tiềm ẩn nguy cơ làm sập luôn API Staging dùng chung của cả công ty và khiến IP của tester bị tường lửa khóa vĩnh viễn!
+  - 💥 **Rủi ro nếu bỏ sót**: Frontend chỉ hiện câu lỗi chung chung "Có lỗi xảy ra" mà không đọc header `Retry-After`. Người dùng không biết phải đợi bao lâu, tiếp tục bấm nút liên tục khiến máy chủ càng kéo dài thời gian phạt khóa IP.
+  - 🎯 **Mục tiêu kiểm định Playwright**: Trả về status 429 kèm header `headers: { "Retry-After": "300" }` từ Playwright. Kiểm tra Frontend: (1) Nhận diện đúng mã 429; (2) Kích hoạt đồng hồ đếm ngược thời gian thực từ 300s về 298s; (3) Tạm thời khóa nút tương tác để ngăn người dùng bấm spam tiếp.
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("06 - [RATE LIMIT 429] Mock 429 Rate Limit — UI đếm ngược 300s theo Retry-After", async ({ page }) => {
+  test("06 - [RATE LIMIT 429] Mock 429 Rate Limit — UI đếm ngược 300s theo Retry-After", async ({
+    page,
+  }) => {
     await page.route("**/api/mock-demo*", async (route) => {
       await route.fulfill({
         status: 429,
@@ -1275,23 +1342,31 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
     await expect(countdown).toContainText("298", { timeout: 5000 });
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * Playwright cấu hình `route.fulfill` với `status: 429` kèm object `headers: { "Retry-After": "300" }`.
-  * Mô phỏng chính xác hành vi của API Gateway (như Cloudflare, Kong, AWS API Gateway) khi client vượt quá hạn ngạch request.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * Mã JavaScript client đọc header qua `res.headers.get("Retry-After")` (300 giây) và kích hoạt bộ đếm thời gian thực `setInterval`.
-  * Ban đầu, assertion xác nhận hiển thị mã lỗi "429" và thời gian "300". Sau 2 giây, assertion tiếp tục xác nhận giá trị đếm ngược đã giảm về "298" trong khoảng timeout 5000ms.
+
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - Playwright cấu hình `route.fulfill` với `status: 429` kèm object `headers: { "Retry-After": "300" }`.
+  - Mô phỏng chính xác hành vi của API Gateway (như Cloudflare, Kong, AWS API Gateway) khi client vượt quá hạn ngạch request.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - Mã JavaScript client đọc header qua `res.headers.get("Retry-After")` (300 giây) và kích hoạt bộ đếm thời gian thực `setInterval`.
+  - Ban đầu, assertion xác nhận hiển thị mã lỗi "429" và thời gian "300". Sau 2 giây, assertion tiếp tục xác nhận giá trị đếm ngược đã giảm về "298" trong khoảng timeout 5000ms.
 
 ---
 
 ##### 🧪 Kịch Bản 07: [BIG DATA EDGE CASE] Mock Dữ Liệu Khủng 500 Phần Tử Trong RAM
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Kiểm thử sức chịu tải hiển thị (UI Stress Testing) khi danh sách trả về lượng dữ liệu rất lớn (500 sản phẩm).
-  * Đo lường khả năng render danh sách mượt mà kèm badge tổng số lượng mà không cần tạo 500 dòng dữ liệu rác trong cơ sở dữ liệu thật.
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 1: Danh Sách Sản Phẩm (Products Panel)** (`data-testid="mock-demo-panel-get"`)
+- **🔘 Nút bấm & testid tương tác**: Nút *"Dữ liệu lớn"* (`data-testid="mock-demo-get-big-data"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Vào các đợt flash sale hoặc đối với kho hàng tổng, API danh mục có thể trả về một danh sách cực lớn gồm 500 đến 1000 món đồ uống cùng lúc.
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: Để có 500 sản phẩm trên môi trường test thật, tester phải chạy script insert 500 dòng vào database. Việc này làm phình to DB thử nghiệm, làm chậm các luồng test khác và tốn thêm công viết code dọn rác (teardown) sau khi test xong.
+  - 💥 **Rủi ro nếu bỏ sót**: Ứng dụng Frontend bị tràn bộ nhớ (Memory Leak), giật lag khung hình khi cuộn trang (Scroll Stutter), hoặc bộ đếm badge bị lỗi tràn số, hiển thị giá trị `NaN` hoặc cắt cụt dữ liệu.
+  - 🎯 **Mục tiêu kiểm định Playwright**: Sinh tức thì 500 sản phẩm trong bộ nhớ RAM bằng JavaScript `Array.from()` (chưa đầy 10ms), đẩy qua CDP để khẳng định: UI render mượt mà không crash, badge `mock-demo-get-count` hiển thị chính xác con số "500", và sản phẩm đầu tiên hiển thị đúng tên.
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("07 - [BIG DATA EDGE CASE] Mock 500 items — UI render mượt mà kèm badge đếm", async ({ page }) => {
+  test("07 - [BIG DATA EDGE CASE] Mock 500 items — UI render mượt mà kèm badge đếm", async ({
+    page,
+  }) => {
     const BIG_DATA_PRODUCTS = {
       data: Array.from({ length: 500 }, (_, i) => ({
         id: i + 1,
@@ -1322,26 +1397,36 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
     const countBadge = page.getByTestId("mock-demo-get-count");
     await expect(countBadge).toBeVisible();
     await expect(countBadge).toContainText("500");
-    await expect(page.getByTestId("mock-demo-get-result")).toContainText("Cà phê hạt Neko mẻ số #1");
+    await expect(page.getByTestId("mock-demo-get-result")).toContainText(
+      "Cà phê hạt Neko mẻ số #1",
+    );
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * Mảng 500 phần tử được khởi tạo tức thì bằng JavaScript `Array.from()` trong bộ nhớ RAM của Playwright Test Runner.
-  * Toàn bộ 500 items được nén thành JSON string và đẩy qua CDP trong vòng chưa tới 10ms.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * Thẻ huy hiệu `mock-demo-get-count` xuất hiện (`toBeVisible()`) và hiển thị chính xác con số "500".
-  * Phần tử đầu tiên trong danh sách hiển thị đúng tên "Cà phê hạt Neko mẻ số #1".
+
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - Mảng 500 phần tử được khởi tạo tức thì bằng JavaScript `Array.from()` trong bộ nhớ RAM của Playwright Test Runner.
+  - Toàn bộ 500 items được nén thành JSON string và đẩy qua CDP trong vòng chưa tới 10ms.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - Thẻ huy hiệu `mock-demo-get-count` xuất hiện (`toBeVisible()`) và hiển thị chính xác con số "500".
+  - Phần tử đầu tiên trong danh sách hiển thị đúng tên "Cà phê hạt Neko mẻ số #1".
 
 ---
 
 ##### 🧪 Kịch Bản 08: [SECURITY XSS SAFE] Mock Payload Độc Hại `<script>` — Khẳng Định React Escape An Toàn
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Kiểm thử an ninh giao diện (Frontend Security Testing) chống lỗ hổng Cross-Site Scripting (XSS).
-  * Xác minh rằng React JSX tự động escape các ký tự nguy hiểm thành chuỗi văn bản thuần túy (Plain Text), không để trình duyệt thực thi đoạn mã độc.
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 1: Danh Sách Sản Phẩm (Products Panel)** (`data-testid="mock-demo-panel-get"`)
+- **🔘 Nút bấm & testid tương tác**: Nút *"Bảo mật XSS"* (`data-testid="mock-demo-get-xss"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Kẻ xấu cố tình đặt tên đồ uống hoặc để lại bình luận chứa chuỗi mã độc JavaScript `<script>alert('xss_attack')</script>` nhằm mục đích cướp token phiên đăng nhập hoặc đánh cắp cookie của người dùng khác khi họ xem menu.
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: Tường lửa WAF và lớp validation của Backend thật luôn chặn các ký tự `<`, `>` với mã 400 Bad Request ngay từ đầu. Tester **hoàn toàn không thể đưa được chuỗi payload độc hại này đến tầng hiển thị của Frontend** để kiểm tra cơ chế tự vệ của React!
+  - 💥 **Rủi ro nếu bỏ sót**: Nếu lập trình viên vô tình dùng các thuộc tính không an toàn như `dangerouslySetInnerHTML` trong React hoặc `v-html` trong Vue, trình duyệt sẽ lập tức thực thi đoạn mã độc của hacker — đây là lỗ hổng bảo mật nghiêm trọng cấp độ doanh nghiệp (OWASP Top 10).
+  - 🎯 **Mục tiêu kiểm định Playwright**: Vượt qua bộ lọc backend bằng cách tiêm thẳng payload chứa thẻ `<script>` vào response qua CDP. Sau đó xác nhận 2 chốt chặn an ninh: Chuỗi script được render an toàn dưới dạng văn bản vô hại (Plain Text) và **tuyệt đối không có bất kỳ popup alert nào bị kích hoạt** (`alertTriggered === false`).
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("08 - [SECURITY XSS SAFE] Mock dữ liệu XSS — chuỗi script escape an toàn thành plain text", async ({ page }) => {
+  test("08 - [SECURITY XSS SAFE] Mock dữ liệu XSS — chuỗi script escape an toàn thành plain text", async ({
+    page,
+  }) => {
     const XSS_PRODUCTS = {
       data: [
         {
@@ -1378,60 +1463,86 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
     await page.getByTestId("mock-demo-get-xss").click();
 
     await expect(page.getByTestId("mock-demo-xss-safe")).toBeVisible();
-    await expect(page.getByTestId("mock-demo-get-result")).toContainText("<script>alert('xss_attack')</script>");
+    await expect(page.getByTestId("mock-demo-get-result")).toContainText(
+      "<script>alert('xss_attack')</script>",
+    );
     expect(alertTriggered).toBe(false);
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * Bơm thẳng mã độc `<script>alert('xss_attack')</script>` vào trường dữ liệu `name`, vượt qua hoàn toàn bộ lọc backend (vì backend thật thường chặn 400 Bad Request nếu thấy script).
-  * Đăng ký sự kiện `page.on("dialog")` để lắng nghe nếu có bất kỳ hộp thoại alert nào của browser bị kích hoạt trái phép.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * Badge bảo mật `mock-demo-xss-safe` hiển thị màu xanh báo an toàn.
-  * Nội dung thẻ `<script>` được hiển thị nguyên vẹn dưới dạng văn bản vô hại trong DOM.
-  * Khẳng định tuyệt đối: `alertTriggered === false` (không có popup alert nào bị kích hoạt).
+
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - Bơm thẳng mã độc `<script>alert('xss_attack')</script>` vào trường dữ liệu `name`, vượt qua hoàn toàn bộ lọc backend (vì backend thật thường chặn 400 Bad Request nếu thấy script).
+  - Đăng ký sự kiện `page.on("dialog")` để lắng nghe nếu có bất kỳ hộp thoại alert nào của browser bị kích hoạt trái phép.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - Badge bảo mật `mock-demo-xss-safe` hiển thị màu xanh báo an toàn.
+  - Nội dung thẻ `<script>` được hiển thị nguyên vẹn dưới dạng văn bản vô hại trong DOM.
+  - Khẳng định tuyệt đối: `alertTriggered === false` (không có popup alert nào bị kích hoạt).
 
 ---
 
 ##### 🧪 Kịch Bản 09: [PERF OPTIMIZATION] `route.abort()` — Chặn Ảnh Nặng & Google Analytics Tăng Tốc 300%
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Tối ưu hóa tốc độ thực thi của bộ test trên hạ tầng CI/CD bằng cách hủy nạp toàn bộ ảnh dung lượng lớn và script phân tích của bên thứ ba.
-  * Bảo vệ dữ liệu thống kê của doanh nghiệp (Google Analytics / Facebook Pixel) không bị ô nhiễm bởi lượt truy cập ảo từ automation bot.
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 3: Chặn Tài Nguyên Nặng & Script Rác (Media & Tracking)**
+- **🔘 Nút bấm & testid tương tác**: Nút *"Nạp Media"* (`data-testid="mock-demo-media-load"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Mỗi trang web thực tế đều tải rất nhiều ảnh độ phân giải cao (ảnh đồ uống 4K nặng 5MB) kèm các script phân tích của bên thứ ba như Google Analytics, Meta Pixel, TikTok Tracker.
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: Trình duyệt luôn tự động nạp mọi tài nguyên. Việc này khiến bộ kịch bản test tự động trên CI/CD bị chậm gấp 3-4 lần, tốn băng thông máy chủ, và nguy hiểm nhất là **làm ô nhiễm số liệu marketing của công ty** vì hàng ngàn lượt truy cập ảo từ bot kiểm thử sẽ gửi event bẩn vào Google Analytics!
+  - 💥 **Rủi ro nếu bỏ sót**: Chi phí hóa đơn CI/CD tăng vọt, các kịch bản test thường xuyên bị fail oan do timeout tải ảnh mạng chậm, và phòng ban Marketing sẽ nhận các báo cáo dữ liệu sai lệch.
+  - 🎯 **Mục tiêu kiểm định Playwright**: Dùng `route.abort("blockedbyclient")` chặn đứng toàn bộ file `.png` và domain `google-analytics.com` ngay tại card mạng của Chromium. Khẳng định ảnh bị chặn sẽ hiển thị khung fallback nhẹ nhàng và tăng tốc độ chạy test lên hơn 300%.
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("09 - [PERF OPTIMIZATION] route.abort() — Chặn ảnh nặng và script Google Analytics", async ({ page }) => {
+  test("09 - [PERF OPTIMIZATION] route.abort() — Chặn ảnh nặng và script Google Analytics", async ({
+    page,
+  }) => {
     await page.route("**/*.png*", (route) => route.abort("blockedbyclient"));
-    await page.route("**/google-analytics.com/**", (route) => route.abort("blockedbyclient"));
+    await page.route("**/google-analytics.com/**", (route) =>
+      route.abort("blockedbyclient"),
+    );
 
     await page.goto(LAB_URL);
     await page.getByTestId("mock-demo-media-load").click();
 
     // Fallback ảnh hiện ra
-    await expect(page.getByTestId("mock-demo-heavy-image-fallback")).toBeVisible();
-    await expect(page.getByTestId("mock-demo-heavy-image-fallback")).toContainText("route.abort()");
+    await expect(
+      page.getByTestId("mock-demo-heavy-image-fallback"),
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("mock-demo-heavy-image-fallback"),
+    ).toContainText("route.abort()");
 
     // Google Analytics bị chặn an toàn
     await expect(page.getByTestId("mock-demo-tracking-blocked")).toBeVisible();
-    await expect(page.getByTestId("mock-demo-tracking-blocked")).toContainText("Google Analytics: Đã bị chặn an toàn");
+    await expect(page.getByTestId("mock-demo-tracking-blocked")).toContainText(
+      "Google Analytics: Đã bị chặn an toàn",
+    );
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * Sử dụng wildcard `**/*.png*` và `**/google-analytics.com/**` kết hợp phương thức `route.abort("blockedbyclient")`.
-  * Trình duyệt Chromium nhận chỉ thị hủy request ngay tại Network Agent trước khi phát tín hiệu ra card mạng.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * Phần tử ảnh kích hoạt sự kiện `onError` và hiển thị khối Fallback nhẹ `mock-demo-heavy-image-fallback`.
-  * Khối thông báo chặn script theo dõi `mock-demo-tracking-blocked` xác nhận Google Analytics đã được triệt tiêu an toàn.
+
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - Sử dụng wildcard `**/*.png*` và `**/google-analytics.com/**` kết hợp phương thức `route.abort("blockedbyclient")`.
+  - Trình duyệt Chromium nhận chỉ thị hủy request ngay tại Network Agent trước khi phát tín hiệu ra card mạng.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - Phần tử ảnh kích hoạt sự kiện `onError` và hiển thị khối Fallback nhẹ `mock-demo-heavy-image-fallback`.
+  - Khối thông báo chặn script theo dõi `mock-demo-tracking-blocked` xác nhận Google Analytics đã được triệt tiêu an toàn.
 
 ---
 
 ##### 🧪 Kịch Bản 10: [RESPONSE TAMPERING] `route.fetch()` — Bắt Gói Tin Thật & Tráo Đổi Thành Hội Viên VIP GOLD 50%
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Kiểm thử giao diện đặc quyền cao cấp (Hội viên VIP Gold, chiết khấu 50%) mà không cần can thiệp quyền hạn trong cơ sở dữ liệu thật của hệ thống.
-  * Giữ nguyên 95% cấu trúc trường thực tế từ backend thật, chỉ can thiệp tráo đổi các cờ logic quan trọng.
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 4: Hồ Sơ Khách Hàng VIP (Profile VIP - Response Tampering)**
+- **🔘 Nút bấm & testid tương tác**: Nút *"Kiểm tra User"* (`data-testid="mock-demo-profile-check"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Hệ thống phân cấp hội viên với quyền lợi đặc biệt (Thẻ VIP GOLD được chiết khấu 50%). Bạn cần kiểm tra giao diện người dùng hiển thị thẻ thành viên VIP và mức giảm giá có đúng quy chuẩn hay không.
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: Tài khoản kiểm thử thông thường chỉ là tài khoản `Customer` cấp thường (0% giảm giá). Muốn có thẻ VIP trên DB thật, tester phải liên hệ DBA xin cấp quyền hoặc phải tự nạp hàng chục triệu tiền ảo để cày level tài khoản — vừa mất thời gian vừa dễ bị mất quyền khi reset cơ sở dữ liệu.
+  - 💥 **Rủi ro nếu bỏ sót**: Logic áp dụng ưu đãi VIP bị tính sai (ví dụ hiển thị thẻ VIP nhưng giỏ hàng tính nguyên giá, hoặc vỡ màu nền vàng ánh kim của thẻ hội viên).
+  - 🎯 **Mục tiêu kiểm định Playwright**: Áp dụng kỹ thuật **Response Tampering** đỉnh cao: Cho phép request bay ra server thật bằng `route.fetch()`, nhưng Playwright đứng ở giữa tráo đổi cờ `is_vip: true`, `role: "VIP GOLD"`, `discount_percent: 50`. Chứng minh giao diện biến hình thành Thẻ Hoàng Kim giảm 50% rực rỡ mà cơ sở dữ liệu gốc không bị can thiệp.
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("10 - [RESPONSE TAMPERING] route.fetch() — Tráo đổi thuộc tính biến Customer thành VIP Gold", async ({ page }) => {
+  test("10 - [RESPONSE TAMPERING] route.fetch() — Tráo đổi thuộc tính biến Customer thành VIP Gold", async ({
+    page,
+  }) => {
     await page.route("**/api/users/profile*", async (route) => {
       let json: Record<string, unknown>;
       try {
@@ -1469,24 +1580,32 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
     await expect(vipCard).toContainText("GIẢM 50%");
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * `route.fetch()`: Playwright tạm đóng vai một HTTP client độc lập, chuyển tiếp request ra backend thật và thu về response thật.
-  * Parse body thành JSON object, biến đổi các thuộc tính: `is_vip = true`, `role = "VIP GOLD"`, `discount_percent = 50`.
-  * Sau đó chuyển giao JSON đã sửa đổi vào `route.fulfill()` để đưa về cho trình duyệt.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * UI phát hiện `is_vip === true` và chuyển đổi sang Thẻ Hoàng Kim `mock-demo-profile-vip-card`.
-  * Khẳng định text hiển thị danh hiệu "HỘI VIÊN KIM CƯƠNG VIP GOLD" và quyền lợi "GIẢM 50%".
+
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - `route.fetch()`: Playwright tạm đóng vai một HTTP client độc lập, chuyển tiếp request ra backend thật và thu về response thật.
+  - Parse body thành JSON object, biến đổi các thuộc tính: `is_vip = true`, `role = "VIP GOLD"`, `discount_percent = 50`.
+  - Sau đó chuyển giao JSON đã sửa đổi vào `route.fulfill()` để đưa về cho trình duyệt.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - UI phát hiện `is_vip === true` và chuyển đổi sang Thẻ Hoàng Kim `mock-demo-profile-vip-card`.
+  - Khẳng định text hiển thị danh hiệu "HỘI VIÊN KIM CƯƠNG VIP GOLD" và quyền lợi "GIẢM 50%".
 
 ---
 
 ##### 🧪 Kịch Bản 11: [HEADER INJECTION] `route.continue()` — Tiêm Header `X-Feature-Flag` Kích Hoạt Banner Thử Nghiệm
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Kiểm thử tính năng thử nghiệm A/B Testing hoặc Dark Launch được điều khiển qua HTTP Header mà không phải cấu hình server hay sửa code frontend.
-  * Đảm bảo header được chuyển tiếp an toàn tới máy chủ phản hồi.
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 5: Tiêm Header & Feature Flag Động (Custom Header Injection)**
+- **🔘 Nút bấm & testid tương tác**: Nút *"Gửi Header"* (`data-testid="mock-demo-feature-trigger"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Đội ngũ kỹ thuật phát hành tính năng mới theo cơ chế Dark Launch hoặc A/B Testing. Tính năng giao diện mới (ví dụ Theme Tím Neon `experimental-dark-v2`) chỉ được bật lên nếu HTTP request từ người dùng gửi kèm một Header đặc biệt `X-Feature-Flag`.
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: Trình duyệt web thông thường của người dùng không cho phép tester tự gõ thêm Custom Header vào các request `fetch()` nội bộ của trang web mà không cần cài extension can thiệp của bên thứ ba.
+  - 💥 **Rủi ro nếu bỏ sót**: Tính năng thử nghiệm bị lộ ra ngoài cho toàn bộ khách hàng đại trà trước ngày ra mắt, hoặc ngược lại, người dùng thuộc nhóm thử nghiệm lại không nhận được tính năng do Frontend lọc sai header.
+  - 🎯 **Mục tiêu kiểm định Playwright**: Sử dụng `route.continue({ headers })` (hoặc `route.fetch({ headers })`) để tiêm thêm header `"X-Feature-Flag": "experimental-dark-v2"` vào gói tin đang bay đi. Xác nhận giao diện nhận diện đúng cờ và kích hoạt dải băng thử nghiệm màu tím nổi bật `mock-demo-feature-banner`.
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("11 - [HEADER INJECTION] route.continue() — Tiêm Custom Header X-Feature-Flag vào request", async ({ page }) => {
+  test("11 - [HEADER INJECTION] route.continue() — Tiêm Custom Header X-Feature-Flag vào request", async ({
+    page,
+  }) => {
     await page.route("**/public/test/echo*", async (route) => {
       const headers = {
         ...route.request().headers(),
@@ -1523,24 +1642,32 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
     await expect(banner).toContainText("experimental-dark-v2");
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * Đọc toàn bộ danh sách headers hiện có của request từ trình duyệt bằng `route.request().headers()`.
-  * Trộn thêm các trường header tùy chỉnh: `"X-Feature-Flag": "experimental-dark-v2"` và `"X-Client-Channel": "playwright-automated-runner"`.
-  * Sử dụng `route.fetch({ headers })` để gửi đi kèm header mới và trả về dữ liệu phản hồi cho trình duyệt.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * Phía client nhận kết quả chứa header thử nghiệm, kích hoạt dải băng màu tím nổi bật `mock-demo-feature-banner`.
-  * Assertion kiểm tra banner xuất hiện và chứa đúng định danh flag `"experimental-dark-v2"`.
+
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - Đọc toàn bộ danh sách headers hiện có của request từ trình duyệt bằng `route.request().headers()`.
+  - Trộn thêm các trường header tùy chỉnh: `"X-Feature-Flag": "experimental-dark-v2"` và `"X-Client-Channel": "playwright-automated-runner"`.
+  - Sử dụng `route.fetch({ headers })` để gửi đi kèm header mới và trả về dữ liệu phản hồi cho trình duyệt.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - Phía client nhận kết quả chứa header thử nghiệm, kích hoạt dải băng màu tím nổi bật `mock-demo-feature-banner`.
+  - Assertion kiểm tra banner xuất hiện và chứa đúng định danh flag `"experimental-dark-v2"`.
 
 ---
 
 ##### 🧪 Kịch Bản 12: [SHIFT-LEFT CONTRACT MOCK] Mock Hợp Đồng API AI Sommelier Trước Khi Backend Triển Khai
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Áp dụng nguyên lý Shift-Left Testing: Hoàn thành 100% giao diện và kịch bản test tự động E2E ngay trong tuần đầu của Sprint dựa trên bản hợp đồng JSON Schema Contract đã thỏa thuận, mà không phải chờ Backend code xong API.
-  * Endpoint `/api/v2/ai/drink-recommendation` trên backend thật vẫn chưa tồn tại (gọi thật sẽ bị 404).
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 6: Đề Xuất Đồ Uống AI Sommelier (Shift-Left Contract Mocking)**
+- **🔘 Nút bấm & testid tương tác**: Nút *"Gợi ý AI"* (`data-testid="mock-demo-ai-trigger"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Đội ngũ phát triển tính năng "AI Sommelier - Gợi ý đồ uống cá nhân hóa theo tâm trạng". Hai bên Frontend và Backend đã họp và chốt xong bản hợp đồng dữ liệu (JSON Schema Contract). Tuy nhiên Backend ước tính phải mất 2 tuần nữa mới xây dựng xong API và máy chủ AI!
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: Nếu làm theo lối mòn truyền thống (Waterfall), Frontend và Tester sẽ phải ngồi chờ Backend code xong. Nếu cố tình bấm nút trên web vào lúc này, máy chủ thật sẽ ném ra lỗi `HTTP 404 Not Found` vì endpoint chưa hề tồn tại!
+  - 💥 **Rủi ro nếu bỏ sót**: Dồn toàn bộ việc tích hợp và kiểm thử vào những ngày cuối cùng của Sprint. Khi Backend deploy trễ, Tester không kịp kiểm thử, dẫn đến việc trễ hạn release (Delayed Delivery) hoặc phát sinh lỗi nghiêm trọng trên Production.
+  - 🎯 **Mục tiêu kiểm định Playwright**: Áp dụng triết lý **Shift-Left Testing (Kiểm thử dịch chuyển về phía trước)**: Playwright đón đầu endpoint tương lai tại tầng CDP và trả về đúng JSON Contract đã cam kết. Toàn bộ UI, animation và test automation E2E được hoàn thành ngay tuần đầu tiên; sang tuần thứ hai khi Backend deploy xong, hệ thống chỉ việc tắt mock là tích hợp trơn tru 100%!
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("12 - [SHIFT-LEFT CONTRACT MOCK] Mock API AI chưa tồn tại trên Backend", async ({ page }) => {
+  test("12 - [SHIFT-LEFT CONTRACT MOCK] Mock API AI chưa tồn tại trên Backend", async ({
+    page,
+  }) => {
     const CONTRACT_AI_PAYLOAD = {
       drink_name: "Cà Phê Muối Neko Signature",
       mood: "Sáng tạo & Tập trung cao độ",
@@ -1566,25 +1693,32 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
     await expect(aiCard).toContainText("Tăng cường dopamine");
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * Đón đầu endpoint tương lai `**/api/v2/ai/drink-recommendation*` bằng `page.route()`.
-  * Trả về đúng 100% cấu trúc payload theo hợp đồng: `drink_name`, `mood`, `match_score`, `ai_quote`.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * Giao diện nhận diện payload và mở thẻ khuyến nghị thông minh `mock-demo-ai-card`.
-  * Xác nhận hiển thị chính xác tên đồ uống "Cà Phê Muối Neko Signature", điểm tương thích "98%", và thông điệp truyền cảm hứng "Tăng cường dopamine".
-  * Đến tuần tiếp theo khi Backend deploy code xong, chỉ cần gỡ bỏ mock là bài test chạy thông suốt với API thật!
+
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - Đón đầu endpoint tương lai `**/api/v2/ai/drink-recommendation*` bằng `page.route()`.
+  - Trả về đúng 100% cấu trúc payload theo hợp đồng: `drink_name`, `mood`, `match_score`, `ai_quote`.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - Giao diện nhận diện payload và mở thẻ khuyến nghị thông minh `mock-demo-ai-card`.
+  - Xác nhận hiển thị chính xác tên đồ uống "Cà Phê Muối Neko Signature", điểm tương thích "98%", và thông điệp truyền cảm hứng "Tăng cường dopamine".
+  - Đến tuần tiếp theo khi Backend deploy code xong, chỉ cần gỡ bỏ mock là bài test chạy thông suốt với API thật!
 
 ---
 
 ##### 🧪 Kịch Bản 13: [WALLET TAMPERING 1B] `route.fetch()` — Tráo Đổi Số Dư 50k Thành 1 TỶ ĐỒNG Platinum
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Hiện thực hóa kỹ thuật đỉnh cao của Phần 4: Lấy dữ liệu thật từ endpoint `/public/test/sample-data` (số dư gốc 50.000 đ).
-  * Playwright can thiệp tráo đổi số dư thành 999.999.999 đ (1 Tỷ đồng) và nâng cấp danh hiệu khách hàng thành "VIP Platinum Diamond 2026".
-  * Giao diện UI biến hình chiếc thẻ ATM thông thường thành Thẻ Hoàng Gia Holographic bừng sáng, chứng minh sức mạnh của Response Tampering mà cơ sở dữ liệu gốc không bị can thiệp.
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 7: Ví Điện Tử Neko Pay (Wallet Response Tampering)**
+- **🔘 Nút bấm & testid tương tác**: Nút *"Kiểm tra số dư"* (`data-testid="mock-demo-wallet-check"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Tính năng Ví Điện Tử Neko Pay hiển thị số dư và phân hạng thẻ ngân hàng của khách hàng. Khi số dư vượt ngưỡng 100 triệu đồng, giao diện tài chính phải tự động kích hoạt Thẻ VIP Platinum Diamond Holographic phát sáng với chip mạ vàng.
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: Tài khoản thử nghiệm của Tester chỉ có số dư mẫu 50.000 ₫. Tester không có thẩm quyền và tuyệt đối không được phép tự ý sửa số dư tài khoản lên 1 Tỷ trong hệ thống tài chính/ngân hàng thật của doanh nghiệp.
+  - 💥 **Rủi ro nếu bỏ sót**: Giao diện bị vỡ bố cục khi số tiền quá dài (tràn khung số dư, mất dấu chấm phân cách hàng nghìn `999.999.999 ₫`), hoặc logic phân loại cấp bậc thẻ hội viên theo hạn mức tiền bị tính toán sai lệch.
+  - 🎯 **Mục tiêu kiểm định Playwright**: Kết hợp `route.fetch()` thu về cấu trúc ngân hàng thật (`currency`, `account_no`), sau đó tráo đổi giá trị trường `balance: 999999999` trên RAM. Chứng minh giao diện tức khắc biến hình thành Thẻ Hoàng Gia lấp lánh với đầy đủ huy hiệu "VIP PLATINUM DIAMOND" mà không làm thay đổi 1 xu nào trong database.
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("13 - [WALLET TAMPERING 1B] route.fetch() — Tráo đổi số dư 50k thành 1 TỶ ĐỒNG Platinum", async ({ page }) => {
+  test("13 - [WALLET TAMPERING 1B] route.fetch() — Tráo đổi số dư 50k thành 1 TỶ ĐỒNG Platinum", async ({
+    page,
+  }) => {
     await page.route("**/public/test/sample-data*", async (route) => {
       let json: Record<string, any>;
       try {
@@ -1620,28 +1754,39 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
 
     const vipWalletCard = page.getByTestId("mock-demo-wallet-card-vip");
     await expect(vipWalletCard).toBeVisible();
-    await expect(page.getByTestId("mock-demo-wallet-balance")).toContainText("999.999.999");
-    await expect(page.getByTestId("mock-demo-wallet-badge")).toContainText("VIP PLATINUM DIAMOND");
+    await expect(page.getByTestId("mock-demo-wallet-balance")).toContainText(
+      "999.999.999",
+    );
+    await expect(page.getByTestId("mock-demo-wallet-badge")).toContainText(
+      "VIP PLATINUM DIAMOND",
+    );
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * `route.fetch()` chuyển tiếp request ra server thật để nhận response cấu trúc chuẩn có đủ các trường ngân hàng (`currency`, `account_no`).
-  * Tráo đổi `balance = 999999999` trên RAM và trả về bằng `route.fulfill()`.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * UI nhận `balance > 100.000.000` lập tức render Thẻ VIP Hoàng Gia `mock-demo-wallet-card-vip`.
-  * Assert số dư hiển thị `999.999.999 ₫` và huy hiệu `VIP PLATINUM DIAMOND 2026`.
+
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - `route.fetch()` chuyển tiếp request ra server thật để nhận response cấu trúc chuẩn có đủ các trường ngân hàng (`currency`, `account_no`).
+  - Tráo đổi `balance = 999999999` trên RAM và trả về bằng `route.fulfill()`.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - UI nhận `balance > 100.000.000` lập tức render Thẻ VIP Hoàng Gia `mock-demo-wallet-card-vip`.
+  - Assert số dư hiển thị `999.999.999 ₫` và huy hiệu `VIP PLATINUM DIAMOND 2026`.
 
 ---
 
 ##### 🧪 Kịch Bản 14: [LATENCY PING METER] Latency Injection — Bơm Trễ 1000ms Vào API Ping & Thanh Progress Bar
 
-* **🎯 Mục tiêu nghiệp vụ**:
-  * Kiểm thử kỹ thuật bơm độ trễ mạng nhân tạo của Phần 4 trên endpoint `/public/test/ping`.
-  * Đảm bảo giao diện hiển thị đồng hồ đo độ trễ nhảy lên >= 950ms, chuyển sang trạng thái cảnh báo mạng nghẽn màu cam rực và kích hoạt thanh Progress Bar chạy mượt mà.
-  * Xác minh cơ chế tự động khóa nút (disabled) để chống click đúp (Double Submission).
-* **💻 Mã nguồn TypeScript thực tế**:
+- **📍 Vị trí trên Showroom UI**: **Panel 8: Trạm Đo Độ Trễ Mạng & Thanh Tiến Trình (Ping Latency Meter)**
+- **🔘 Nút bấm & testid tương tác**: Nút *"Đo tốc độ"* (`data-testid="mock-demo-ping-trigger"`)
+- **🎯 Mục tiêu nghiệp vụ & Bối cảnh thực chiến (Học viên cần nắm vững)**:
+  - 🌍 **Bối cảnh thực tế**: Trong các giao dịch thanh toán hoặc đặt món trực tuyến, khi mạng Internet bị trễ, nút bấm phải kích hoạt thanh tiến trình (Progress Bar) và phải lập tức chuyển sang trạng thái vô hiệu hóa (`disabled`) để ngăn khách hàng bấm liên tục nhiều lần (Double Submission).
+  - 🚧 **Vì sao không thể test thường (Pain Point)**: API Ping trên máy chủ thật phản hồi quá nhanh (< 50ms). Mọi thao tác kết thúc chớp nhoáng khiến tester không thể quan sát được thanh tiến trình chạy và không thể kịp bấm thử để kiểm tra nút có thật sự bị khóa hay không.
+  - 💥 **Rủi ro nếu bỏ sót**: Khách hàng thấy màn hình chưa phản hồi liền sốt ruột bấm nút "Thanh toán" 3-4 lần liên tiếp, dẫn đến việc tài khoản ngân hàng bị trừ tiền nhiều lần cho cùng một đơn hàng — sự cố nghiêm trọng gây thiệt hại tài chính và uy tín thương hiệu!
+  - 🎯 **Mục tiêu kiểm định Playwright**: Chủ động bơm trễ đúng 1000ms vào request bằng `setTimeout(1000)` từ Playwright. Kiểm tra toàn diện 3 tiêu chí sống còn: (1) Kim đo độ trễ nhảy vào vùng cảnh báo đỏ (>= 950ms); (2) Thanh Progress Bar xung điện chạy đều đặn mượt mà; (3) Nút bấm bị khóa vô hiệu hóa (`disabled`) ngăn chặn hoàn toàn nguy cơ click đúp.
+- **💻 Mã nguồn TypeScript thực tế**:
+
   ```typescript
-  test("14 - [LATENCY PING METER] Latency Injection — Bơm trễ 1000ms, đồng hồ đo cảnh báo độ trễ cao", async ({ page }) => {
+  test("14 - [LATENCY PING METER] Latency Injection — Bơm trễ 1000ms, đồng hồ đo cảnh báo độ trễ cao", async ({
+    page,
+  }) => {
     await page.route("**/public/test/ping*", async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       await route.fulfill({
@@ -1657,14 +1802,16 @@ Dưới đây là mã nguồn TypeScript thực tế trích xuất trực tiếp
 
     const statusBadge = page.getByTestId("mock-demo-ping-status");
     await expect(statusBadge).toBeVisible();
-    await expect(statusBadge).toContainText("Cảnh báo: Mạng bị tiêm độ trễ cao");
+    await expect(statusBadge).toContainText(
+      "Cảnh báo: Mạng bị tiêm độ trễ cao",
+    );
   });
   ```
-* **⚙️ Giải phẫu kỹ thuật CDP Interception**:
-  * `await new Promise(resolve => setTimeout(resolve, 1000))` giữ kết nối treo đúng 1 giây trước khi trả về HTTP 200.
-* **🖥️ Phản hồi giao diện & Assertions**:
-  * UI đo đạc `duration >= 800ms`, kích hoạt huy hiệu cảnh báo `mock-demo-ping-status` chứa chuỗi "Cảnh báo: Mạng bị tiêm độ trễ cao".
 
+- **⚙️ Giải phẫu kỹ thuật CDP Interception**:
+  - `await new Promise(resolve => setTimeout(resolve, 1000))` giữ kết nối treo đúng 1 giây trước khi trả về HTTP 200.
+- **🖥️ Phản hồi giao diện & Assertions**:
+  - UI đo đạc `duration >= 800ms`, kích hoạt huy hiệu cảnh báo `mock-demo-ping-status` chứa chuỗi "Cảnh báo: Mạng bị tiêm độ trễ cao".
 
 ---
 
@@ -1695,6 +1842,7 @@ Running 14 tests using 1 worker
 
   14 passed (16.8s)
 ```
+
 ---
 
 # 🛠️ PHẦN 3: CÁCH THỰC HIỆN VỚI `page.route()` & GIẢI PHẪU OBJECT `fulfill`
@@ -1710,8 +1858,8 @@ await page.route("**/api/products", async (route) => {
 ```
 
 - **Quy tắc dùng Wildcard `**`**:  
-  Đường dẫn API có thể thay đổi domain giữa các môi trường:  
-  `https://dev.autoneko.com/api/products` ➔ `https://staging.autoneko.com/api/products` ➔ `https://api-neko-coffee.autoneko.com/api/products`.  
+Đường dẫn API có thể thay đổi domain giữa các môi trường:  
+`https://dev.autoneko.com/api/products` ➔ `https://staging.autoneko.com/api/products` ➔ `https://api-neko-coffee.autoneko.com/api/products`.  
   Việc sử dụng cú pháp `**/api/products*` đảm bảo Playwright sẽ chặn chính xác endpoint này trên **mọi domain và mọi môi trường**!
 
 ---
@@ -1916,13 +2064,13 @@ Intercepted Request URL: https://api-neko-coffee.autoneko.com/api/products?page=
 # ⚡ PHẦN 4: KỸ THUẬT CAN THIỆP NÂNG CAO & BỘ TEST KIT NEKO COFFEE
 
 > 🌟 **KẾT NỐI TRỰC TIẾP VỚI SHOWROOM GIAO DIỆN (INTERACTIVE LAB UI)**:
-> 
+>
 > Toàn bộ các kỹ thuật can thiệp mạng nâng cao dưới đây (chặn ảnh, tiêm header, tráo số dư 1 Tỷ, và tiêm trễ Ping) **ĐÃ ĐƯỢC HIỆN THỰC HÓA THÀNH CÁC PANEL GIAO DIỆN TƯƠNG TÁC ĐẲNG CẤP TRÊN WEB**:
-> 
-> * 🔗 **Trang Showroom Trực Tiếp**: **`https://coffee.autoneko.com/vi/lab/route-mock`**
-> * 💳 **Panel 7**: Ví Điện Tử Neko Pay — Bắt Response Thật & Sửa Đổi Số Dư Thành **1 TỶ ĐỒNG PLATINUM VIP** (`GET /public/test/sample-data`).
-> * ⏱️ **Panel 8**: Đồng Hồ Đo Tốc Độ Mạng (Ping Latency Meter) & Thanh Tiến Trình Progress Bar (`GET /public/test/ping`).
-> 
+>
+> - 🔗 **Trang Showroom Trực Tiếp**: **`https://coffee.autoneko.com/vi/lab/route-mock`**
+> - 💳 **Panel 7**: Ví Điện Tử Neko Pay — Bắt Response Thật & Sửa Đổi Số Dư Thành **1 TỶ ĐỒNG PLATINUM VIP** (`GET /public/test/sample-data`).
+> - ⏱️ **Panel 8**: Đồng Hồ Đo Tốc Độ Mạng (Ping Latency Meter) & Thanh Tiến Trình Progress Bar (`GET /public/test/ping`).
+>
 > Tại Phần 4 này, bạn sẽ được học cả 2 tầng: **Tầng Giao Thức (Protocol-Level qua `page.evaluate`)** và **Tầng Giao Diện Người Dùng (UI E2E Level trên Showroom)**!
 
 ---
@@ -2037,20 +2185,26 @@ test("01 - [ROUTE ABORT] Chặn triệt để các tệp ảnh và tracking scri
 ```
 
 ##### 📋 Bảng Tra Cứu Locator & TestID Panel 3:
-| Tên Thành Phần | `data-testid` | Vai Trò & Hành Vi Kiểm Thử |
-| :--- | :--- | :--- |
-| **Khung Panel 3** | `mock-demo-panel-abort-media` | Container bao quanh tính năng chặn tài nguyên rác. |
-| **Nút Kích Hoạt** | `mock-demo-media-load` | Bấm để kích hoạt tải ảnh và gửi beacon Google Analytics. |
-| **Vùng Kết Quả** | `mock-demo-media-result` | Hiển thị kết quả tải ảnh hoặc fallback chặn. |
-| **Fallback Ảnh Bị Chặn** | `mock-demo-heavy-image-fallback` | Khung thông báo màu đỏ cam xác nhận ảnh nặng đã bị chặn. |
-| **Badge Chặn Analytics** | `mock-demo-tracking-blocked` | Huy hiệu xác nhận tracker Google Analytics đã bị triệt tiêu. |
+
+| Tên Thành Phần           | `data-testid`                    | Vai Trò & Hành Vi Kiểm Thử                                   |
+| :----------------------- | :------------------------------- | :----------------------------------------------------------- |
+| **Khung Panel 3**        | `mock-demo-panel-abort-media`    | Container bao quanh tính năng chặn tài nguyên rác.           |
+| **Nút Kích Hoạt**        | `mock-demo-media-load`           | Bấm để kích hoạt tải ảnh và gửi beacon Google Analytics.     |
+| **Vùng Kết Quả**         | `mock-demo-media-result`         | Hiển thị kết quả tải ảnh hoặc fallback chặn.                 |
+| **Fallback Ảnh Bị Chặn** | `mock-demo-heavy-image-fallback` | Khung thông báo màu đỏ cam xác nhận ảnh nặng đã bị chặn.     |
+| **Badge Chặn Analytics** | `mock-demo-tracking-blocked`     | Huy hiệu xác nhận tracker Google Analytics đã bị triệt tiêu. |
 
 ##### 💻 Mã Nguồn Playwright Test UI E2E (Trích từ Kịch Bản 09):
+
 ```typescript
-test("09 - [PERF OPTIMIZATION] route.abort() — Chặn ảnh nặng và script Google Analytics", async ({ page }) => {
+test("09 - [PERF OPTIMIZATION] route.abort() — Chặn ảnh nặng và script Google Analytics", async ({
+  page,
+}) => {
   // 1. Chặn toàn bộ ảnh nặng .png và request analytics
   await page.route("**/*.png*", (route) => route.abort("blockedbyclient"));
-  await page.route("**/google-analytics.com/**", (route) => route.abort("blockedbyclient"));
+  await page.route("**/google-analytics.com/**", (route) =>
+    route.abort("blockedbyclient"),
+  );
 
   // 2. Mở giao diện thật và click nút tải media
   await page.goto("https://coffee.autoneko.com/vi/lab/route-mock");
@@ -2162,17 +2316,21 @@ test("02 - [MODIFY REQUEST] Tiêm Custom Header và Client Metadata qua route.co
 ```
 
 ##### 📋 Bảng Tra Cứu Locator & TestID Panel 5:
-| Tên Thành Phần | `data-testid` | Vai Trò & Hành Vi Kiểm Thử |
-| :--- | :--- | :--- |
-| **Khung Panel 5** | `mock-demo-panel-headers` | Container bao quanh kiểm thử tiêm Header / Feature Flag. |
-| **Nút Gửi Request** | `mock-demo-feature-trigger` | Bấm để kích hoạt gọi API `POST /public/test/echo`. |
-| **Vùng Kết Quả** | `mock-demo-feature-result` | Hiển thị Banner thử nghiệm hoặc thông báo bản chuẩn. |
-| **Banner Thử Nghiệm Tím** | `mock-demo-feature-banner` | Banner màu tím neon hiển thị khi có header `X-Feature-Flag`. |
-| **Dòng Trạng Thái Thường** | `mock-demo-feature-normal` | Hiển thị khi không có cờ thử nghiệm (click chay bằng tay). |
+
+| Tên Thành Phần             | `data-testid`               | Vai Trò & Hành Vi Kiểm Thử                                   |
+| :------------------------- | :-------------------------- | :----------------------------------------------------------- |
+| **Khung Panel 5**          | `mock-demo-panel-headers`   | Container bao quanh kiểm thử tiêm Header / Feature Flag.     |
+| **Nút Gửi Request**        | `mock-demo-feature-trigger` | Bấm để kích hoạt gọi API `POST /public/test/echo`.           |
+| **Vùng Kết Quả**           | `mock-demo-feature-result`  | Hiển thị Banner thử nghiệm hoặc thông báo bản chuẩn.         |
+| **Banner Thử Nghiệm Tím**  | `mock-demo-feature-banner`  | Banner màu tím neon hiển thị khi có header `X-Feature-Flag`. |
+| **Dòng Trạng Thái Thường** | `mock-demo-feature-normal`  | Hiển thị khi không có cờ thử nghiệm (click chay bằng tay).   |
 
 ##### 💻 Mã Nguồn Playwright Test UI E2E (Trích từ Kịch Bản 11):
+
 ```typescript
-test("11 - [HEADER INJECTION] route.continue() — Tiêm Custom Header X-Feature-Flag vào request", async ({ page }) => {
+test("11 - [HEADER INJECTION] route.continue() — Tiêm Custom Header X-Feature-Flag vào request", async ({
+  page,
+}) => {
   // 1. Tiêm Header X-Feature-Flag vào request đang bay đi
   await page.route("**/public/test/echo*", async (route) => {
     const headers = {
@@ -2306,19 +2464,23 @@ test("03 - [MODIFY RESPONSE] Bắt Response thật từ Backend, sửa đổi gi
 ```
 
 ##### 📋 Bảng Tra Cứu Locator & TestID Panel 7:
-| Tên Thành Phần | `data-testid` | Vai Trò & Hành Vi Kiểm Thử |
-| :--- | :--- | :--- |
-| **Khung Panel 7** | `mock-demo-panel-wallet` | Container bao quanh tính năng ví điện tử Neko Pay. |
-| **Nút Kiểm Tra Ví** | `mock-demo-wallet-check` | Bấm để gọi `GET /public/test/sample-data`. |
-| **Vùng Kết Quả Ví** | `mock-demo-wallet-result` | Vùng hiển thị thẻ ngân hàng tương ứng với số dư. |
-| **Thẻ VIP Hoàng Gia** | `mock-demo-wallet-card-vip` | Thẻ Holographic phát sáng gradient chỉ hiện khi số dư > 100 triệu. |
-| **Thẻ Tiêu Chuẩn** | `mock-demo-wallet-card-standard` | Thẻ màu xám tro tiêu chuẩn khi số dư bình thường (50.000 ₫). |
-| **Số Dư Tài Khoản** | `mock-demo-wallet-balance` | Đoạn text hiển thị định dạng tiền tệ `999.999.999 ₫`. |
-| **Huy Hiệu VIP** | `mock-demo-wallet-badge` | Huy hiệu `VIP PLATINUM DIAMOND` trên thẻ. |
+
+| Tên Thành Phần        | `data-testid`                    | Vai Trò & Hành Vi Kiểm Thử                                         |
+| :-------------------- | :------------------------------- | :----------------------------------------------------------------- |
+| **Khung Panel 7**     | `mock-demo-panel-wallet`         | Container bao quanh tính năng ví điện tử Neko Pay.                 |
+| **Nút Kiểm Tra Ví**   | `mock-demo-wallet-check`         | Bấm để gọi `GET /public/test/sample-data`.                         |
+| **Vùng Kết Quả Ví**   | `mock-demo-wallet-result`        | Vùng hiển thị thẻ ngân hàng tương ứng với số dư.                   |
+| **Thẻ VIP Hoàng Gia** | `mock-demo-wallet-card-vip`      | Thẻ Holographic phát sáng gradient chỉ hiện khi số dư > 100 triệu. |
+| **Thẻ Tiêu Chuẩn**    | `mock-demo-wallet-card-standard` | Thẻ màu xám tro tiêu chuẩn khi số dư bình thường (50.000 ₫).       |
+| **Số Dư Tài Khoản**   | `mock-demo-wallet-balance`       | Đoạn text hiển thị định dạng tiền tệ `999.999.999 ₫`.              |
+| **Huy Hiệu VIP**      | `mock-demo-wallet-badge`         | Huy hiệu `VIP PLATINUM DIAMOND` trên thẻ.                          |
 
 ##### 💻 Mã Nguồn Playwright Test UI E2E (Trích từ Kịch Bản 13):
+
 ```typescript
-test("13 - [WALLET TAMPERING 1B] route.fetch() — Tráo đổi số dư 50k thành 1 TỶ ĐỒNG Platinum", async ({ page }) => {
+test("13 - [WALLET TAMPERING 1B] route.fetch() — Tráo đổi số dư 50k thành 1 TỶ ĐỒNG Platinum", async ({
+  page,
+}) => {
   // 1. Đón đầu response thật từ máy chủ và tráo đổi số dư thành 1 Tỷ
   await page.route("**/public/test/sample-data*", async (route) => {
     const response = await route.fetch();
@@ -2336,8 +2498,12 @@ test("13 - [WALLET TAMPERING 1B] route.fetch() — Tráo đổi số dư 50k th�
   // 3. Khẳng định Thẻ Holographic VIP Platinum bừng sáng với số dư 1 Tỷ
   const vipCard = page.getByTestId("mock-demo-wallet-card-vip");
   await expect(vipCard).toBeVisible();
-  await expect(page.getByTestId("mock-demo-wallet-balance")).toContainText("999.999.999");
-  await expect(page.getByTestId("mock-demo-wallet-badge")).toContainText("VIP PLATINUM DIAMOND");
+  await expect(page.getByTestId("mock-demo-wallet-balance")).toContainText(
+    "999.999.999",
+  );
+  await expect(page.getByTestId("mock-demo-wallet-badge")).toContainText(
+    "VIP PLATINUM DIAMOND",
+  );
 });
 ```
 
@@ -2429,18 +2595,22 @@ test("04 - [LATENCY INJECTION] Giả lập độ trễ mạng để kiểm tra t
 ```
 
 ##### 📋 Bảng Tra Cứu Locator & TestID Panel 8:
-| Tên Thành Phần | `data-testid` | Vai Trò & Hành Vi Kiểm Thử |
-| :--- | :--- | :--- |
-| **Khung Panel 8** | `mock-demo-panel-ping` | Container bao quanh trạm đo độ trễ mạng. |
-| **Nút Đo Ping** | `mock-demo-ping-trigger` | Bấm để gọi `GET /public/test/ping` (bị disabled khi đang đo). |
-| **Vùng Kết Quả** | `mock-demo-ping-result` | Container hiển thị đồng hồ và thanh tiến trình. |
-| **Thanh Progress Bar** | `mock-demo-ping-progress` | Thanh tiến trình chạy hoạt ảnh sóng xung điện trong lúc chờ. |
-| **Thời Gian Phản Hồi** | `mock-demo-ping-duration` | Đo đạc chính xác số mili-giây (ví dụ: `1045ms`). |
-| **Huy Hiệu Trạng Thái** | `mock-demo-ping-status` | Chuyển màu cam đỏ cảnh báo khi `duration >= 800ms`. |
+
+| Tên Thành Phần          | `data-testid`             | Vai Trò & Hành Vi Kiểm Thử                                    |
+| :---------------------- | :------------------------ | :------------------------------------------------------------ |
+| **Khung Panel 8**       | `mock-demo-panel-ping`    | Container bao quanh trạm đo độ trễ mạng.                      |
+| **Nút Đo Ping**         | `mock-demo-ping-trigger`  | Bấm để gọi `GET /public/test/ping` (bị disabled khi đang đo). |
+| **Vùng Kết Quả**        | `mock-demo-ping-result`   | Container hiển thị đồng hồ và thanh tiến trình.               |
+| **Thanh Progress Bar**  | `mock-demo-ping-progress` | Thanh tiến trình chạy hoạt ảnh sóng xung điện trong lúc chờ.  |
+| **Thời Gian Phản Hồi**  | `mock-demo-ping-duration` | Đo đạc chính xác số mili-giây (ví dụ: `1045ms`).              |
+| **Huy Hiệu Trạng Thái** | `mock-demo-ping-status`   | Chuyển màu cam đỏ cảnh báo khi `duration >= 800ms`.           |
 
 ##### 💻 Mã Nguồn Playwright Test UI E2E (Trích từ Kịch Bản 14):
+
 ```typescript
-test("14 - [LATENCY PING METER] Latency Injection — Bơm trễ 1000ms, đồng hồ đo cảnh báo độ trễ cao", async ({ page }) => {
+test("14 - [LATENCY PING METER] Latency Injection — Bơm trễ 1000ms, đồng hồ đo cảnh báo độ trễ cao", async ({
+  page,
+}) => {
   // 1. Tiêm trễ 1000ms vào endpoint ping
   await page.route("**/public/test/ping*", async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -2468,8 +2638,9 @@ test("14 - [LATENCY PING METER] Latency Injection — Bơm trễ 1000ms, đồng
 ### 🔹 4.6. ⚖️ Phân Định Chuyên Sâu Hai Tầng Kiểm Thử: Protocol-Level Test vs UI E2E Interception Test
 
 Một trong những bước nhảy vọt quan trọng nhất của một kỹ sư Automation từ cấp độ Junior lên **Senior/Lead QA-QE** là khả năng phân định rạch ròi giữa:
-* **Tầng Giao Thức Mạng (Protocol-Level Testing)**: Kiểm chứng khả năng can thiệp kỹ thuật ngầm trong nhân trình duyệt CDP.
-* **Tầng Giao Diện Người Dùng (UI E2E Interception Testing)**: Kiểm chứng trải nghiệm thị giác và hành vi ứng dụng trước mắt khách hàng.
+
+- **Tầng Giao Thức Mạng (Protocol-Level Testing)**: Kiểm chứng khả năng can thiệp kỹ thuật ngầm trong nhân trình duyệt CDP.
+- **Tầng Giao Diện Người Dùng (UI E2E Interception Testing)**: Kiểm chứng trải nghiệm thị giác và hành vi ứng dụng trước mắt khách hàng.
 
 Hai tầng này không hề triệt tiêu nhau, mà phối hợp chặt chẽ theo nguyên lý **"Trong Ứng — Ngoài Hợp" (Mô Hình Tảng Băng Trôi)**:
 
@@ -2493,14 +2664,14 @@ Hai tầng này không hề triệt tiêu nhau, mà phối hợp chặt chẽ th
 
 #### 📊 1. Bảng So Sánh 6 Tiêu Chí Cốt Lõi Giữa Hai Tầng:
 
-| Tiêu Chí Phân Định | 🧪 Tầng Giao Thức (Protocol-Level Test)<br>*(Đại diện: `02-route-abort-and-modify.spec.ts`)* | 🖥️ Tầng Giao Diện Tích Hợp (UI E2E Interception)<br>*(Đại diện: `09-nextjs-route-mock-showroom.spec.ts`)* |
-| :--- | :--- | :--- |
-| **1. Môi trường ngữ cảnh** | **`about:blank` (Trang trắng tinh)**<br>Không tải HTML/CSS, không chạy React Hydration, không tốn tài nguyên GPU. | **Trang Web thật (`https://coffee.autoneko.com/...`)**<br>Tải 100% ứng dụng Next.js, render Tailwind CSS, nạp fonts, hình ảnh. |
-| **2. Cơ chế kích hoạt Request** | **Bắn lệnh ngầm bằng JavaScript Context**:  <br>`page.evaluate(async () => fetch('/echo'))`<br>Lập trình viên tự tay phát sinh gói tin trong bộ nhớ Chromium. | **Mô phỏng hành vi người dùng thật**:  <br>`page.getByTestId("mock-demo-...").click()`<br>Code React trong Component tự phát sinh `fetch()` sau cú click chuột. |
-| **3. Đối tượng Assert** | **Dữ liệu JSON thô trong bộ nhớ RAM**:  <br>`expect(json.data.balance).toBe(999999999)`<br>Chỉ quan tâm dữ liệu số/chuỗi trả về có đúng chuẩn hợp đồng hay không. | **Thành phần giao diện DOM trực quan**:  <br>`expect(vipCard).toBeVisible()`<br>`expect(balanceText).toContainText("999.999.999 ₫")`<br>Quan sát màu sắc gradient, chip vàng, bố cục không bị vỡ. |
-| **4. Tốc độ & Hiệu năng** | **Siêu tốc (~100ms - 300ms/test)**<br>Phù hợp chạy hàng nghìn test cases trong pre-commit hook hoặc PR verification. | **Độ trễ cao hơn (~1.5s - 3.5s/test)**<br>Phải chờ trình duyệt tải asset, parse stylesheet, chạy animation. |
-| **5. Nguy cơ Flakiness (Chập chờn)** | **Gần như bằng 0 (Zero Flakiness)**<br>Vì không phụ thuộc vào tốc độ render font, hydration mạng hay animation của UI. | **Có rủi ro flakiness nhẹ** nếu frontend đổi class CSS, đổi cấu trúc DOM hoặc animation bị khựng. |
-| **6. Ý nghĩa đối với dự án** | **Chứng minh năng lực kỹ thuật của hệ thống**: Khẳng định CDP Interceptor can thiệp đúng gói tin, tiêm đúng header, tráo đúng body. | **Bảo vệ doanh thu & trải nghiệm khách hàng**: Khẳng định khi có sự cố mạng hoặc can thiệp dữ liệu, giao diện web phản ứng mượt mà, không văng lỗi trắng trang. |
+| Tiêu Chí Phân Định                   | 🧪 Tầng Giao Thức (Protocol-Level Test)<br>_(Đại diện: `02-route-abort-and-modify.spec.ts`)_                                                                     | 🖥️ Tầng Giao Diện Tích Hợp (UI E2E Interception)<br>_(Đại diện: `09-nextjs-route-mock-showroom.spec.ts`)_                                                                                        |
+| :----------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Môi trường ngữ cảnh**           | **`about:blank` (Trang trắng tinh)**<br>Không tải HTML/CSS, không chạy React Hydration, không tốn tài nguyên GPU.                                                | **Trang Web thật (`https://coffee.autoneko.com/...`)**<br>Tải 100% ứng dụng Next.js, render Tailwind CSS, nạp fonts, hình ảnh.                                                                   |
+| **2. Cơ chế kích hoạt Request**      | **Bắn lệnh ngầm bằng JavaScript Context**: <br>`page.evaluate(async () => fetch('/echo'))`<br>Lập trình viên tự tay phát sinh gói tin trong bộ nhớ Chromium.     | **Mô phỏng hành vi người dùng thật**: <br>`page.getByTestId("mock-demo-...").click()`<br>Code React trong Component tự phát sinh `fetch()` sau cú click chuột.                                   |
+| **3. Đối tượng Assert**              | **Dữ liệu JSON thô trong bộ nhớ RAM**: <br>`expect(json.data.balance).toBe(999999999)`<br>Chỉ quan tâm dữ liệu số/chuỗi trả về có đúng chuẩn hợp đồng hay không. | **Thành phần giao diện DOM trực quan**: <br>`expect(vipCard).toBeVisible()`<br>`expect(balanceText).toContainText("999.999.999 ₫")`<br>Quan sát màu sắc gradient, chip vàng, bố cục không bị vỡ. |
+| **4. Tốc độ & Hiệu năng**            | **Siêu tốc (~100ms - 300ms/test)**<br>Phù hợp chạy hàng nghìn test cases trong pre-commit hook hoặc PR verification.                                             | **Độ trễ cao hơn (~1.5s - 3.5s/test)**<br>Phải chờ trình duyệt tải asset, parse stylesheet, chạy animation.                                                                                      |
+| **5. Nguy cơ Flakiness (Chập chờn)** | **Gần như bằng 0 (Zero Flakiness)**<br>Vì không phụ thuộc vào tốc độ render font, hydration mạng hay animation của UI.                                           | **Có rủi ro flakiness nhẹ** nếu frontend đổi class CSS, đổi cấu trúc DOM hoặc animation bị khựng.                                                                                                |
+| **6. Ý nghĩa đối với dự án**         | **Chứng minh năng lực kỹ thuật của hệ thống**: Khẳng định CDP Interceptor can thiệp đúng gói tin, tiêm đúng header, tráo đúng body.                              | **Bảo vệ doanh thu & trải nghiệm khách hàng**: Khẳng định khi có sự cố mạng hoặc can thiệp dữ liệu, giao diện web phản ứng mượt mà, không văng lỗi trắng trang.                                  |
 
 ---
 
@@ -2626,25 +2797,140 @@ Trong kiểm thử tự động, trường phái **Pure UI (100% thao tác trìn
 
 ---
 
-### 🔹 5.2. Mô Hình Chiếc Bánh Kẹp (Sandwich Model 3 Lớp)
+### 🔹 5.2. Mô Hình Chiếc Bánh Kẹp (Sandwich Model 3 Lớp) & Bản Đồ Không Gian Bộ Nhớ
+
+Khi mới tiếp cận **Hybrid Testing**, học viên thường thấy khó hình dung vì có quá nhiều thành phần: *Mô hình Bánh mì kẹp (Sandwich Model)*, *Page Object Model (UI POM)*, *CRM Table Helpers*, *API Object Model (AOM)*, *Zod Schema Contracts*, *Worker Scope RAM*, và *CDP `context.addInitScript`*.
+
+Để thấy được bức tranh toàn cảnh, trước hết hãy nhìn vào **Hệ Quy Chiếu 3 Vùng Không Gian Vật Lý & Bộ Nhớ** cùng chạy song song khi 1 bài test kích hoạt:
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────────────────────┐
-│                           MÔ HÌNH CHIẾC BÁNH KẸP (SANDWICH MODEL)                           │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 🍞 LỚP 1: BÁNH MÌ TRÊN - SETUP / PRE-CONDITION (Dùng API 100%):                             │
-│    • Gọi API 'POST /auth/register', 'POST /auth/login', 'POST /cart/add'.                   │
-│    • Chuẩn bị dữ liệu chỉ mất 0.3 giây thay vì mất 2 phút click form UI!                    │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 🥩 LỚP 2: MIẾNG THỊT BÒ Ở GIỮA - ACTION / INTERACTION (Dùng UI 100%):                       │
-│    • ĐÂY LÀ TRỌNG TÂM CỦA BÀI TEST!                                                         │
-│    • Bắt buộc dùng: page.click(), page.fill(), kéo thả, upload file, kiểm tra hiển thị.     │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 🍞 LỚP 3: BÁNH MÌ DƯỚI - VERIFICATION & TEARDOWN (Dùng Cả Hai):                            │
-│    • Check UI: Người dùng nhìn thấy thông báo thành công.                                   │
-│    • Check API / DB: Gửi API kiểm tra Database đã cập nhật đúng đơn hàng chưa.              │
-│    • Teardown API: Gọi 'DELETE' dọn sạch dữ liệu rác trong 50ms.                            │
-└─────────────────────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                     HỆ QUY CHIẾU KHÔNG GIAN THỰC THI (SYSTEM TOPOLOGY)                                   │
+├────────────────────────────────────────────────────────────────┬─────────────────────────────┬────────────────────────────┤
+│ 🟢 VÙNG 1: NODE.JS PROCESS (Playwright Test Runner)            │ 🔵 VÙNG 2: CHROMIUM BROWSER │ 🟠 VÙNG 3: BACKEND SERVER  │
+│    (Chạy trên CPU máy Tester / CI Runner)                      │    (Trình duyệt giao diện)  │    (Cloud Production DB)   │
+├────────────────────────────────────────────────────────────────┼─────────────────────────────┼────────────────────────────┤
+│                                                                │                             │                            │
+│  🧠 [WORKER SCOPE RAM]                                         │  🌐 [BROWSER CONTEXT]       │  ☁️ [API SERVER]           │
+│  • workerStaffSnapshot = { token: 'jwt_...', role: 'staff' }   │  • window.localStorage      │     api-neko-coffee...     │
+│  (Sinh 1 lần duy nhất lúc Worker khởi động ➔ Cấp phát 0ms)     │  • neko_auth (Zustand Store)│  • POST /auth/register     │
+│                                │                               │  • DOM Tree / React Bundle  │  • POST /public/products   │
+│                                ▼                               │                             │  • GET  /public/products   │
+│  ⚡ [TẦNG 1: API AOM (Api Object Model)]                       │  🖥️ [TẦNG 3: UI POM]        │  • PATCH /admin/products   │
+│  • AuthApiClient / ProductApiClient (kế thừa BaseApiClient)    │  • NekoAdminProductsPage    │                            │
+│  • Bắn HTTP trực tiếp qua Node.js network stack                │  • NekoAdminOrdersPage      │                            │
+│                                │                               │                             │  🗄️ [DATABASE PRODUCTION]  │
+│                                ▼                               │  📐 [CRM TABLE HELPERS]     │  • PostgreSQL / MySQL      │
+│  🛡️ [TẦNG 2: ZOD RUNTIME ENGINE]                               │  • createColumnMap          │  • Bảng Products (kho hàng)│
+│  • productDtoSchema.safeParse(json)                            │  • findRowByColumnValue     │  • Bảng Orders (đơn hàng)  │
+│  • Thẩm định kiểu dữ liệu DB: number, string, boolean          │  • getProductRowData        │                            │
+│                                                                │                             │                            │
+│                                │ (Tiêm qua Cầu nối CDP)        │                             │                            │
+│                                └───────────────┬───────────────┘                             │                            │
+│                                                ▼                                             │                            │
+│                                 💉 Chrome DevTools Protocol (CDP)                            │                            │
+│                                 Page.addScriptToEvaluateOnNewDocument                        │                            │
+│                                 (Nạp Token vào RAM Trình duyệt TRƯỚC khi DOM kịp tải)        │                            │
+│                                                                                              │                            │
+└──────────────────────────────────────────────────────────────────────────────────────────────┴────────────────────────────┘
+```
+
+---
+
+#### 🥪 Mô Hình Chiếc Bánh Kẹp Hybrid Toàn Diện (The Unified Sandwich Model)
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                    MÔ HÌNH CHIẾC BÁNH KẸP HYBRID TOÀN DIỆN (THE UNIFIED SANDWICH MODEL)                 │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                         │
+│  🏛️ [TẦNG NỀN TẢNG KHỞI TẠO — THE FOUNDATION SETUP (Chạy 1 lần trước Suite / Worker)]                    │
+│  • Thực hiện: Worker Setup (RAM Snapshot 0ms) HOẶC Global Project Setup (File đĩa .auth/*.json).        │
+│  • Kết quả: Chuẩn bị sẵn Danh tính Staff/Admin (Token & User) trong bộ nhớ RAM của Worker.              │
+│                                                                                                         │
+│                                      │                                                                  │
+│                                      ▼ (Cấp phát Token trong 0ms cho bài test bắt đầu)                  │
+│                                                                                                         │
+│  🍞 LỚP 1: BÁNH MÌ TRÊN — PRE-CONDITION QUA API (Tốn ~150ms — Dùng AOM & Zod 100%):                     │
+│  • authedStaffClient.productApi.createProduct({ name: 'Hạt Robusta Honey #99', price: 95000 })         │
+│  • Zod Contract (productDtoSchema.safeParse) thẩm định dữ liệu máy chủ trả về hợp lệ.                   │
+│  • Thu được: targetProduct.id = 99 trong cơ sở dữ liệu thật (Không tốn 2 phút gõ form Admin).           │
+│                                                                                                         │
+│                                      │                                                                  │
+│                                      ▼ (Chuyển giao danh tính vào Trình duyệt Browser)                  │
+│                                                                                                         │
+│  🌉 CẦU NỐI CHUYỂN GIAO PHIÊN — THE SESSION BRIDGE (Bypass 100% Form Login UI):                         │
+│  ├── 💎 Lựa chọn 1 (Siêu App In-Memory): context.addInitScript() rút Token từ RAM Worker tiêm thẳng    │
+│  │   vào localStorage, hỗ trợ hoàn hảo cấu trúc Zustand/Redux Next.js (~3ms).                           │
+│  └── 💾 Lựa chọn 2 (Project Setup Disk): Browser Context nạp tự động qua config storageState file đĩa.   │
+│                                                                                                         │
+│                                      │                                                                  │
+│                                      ▼ (Trình duyệt mở thẳng Dashboard đã Đăng Nhập)                    │
+│                                                                                                         │
+│  🥩 LỚP 2: MIẾNG THỊT BÒ Ở GIỮA — CORE UI ACTION (Tốn ~1.2s — Trọng tâm kiểm thử UI):                   │
+│  • adminProductsPage.navigate('/admin/products') ➔ Vào thẳng bảng sản phẩm không qua form Login!        │
+│  • TableColumnHelpers quét thẻ <th> thực tế ➔ Tìm trúng dòng #99 không hardcode index cột.              │
+│  • Thao tác UI: Click [Sửa Kho] ➔ Gõ '500' ➔ Bấm [Lưu] ➔ Assert Toast xanh "Cập nhật kho thành công!"│
+│                                                                                                         │
+│                                      │                                                                  │
+│                                      ▼ (Hậu kiểm toàn vẹn dữ liệu)                                      │
+│                                                                                                         │
+│  🍞 LỚP 3: BÁNH MÌ DƯỚI — DEEP AUDIT & TEARDOWN (Tốn ~50ms — Dùng Cả Hai):                              │
+│  • Check UI: Toast thông báo hiển thị đúng text, DOM cập nhật số 500.                                   │
+│  • Check DB qua API: authedStaffClient.productApi.getProductDetailData(99).                             │
+│  • Zod Contract: Khẳng định trường tồn kho trong Database đã thực sự cập nhật thành số nguyên 500!      │
+│  • Teardown API: Gọi productApi.deleteProduct(99) dọn rác tức thì trong 30ms (nếu cần).                 │
+│  • Kết thúc: BrowserContext tự động tiêu hủy ➔ Sạch bóng RAM trình duyệt (Zero State Leakage)!          │
+│                                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+#### 🎬 Sơ Đồ Tương Tác Tuần Tự 8 Tác Nhân (Execution Sequence Flowchart)
+
+Dưới đây là sơ đồ tương tác chính xác từng bước theo thời gian giữa **8 tác nhân** trong toàn bộ vòng đời của kịch bản kiểm thử:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Setup as 🏛️ Setup (Project / Worker)
+    participant RAM as 🧠 Worker RAM (Node.js)
+    participant AOM as ⚡ API Client (AOM)
+    participant Zod as 🛡️ Zod Engine (Contract)
+    participant Bridge as 🌉 Session Bridge (addInitScript / StorageState)
+    participant Browser as 🌐 Chromium (React UI)
+    participant POM as 📐 UI POM + Table Helpers
+    participant DB as ☁️ Backend API & DB
+
+    Note over Setup, RAM: 🏛️ BƯỚC 0: PRE-TEST FOUNDATION (Khởi tạo phiên 1 lần duy nhất)
+    Setup->>DB: POST /auth/register (hoặc POST /auth/login trong Setup)
+    DB-->>Setup: 201 Created: { access_token: "jwt_...", user: { role: "staff" } }
+    Setup->>RAM: Lưu Token Staff vào RAM tiến trình Worker (0ms delay cấp phát)
+
+    Note over RAM, DB: 🍞 LỚP 1: BÁNH MÌ TRÊN — PRE-CONDITION QUA API (~150ms)
+    RAM->>AOM: Cấp Token Staff từ RAM
+    AOM->>DB: POST /public/products { name: 'Cà phê Robusta Honey #99', price: 95000, stock: 0 }
+    DB-->>AOM: 201 Created { id: 99, stock: 0 }
+    AOM->>Zod: productDtoSchema.safeParse(res)
+    Zod-->>AOM: ✅ Hợp đồng hợp lệ (id: 99 là number)
+
+    Note over RAM, Browser: 🌉 CẦU NỐI PHIÊN — CHUYỂN GIAO DANH TÍNH (~3ms)
+    RAM->>Bridge: Cung cấp Token từ RAM (hoặc nạp qua StorageState file đĩa)
+    Bridge->>Browser: Bơm phiên vào Browser trước khi nạp DOM (Bypass Form Login 100%)
+
+    Note over Browser, POM: 🥩 LỚP 2: MIẾNG THỊT BÒ Ở GIỮA — TƯƠNG TÁC UI CHÍNH (~1.2s)
+    Browser->>Browser: page.goto('/admin/products') ➔ Vào thẳng Dashboard
+    POM->>Browser: TableColumnHelpers quét thẻ <th> động ➔ Tìm dòng #99
+    POM->>Browser: UI: Sửa kho thành 500 ➔ Bấm [Lưu] ➔ Assert Toast xanh thành công!
+
+    Note over AOM, DB: 🍞 LỚP 3: BÁNH MÌ DƯỚI — DEEP AUDIT & TEARDOWN (~50ms)
+    AOM->>DB: GET /public/products/99 (Hậu kiểm DB thật)
+    DB-->>AOM: 200 OK { id: 99, stock: 500 }
+    AOM->>Zod: BaseApiClient.parseResponse(res, productDtoSchema)
+    Zod-->>AOM: ✅ Xác nhận kiểu dữ liệu DB: stock === 500
+    Note over AOM, POM: 🏆 Đối soát 2 chiều: UI hiển thị 500 === DB lưu đúng 500!
+    Note over RAM, Browser: 🏁 Hết test: Tiêu hủy Context ➔ Không ô nhiễm RAM!
 ```
 
 ---
@@ -2659,9 +2945,701 @@ Trong kiểm thử tự động, trường phái **Pure UI (100% thao tác trìn
 
 ---
 
-### 🔹 5.4. ⚖️ Phân Tích Hai Con Đường Xác Thực Hybrid: Cách 1 (File Đĩa & Setup) vs Cách 2 (Tiêm Phiên Động & addInitScript)
+### 🔹 5.4. ⚖️ Toàn Cảnh Hệ Phổ Xác Thực Hybrid & "Bộ Ba Quyền Lực" Của Siêu App (Setup + Worker Scope RAM + addInitScript)
 
-Trong tự động hóa kiểm thử kết hợp UI và API (Hybrid Testing), việc **bỏ qua màn hình đăng nhập (Bypass Login UI)** là bí quyết sống còn để tăng tốc độ thực thi lên gấp 10 lần. Để đưa trạng thái đăng nhập vào Trình duyệt, có **2 con đường kiến trúc kinh điển**:
+Trong tự động hóa kiểm thử kết hợp UI và API (Hybrid Testing), việc **bỏ qua màn hình đăng nhập (Bypass Login UI)** là bí quyết sống còn để tăng tốc độ thực thi lên gấp 10 lần.
+
+Tuy nhiên, trong các hệ thống doanh nghiệp thực tế, xác thực không chỉ gói gọn trong 2 thái cực thô sơ ("File đĩa" vs "API từng test"). Bản chất kiến trúc của **Siêu App Hybrid Automation** chính là **sự hội tụ đỉnh cao của CẢ 3 MẮT XÍCH (Bộ Ba Quyền Lực — The Holy Trinity of Hybrid Auth)**:
+
+$$\text{SETUP (Khởi tạo phiên)} \longrightarrow \text{WORKER SCOPE (Cất giữ RAM 0ms)} \longrightarrow \text{addInitScript (Bơm vào Trình duyệt)}$$
+
+---
+
+#### 🧭 0. Bức Tranh Tổng Thể: Dây Chuyền 3 Trạm Xác Thực Của Siêu App (3-Station Master Pipeline)
+
+Để không bao giờ bị nhầm lẫn giữa các khái niệm xác thực trong Playwright, kiến trúc sư kiểm thử cần nắm vững **Dây Chuyền 3 Trạm Liên Hoàn** — từ lúc thu thập token ban đầu, lưu vào RAM đệm, cho đến khi phân hệ quyết định có dùng `addInitScript` hay không:
+
+```text
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                DÂY CHUYỀN 3 TRẠM XÁC THỰC LIÊN HOÀN TRONG SIÊU APP HYBRID                                 │
+├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                                           │
+│  [TRẠM 1: THU THẬP PHIÊN GỐC]         [TRẠM 2: VÙNG ĐỆM WORKER RAM]          [TRẠM 3: ĐIỀU PHỐI VÀO BROWSER Ở TEST SCOPE]  │
+│  (Origin Authentication Station)      (In-Memory Worker Cache)                (Browser Delivery Decision Tree)            │
+│                                                                                                                           │
+│  ┌─────────────────────────────┐      ┌─────────────────────────────┐         ┌────────────────────────────────────────┐  │
+│  │ CÁCH 1A: UI Login           │      │                             │         │ PHÂN HỆ 1: DÙNG addInitScript         │  │
+│  │ (Project Dependencies)      │──┐   │  Worker Scope Fixture       │    ┌───►│ • Tiêm Token từ RAM vào localStorage   │  │
+│  │ Dùng khi dính Captcha, SSO, │  │   │  { scope: 'worker' }        │    │    │ • Dùng cho 98% test Admin/Dashboard    │  │
+│  │ SAML, 2FA, chặn API Login.  │  │   │                             │    │    │ • Tốc độ 0ms, không auto-redirect lỗi  │  │
+│  └─────────────────────────────┘  │   │  • Lưu chuỗi Bearer Token   │    │    └────────────────────────────────────────┘  │
+│                                   ├──►│    trong biến RAM Node.js.  │────┤                                                │
+│  ┌─────────────────────────────┐  │   │  • Cấp phát độ trễ 0ms.     │    │    ┌────────────────────────────────────────┐  │
+│  │ CÁCH 1B: API Login          │  │   │  • Sẵn sàng cho:            │    │    │ PHÂN HỆ 2: KHÔNG DÙNG addInitScript   │  │
+│  │ (Direct API Request)        │──┘   │    - authedStaffClient      │    ├───►│ (Dùng storageState / Cookie)           │  │
+│  │ Gọi REST API /auth/login    │      │    - Trình duyệt Test       │    │    │ • Dùng khi web lưu Auth qua HttpOnly   │  │
+│  │ trong 100ms siêu tốc.       │      │                             │    │    │ • addInitScript không thể ghi Cookie!  │  │
+│  └─────────────────────────────┘      └─────────────────────────────┘    │    └────────────────────────────────────────┘  │
+│                                                                          │                                                │
+│                                                                          │    ┌────────────────────────────────────────┐  │
+│                                                                          │    │ PHÂN HỆ 3: HOÀN TOÀN SẠCH (GUEST)      │  │
+│                                                                          └───►│ • KHÔNG addInitScript, KHÔNG Token     │  │
+│                                                                               │ • Chính là guestPage / loginPage       │  │
+│                                                                               │ • Dùng test Form Login, 401, 429, Khách│  │
+│                                                                               └────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+##### 📊 Ma Trận Phân Biệt Chi Tiết 3 Trạm Xác Thực
+
+| Trạm Vận Hành | Câu Hỏi Cốt Lõi | Các Lựa Chọn Kỹ Thuật | Đặc Điểm & Kịch Bản Phù Hợp |
+|---|---|---|---|
+| **TRẠM 1: Thu Thập Phiên Gốc** *(Origin Authentication)* | *"Lấy chuỗi Token hoặc Cookie phiên ban đầu ở đâu và bằng cách nào?"* | • **Cách 1A (UI Login ở Dependencies)**: Dùng `page.goto('/login')` gõ form trong Project Setup.<br>• **Cách 1B (API Login)**: Dùng `request.post('/auth/login')` lấy token trong 100ms. | • **Cách 1A**: Bắt buộc khi site có **Cloudflare Turnstile, reCAPTCHA, SSO Okta, Azure AD, 2FA/OTP** hoặc mã hóa RSA mật khẩu client-side.<br>• **Cách 1B**: Tối ưu khi Backend mở REST API công khai. |
+| **TRẠM 2: Vùng Đệm Bộ Nhớ RAM** *(Worker Scope Caching)* | *"Làm sao để 100 bài test không phải đọc đĩa hay gọi lại API 100 lần?"* | • **Worker Scope Fixture** `{ scope: 'worker' }`<br>• Khởi tạo biến RAM: `workerStaffSnapshot = { token, email, user }` | • **0ms delay**: Biến RAM tồn tại suốt vòng đời của Worker tiến trình.<br>• **Cung cấp cho API Client**: Gắn Token vào Node.js `authedStaffClient` Header.<br>• **Worker Isolation**: Gắn `workerIndex` chống đụng độ tài khoản khi chạy song song parallel. |
+| **TRẠM 3: Điều Phối Vào Browser** *(Test Scope Delivery)* | *"Khi bài test chạy, có dùng `addInitScript` để bơm token vào trình duyệt không?"* | • **Phân Hệ 3.1: CÓ DÙNG `addInitScript`**<br>• **Phân Hệ 3.2: KHÔNG DÙNG (Dùng `storageState`/Cookie)**<br>• **Phân Hệ 3.3: KHÔNG DÙNG & KHÔNG TOKEN (`guestPage`)** | • **Phân hệ 3.1**: Dùng cho 98% test Admin/Dashboard (App dùng LocalStorage/Zustand), vào thẳng trang trong 50ms.<br>• **Phân hệ 3.2**: Bắt buộc khi app dùng **Cookie HttpOnly** (JavaScript bị cấm ghi cookie HttpOnly).<br>• **Phân hệ 3.3**: Bắt buộc khi test **Form Login UI (`/login`), 401, 429, Form Validation hoặc Khách vãng lai** để không bị Auto-Redirect! |
+
+---
+
+#### 🚪 0.1. Giải Mã Chuyên Sâu Trạm 3: Ba Phân Hệ Bơm Phiên Vào Browser (Dùng Hay Không Dùng addInitScript?)
+
+Sau khi đã có chuỗi JWT Token hoặc Cookie phiên an tọa trong RAM của Worker (Trạm 2), câu hỏi mang tính quyết định của kiến trúc sư kiểm thử là: **"Tại thời điểm bài test bắt đầu, làm thế nào để nạp phiên vào Browser Context một cách tối ưu nhất?"**
+
+Đây chính là nơi **Cây Quyết Định 3 Phân Hệ Bơm Phiên** phát huy toàn bộ uy lực:
+
+```text
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   CÂY QUYẾT ĐỊNH ĐIỀU PHỐI PHIÊN VÀO BROWSER (TRẠM 3)                                     │
+├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                                           │
+│                                           BÀI TEST SẮP BẮT ĐẦU CHẠY                                                       │
+│                                                       │                                                                   │
+│                                  Có phải bài test kiểm thử Form Login UI,                                                 │
+│                                  gõ sai mật khẩu (401), rate limit (429),                                                 │
+│                                  hoặc giỏ hàng Khách vãng lai (Guest)?                                                    │
+│                                            /                    \                                                         │
+│                                    (CÓ)   /                      \  (KHÔNG - 98% Test Nghiệp Vụ)                          │
+│                                          /                        \                                                       │
+│                                         ▼                          ▼                                                      │
+│                         ┌─────────────────────────────┐   Website lưu trữ phiên người dùng                                │
+│                         │ PHÂN HỆ 3.3: GUEST / SẠCH   │   bằng công nghệ nào ở Client?                                    │
+│                         │ • KHÔNG addInitScript       │          /                    \                                   │
+│                         │ • KHÔNG nạp Cookie/Token    │  (LocalStorage / Zustand)      \ (Cookie HttpOnly / SSR Session)  │
+│                         │ • Dùng guestPage/loginPage  │        /                        \                                 │
+│                         │ 🎯 Chống Auto-Redirect 302! │       ▼                          ▼                                │
+│                         └─────────────────────────────┘ ┌─────────────────────────────┐ ┌─────────────────────────────┐    │
+│                                                         │ PHÂN HỆ 3.1: DÙNG           │ │ PHÂN HỆ 3.2: KHÔNG THỂ DÙNG │    │
+│                                                         │ addInitScript               │ │ addInitScript (DÙNG COOKIE) │    │
+│                                                         │ • Tiêm trước DOM (0ms delay)│ │ • JS bị cấm ghi HttpOnly!   │    │
+│                                                         │ • Khởi tạo Zustand Store    │ │ • Dùng context.addCookies() │    │
+│                                                         │ • Vào thẳng Dashboard 50ms  │ │ • Hoặc storageState đĩa     │    │
+│                                                         └─────────────────────────────┘ └─────────────────────────────┘    │
+└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+##### 💉 1. Phân Hệ 3.1: Bơm Phiên Bằng `addInitScript` (Áp Dụng Cho LocalStorage & Client State)
+
+###### A. Bản Chất Kỹ Thuật (How It Works):
+- Playwright giao tiếp trực tiếp với Chromium thông qua Chrome DevTools Protocol (CDP), kích hoạt chỉ thị:
+  `Page.addScriptToEvaluateOnNewDocument`.
+- Đoạn mã JavaScript truyền vào sẽ được ghim vào nhân trình duyệt và được thực thi **ngay khi Document vừa được tạo lập, TRƯỚC KHI bất kỳ script HTML/JS nào của trang web chạy** (trước cả sự kiện `DOMContentLoaded` và trước khi bundle React/Next.js/Vue được nạp).
+- Đoạn script này tự do ghi dữ liệu vào `window.localStorage`, `window.sessionStorage`, hoặc gán cờ toàn cục vào `window`.
+
+###### B. Vì Sao addInitScript Vượt Trội Tuyệt Đối So Với `page.evaluate()`?
+```typescript
+// ❌ CÁCH 1: page.evaluate() trước khi goto -> CRASH!
+await page.evaluate(() => localStorage.setItem('token', jwt));
+await page.goto('/admin');
+// 💥 Lỗi: "SecurityError: Access is denied for document about:blank". 
+// Trình duyệt chưa tải domain nào nên không thể truy cập LocalStorage!
+
+// ⚠️ CÁCH 2: goto rồi mới evaluate -> FLAKY VÀ CHẬM!
+await page.goto('/admin'); // Chưa có token -> Next.js Auth Guard đá văng về /login
+await page.evaluate(() => localStorage.setItem('token', jwt)); // Gán muộn màng
+await page.reload(); // Phải tải lại trang lần 2 -> Mất thêm 2-3 giây!
+
+// ✅ CÁCH 3: context.addInitScript() -> HOÀN HẢO 0ms!
+await context.addInitScript(({ token, user }) => {
+  // Gài sẵn token ngay trong phòng chờ, trước khi trang mở cửa!
+  localStorage.setItem('neko_auth', JSON.stringify({
+    state: { accessToken: token, user, isAuthenticated: true },
+    version: 0
+  }));
+}, { token: snapshot.token, user: snapshot.user });
+await page.goto('/admin'); // Mở cửa ra là React thấy ngay phiên đăng nhập, render thẳng Dashboard!
+```
+
+###### C. Kỹ Thuật Bơm Client State Phức Tạp (Zustand / Redux Persist / Pinia):
+Trong các ứng dụng Frontend hiện đại như Next.js của Neko Coffee, thông tin phiên không chỉ là một chuỗi string thô mà được quản lý bởi Zustand Store có cấu trúc JSON lồng nhau và cờ `version`:
+```typescript
+// Fixture Test Scope: modules/2-api/NekoCoffee/lesson-24/fixtures/hybrid-auth.fixture.ts
+await context.addInitScript(({ token, user }) => {
+  const authPayload = {
+    state: {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name || 'Staff Specialist',
+        role: user.role || 'staff',
+      },
+      accessToken: token,
+      isAuthenticated: true,
+    },
+    version: 0, // 👈 Bắt buộc: Zustand Persist kiểm tra schema version để không xóa trắng state!
+  };
+  window.localStorage.setItem('neko_auth', JSON.stringify(authPayload));
+}, { token: workerStaffSnapshot.token, user: workerStaffSnapshot.user });
+```
+
+---
+
+##### 🍪 2. Phân Hệ 3.2: KHÔNG THỂ DÙNG `addInitScript` (Bắt Buộc Dùng Cookie HttpOnly / SSR Session)
+
+###### A. Rào Cản Kỹ Thuật: Vì Sao JavaScript Không Thể Sờ Vào Cookie HttpOnly?
+- Flag `HttpOnly` là tiêu chuẩn bảo mật của IETF (RFC 6265) được thiết kế đặc thù để **ngăn chặn rò rỉ session khi web bị dính lỗ hổng XSS (Cross-Site Scripting)**.
+- Khi một cookie mang cờ `HttpOnly`, Sandbox của trình duyệt **CẤM TUYỆT ĐỐI mọi mã JavaScript trong trang web** (bao gồm `document.cookie` và code chạy qua `addInitScript`) đọc hoặc ghi cookie đó.
+- Nếu bạn dùng `addInitScript` chạy:
+  ```javascript
+  document.cookie = "session_id=secret123; Path=/; HttpOnly"; // 👈 VÔ NGHĨA!
+  ```
+  Trình duyệt sẽ tự động cắt bỏ cờ `HttpOnly` hoặc từ chối thực thi. Khi request HTTP gửi lên server, server kiểm tra header `Cookie` và phát hiện thiếu cờ HttpOnly hoặc không đúng định dạng ➔ **Trả về mã lỗi `401 Unauthorized` ngay lập tức!**
+
+###### B. Giải Pháp Chuẩn Mực Của Playwright: Can Thiệp Ở Tầng Giao Thức Mạng Trình Duyệt (Browser Protocol Level)
+Để thiết lập được cookie `HttpOnly`, Playwright không thể nhờ JavaScript trong trang web gõ lệnh, mà phải dùng **quyền lực đặc quyền của trình điều khiển trình duyệt (Browser Driver)** để nạp cookie thẳng vào Network Cookie Jar:
+
+```typescript
+// ── GIẢI PHÁP 3.2A: Nạp trực tiếp qua context.addCookies() ──
+await context.addCookies([
+  {
+    name: 'staff_session',
+    value: workerStaffSnapshot.token,
+    domain: 'coffee.autoneko.com',
+    path: '/',
+    httpOnly: true,  // 👈 Playwright Network Layer nạp thành công 100%!
+    secure: true,
+    sameSite: 'Lax',
+  },
+]);
+
+// ── GIẢI PHÁP 3.2B: Khởi tạo Context kèm storageState từ RAM hoặc File đĩa ──
+const authedContext = await browser.newContext({
+  storageState: {
+    cookies: [
+      {
+        name: 'staff_session',
+        value: workerStaffSnapshot.token,
+        domain: 'coffee.autoneko.com',
+        path: '/',
+        expires: Math.floor(Date.now() / 1000) + 3600,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'Lax',
+      }
+    ],
+    origins: []
+  }
+});
+```
+
+###### C. Kịch Bản Áp Dụng Thực Tế:
+- Các hệ thống kiến trúc **Next.js Server-Side Rendering (SSR)** hoặc **Server Components**: Khi người dùng gõ URL, Next.js Server thực thi hàm `getServerSideProps` hoặc Server Component trên máy chủ Node.js. Server cần đọc `Cookie` trong HTTP Header của request đến để query Database và sinh ra HTML tĩnh. Nếu phiên nằm ở LocalStorage (chỉ có ở Client), SSR Server sẽ thấy phiên rỗng và trả về trang Login! Lúc này, **Phân Hệ 3.2 (Cookie HttpOnly)** là bắt buộc 100%.
+- Các Framework truyền thống: Laravel Sanctum, Django Session, Spring Security, ASP.NET Core Identity.
+
+---
+
+##### 🧼 3. Phân Hệ 3.3: HOÀN TOÀN SẠCH BÓNG — Zero-Auth Guest (`guestPage` / `guestContext` / `loginPage`)
+
+###### A. Hiểm Họa Tày Trời: Bẫy Sập Tự Động Chuyển Hướng (Auto-Redirect Guard Trap)
+Trong các ứng dụng Single Page App (SPA) và Next.js hiện đại, lập trình viên luôn cài đặt các rào chắn bảo vệ (Route Guards):
+```typescript
+// Ví dụ middleware.ts hoặc component Login:
+export function AuthGuard({ children }) {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    // ⚠️ NẾU TRÌNH DUYỆT PHÁT HIỆN ĐÃ ĐĂNG NHẬP -> TỰ ĐỘNG CHUYỂN HƯỚNG!
+    if (isAuthenticated) {
+      router.replace('/admin/dashboard');
+    }
+  }, [isAuthenticated]);
+}
+```
+
+Nếu Fixture kiểm thử của bạn "quá thông minh" — tự động tiêm `addInitScript` hoặc Cookie cho **TẤT CẢ** mọi đối tượng `page`, thảm họa sẽ xảy ra khi bạn viết các bài test sau:
+1. **Kiểm thử Form Login UI (`/login`)**: Bạn muốn mở form, gõ email, gõ mật khẩu, bấm nút "Đăng nhập".
+2. **Kiểm thử Báo Lỗi Nhập Sai Mật Khẩu (401)**: Gõ mật khẩu bậy để kiểm tra dòng chữ `"Email hoặc mật khẩu không chính xác"`.
+3. **Kiểm thử Rate Limiting (429 Too Many Requests)**: Bấm nút Login liên tục 10 lần để kiểm tra khóa tài khoản.
+4. **Kiểm thử Xác Thực Dữ Liệu Đầu Vào (Form Validation)**: Bỏ trống email, gõ email không có ký tự `@`.
+5. **Kiểm thử Khách Vãng Lai (Anonymous Guest)**: Khách chưa đăng nhập duyệt menu sản phẩm, thêm vào giỏ hàng ẩn danh.
+
+💥 **HẬU QUẢ KHI BƠM NHẦM PHIÊN VÀO CÁC TEST NÀY**:  
+Khi vừa gọi `page.goto('/login')`, Auth Guard của Frontend phát hiện Token nằm sẵn trong LocalStorage ➔ Lập tức kích hoạt lệnh điều hướng `307 Temporary Redirect` đá văng sang `/admin/dashboard`!  
+Toàn bộ các trường input `#username`, `#password` trên trang Login bị xóa khỏi DOM ➔ Playwright văng lỗi `TimeoutError: locator.fill: Timeout 30000ms waiting for locator('#username')` ➔ **Test case FAIL oan uổng 100%!**
+
+###### B. Giải Pháp Kiến Trúc Của Siêu App: Phân Ly Đôi Phiên (Dual-Session Architecture)
+Siêu App Bài 24 giải quyết triệt để vấn đề này bằng cách thiết kế **Cặp Fixture Phân Ly** trong [`hybrid-auth.fixture.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-24/fixtures/hybrid-auth.fixture.ts) và Gatekeeper:
+
+```typescript
+// 1. Fixture { page } thông thường (Phân Hệ 3.1):
+//    -> Tự động tiêm Worker RAM Token qua addInitScript (Dành cho 98% test Admin/Order)
+page: async ({ context, workerStaffSnapshot }, use) => {
+  await context.addInitScript(({ token, user }) => {
+    localStorage.setItem('neko_auth', JSON.stringify({ state: { accessToken: token, user, isAuthenticated: true } }));
+  }, { token: workerStaffSnapshot.token, user: workerStaffSnapshot.user });
+  const page = await context.newPage();
+  await use(page);
+}
+
+// 2. Fixture { guestPage, guestContext, loginPage } (Phân Hệ 3.3):
+//    -> Mở Browser Context MỚI TOANH, TUYỆT ĐỐI KHÔNG GỌI addInitScript, KHÔNG COOKIE!
+guestContext: async ({ browser }, use) => {
+  const context = await browser.newContext(); // Sạch bóng 100%
+  await use(context);
+  await context.close();
+},
+
+guestPage: async ({ guestContext }, use) => {
+  const page = await guestContext.newPage();
+  await use(page);
+},
+
+loginPage: async ({ guestPage }, use) => {
+  // NekoLoginPage gắn chặt vào guestPage, đảm bảo mở /login không bao giờ bị redirect!
+  const loginPage = new NekoLoginPage(guestPage);
+  await use(loginPage);
+}
+```
+
+---
+
+##### 📊 Ma Trận So Sánh Kỹ Thuật 3 Phân Hệ Bơm Của Trạm 3
+
+| Tiêu Chí So Sánh | 💉 Phân Hệ 3.1: DÙNG `addInitScript` | 🍪 Phân Hệ 3.2: KHÔNG THỂ DÙNG (Dùng Cookie) | 🧼 Phân Hệ 3.3: HOÀN TOÀN SẠCH (`guestPage`) |
+|---|---|---|---|
+| **Vị trí can thiệp** | DOM Document Object (`window.localStorage` / `sessionStorage`) | Network Protocol Layer (Browser Network Cookie Jar) | Không can thiệp (Trình duyệt nguyên bản sạch) |
+| **Phương thức Playwright** | `context.addInitScript(fn, arg)` | `context.addCookies([ ... ])` hoặc `newContext({ storageState })` | `browser.newContext()` nguyên bản không cấu hình |
+| **Thời điểm kích hoạt** | Trước khi bất kỳ mã JS nào của trang web chạy | Tại thời điểm gửi request HTTP Header đầu tiên | Khi mở Context mới |
+| **Ghi Cookie HttpOnly?** | ❌ **BẤT LỰC** (Sandbox JS chặn hoàn toàn) | ✅ **THÀNH CÔNG 100%** (Giao thức mạng hỗ trợ) | ➖ Không áp dụng |
+| **Khởi tạo Zustand/Pinia Store?** | ✅ **CỰC KỲ MẠNH MẼ** (Tái tạo cả cấu trúc JSON lồng nhau) | ❌ Không trực tiếp (Chỉ gửi cookie về server) | ❌ Store để trống tự nhiên |
+| **Nguy cơ Auto-Redirect** | ⚠️ Rất cao nếu truy cập trang `/login` | ⚠️ Rất cao nếu truy cập trang `/login` | 🛡️ **0% (An toàn tuyệt đối trên trang Login/Register)** |
+| **Kịch bản ứng dụng chuẩn** | • 98% kịch bản Admin / Dashboard / Checkout<br>• SPA lưu phiên ở LocalStorage / Zustand | • Next.js SSR / Server Components<br>• Django, Laravel, Spring Security dùng Cookie Session | • Kiểm thử Form Login UI & Submit form<br>• Kiểm thử sai mật khẩu (401), Rate limit (429)<br>• Khách vãng lai xem giỏ hàng |
+
+---
+
+#### 🌟 1. "Bộ Ba Quyền Lực" (The Holy Trinity): Vì Sao Bắt Buộc Phải Kết Hợp Cả 3?
+
+Nếu hệ thống chỉ áp dụng 1 hoặc 2 mắt xích đơn lẻ, tự động hóa kiểm thử sẽ lập tức rơi vào các bẫy kiến trúc (Architectural Pitfalls):
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                 VÌ SAO SIÊU APP BẮT BUỘC PHẢI KẾT HỢP CẢ 3 (SETUP + WORKER RAM + ADDINITSCRIPT)?        │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                         │
+│  ❌ NẾU CHỈ CÓ SETUP (Bài 17 UI / Bài 23 API cũ):                                                       │
+│     • Project 'setup' ghi file đĩa '.auth/staff.json' ➔ Cấu hình 'storageState' trong config.           │
+│     • 💥 HẬU QUẢ:                                                                                      │
+│       1. Tầng API (authedStaffClient) không có token chuỗi sẵn trong RAM để gắn Header Bearer!          │
+│       2. storageState thô không nạp được Client State lồng nhau phức tạp của Next.js (Zustand/Redux).   │
+│                                                                                                         │
+│  ❌ NẾU CHỈ CÓ WORKER SCOPE MÀ THIẾU ADDINITSCRIPT:                                                     │
+│     • Worker giữ token Staff trong RAM rất tốt, API Client chạy siêu tốc.                               │
+│     • 💥 HẬU QUẢ: Trình duyệt Chromium mở lên không có dữ liệu phiên trong localStorage ➔ Bị           │
+│       Next.js Auth Guard đá văng về Form Login UI ngay lập tức!                                         │
+│                                                                                                         │
+│  ❌ NẾU CHỈ CÓ ADDINITSCRIPT MÀ THIẾU SETUP & WORKER SCOPE:                                             │
+│     • 💥 HẬU QUẢ: Từng bài test phải tự gọi API tạo user lại từ đầu (lãng phí 200ms x 100 bài test =    │
+│       20 giây vô ích) hoặc phải tự gõ form Login UI chậm chạp!                                          │
+│                                                                                                         │
+│  🏆 SIÊU APP BÀI 24 KẾT HỢP TRỌN VẸN CẢ 3 MẮT XÍCH (THE HOLY TRINITY):                                  │
+│     1. 🚀 MẮT XÍCH 1 - SETUP PHA (Khởi tạo 1 lần): Sinh/lấy Token Staff cấp Worker hoặc Global.        │
+│     2. 🧠 MẮT XÍCH 2 - WORKER SCOPE RAM (0ms delay): Neo giữ Token trong RAM Node.js suốt 100 tests.    │
+│     3. 💉 MẮT XÍCH 3 - ADDINITSCRIPT (CDP Bridge): Rút Token từ RAM Worker bơm vào Browser trước DOM!    │
+│                                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+#### 🗺️ 2. Ma Trận Hệ Phổ 5 Chiến Lược Xác Thực Trong Playwright Enterprise
+
+Khi phân loại theo 3 trục kiến trúc (**Nguồn xác thực** x **Vòng đời điều phối** x **Kênh chuyển giao vào Browser**), ta có bức tranh toàn cảnh 5 trường phái xác thực:
+
+```text
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              HỆ PHỔ 5 CHIẾN LƯỢC XÁC THỰC TRONG PLAYWRIGHT TYPESCRIPT                                    │
+├───────────────────┬──────────────────────┬──────────────────────────────┬────────────────────────────────┬────────────────┤
+│ CHIẾN LƯỢC        │ 1. NGUỒN XÁC THỰC    │ 2. ĐIỀU PHỐI (ORCHESTRATION) │ 3. CHUYỂN GIAO VÀO BROWSER     │ 4. LƯU PHIÊN   │
+├───────────────────┼──────────────────────┼──────────────────────────────┼────────────────────────────────┼────────────────┤
+│ 🐢 Chiến lược 1   │ 🖥️ Gõ Form UI Login  │ 📂 Project Dependencies      │ 💾 storageState (Playwright nạp│ Ổ cứng Disk    │
+│ (Chuẩn Bài 17)    │ (page.fill/click)    │ (setup project chạy trước)   │    trực tiếp từ file đĩa)      │ (.auth/*.json) │
+├───────────────────┼──────────────────────┼──────────────────────────────┼────────────────────────────────┼────────────────┤
+│ ⚡ Chiến lược 2   │ ⚡ Bắn API Request   │ 📂 Project Dependencies      │ 💾 storageState hoặc Worker    │ Ổ cứng Disk    │
+│ (Chuẩn Bài 23)    │ (request.post login) │ (setup project chạy trước)   │    đọc file đĩa cấp cho API    │ (.auth/*.json) │
+├───────────────────┼──────────────────────┼──────────────────────────────┼────────────────────────────────┼────────────────┤
+│ 💉 Chiến lược 3   │ ⚡ Bắn API hoặc UI   │ 📂 Project Dependencies      │ 💉 addInitScript (Đọc file đĩa │ Ổ cứng Disk    │
+│ (Setup + Inject)  │ (Trong setup project)│ (dependencies: ['setup'])    │    rồi bơm vào localStorage)   │ (.auth/*.json) │
+├───────────────────┼──────────────────────┼──────────────────────────────┼────────────────────────────────┼────────────────┤
+│ 🏰 Chiến lược 4   │ ⚡ Bắn API Request   │ 🧠 Worker Scope Fixture      │ 💉 addInitScript (Rút Token    │ RAM Worker     │
+│ (Siêu App Bài 24) │ (Tự gọi lúc Worker mở│ (KHÔNG CẦN setup dependency, │    từ RAM bơm thẳng Browser)   │ (0ms, KHÔNG    │
+│                   │  cấp Worker Snapshot)│  chạy độc lập từng worker)   │    (Zero-Race Condition)       │  ghi đĩa Disk) │
+├───────────────────┼──────────────────────┼──────────────────────────────┼────────────────────────────────┼────────────────┤
+│ 🧪 Chiến lược 5   │ ⚡ Bắn API tạo User  │ 🧪 Test Scope Fixture        │ 💉 addInitScript               │ RAM Test Scope │
+│ (Disposable User) │ (Sinh user mới toanh │ (Mỗi bài test tự sinh riêng) │ (Tiêm phiên dùng 1 lần,        │ (Hết bài test  │
+│                   │  trong 100ms)        │                              │  hết test tiêu hủy sạch bóng)  │  tự tiêu hủy)  │
+└───────────────────┴──────────────────────┴──────────────────────────────┴────────────────────────────────┴────────────────┘
+```
+
+##### 💡 Vì Sao Đã Có Project Setup Dependencies Mà Vẫn Cần Bơm `addInitScript` (Chiến Lược 3)?
+- **Vấn đề cốt lõi**: `storageState` mặc định của Playwright chỉ lưu Cookies chuẩn và các cặp Key-Value tĩnh đơn giản trong `localStorage`.
+- **Thực tế Frontend hiện đại (Next.js / React / Vue)**: Dữ liệu phiên không chỉ là `token`, mà nằm trong Store của **Zustand, Redux Persist hoặc Pinia** dưới dạng JSON lồng nhau kèm `version`:
+  `localStorage.setItem("neko_auth", JSON.stringify({ state: { accessToken: token, isAuthenticated: true }, version: 0 }))`.
+- Nếu chỉ nạp file qua `storageState`, React Hydration nạp lên sẽ thấy Store Zustand bị rỗng và **vẫn đá văng người dùng về trang `/login`**!
+- 👉 **Do đó, Chiến lược 3 ra đời**: Project `setup` ghi file đĩa chứa token ➔ Custom Fixture đọc file đĩa và dùng `context.addInitScript` tái tạo chuẩn xác cấu trúc JSON Zustand rồi tiêm vào Browser trước khi React chạy!
+
+---
+
+#### ⚖️ 3. Hai Biến Thể Của Mắt Xích 1 (Setup) Trong Siêu App Thực Chiến
+
+Để người học hiểu vì sao file kịch bản `06-hybrid-full-e2e-workflow.spec.ts` của chúng ta vừa có `Proof 1 (Worker RAM)` vừa có `Proof 3 (Storage State & Disk)`:
+
+1. **Biến thể 1A: Setup Qua Project Dependencies & File Đĩa (Kế thừa Bài 23 & Proof 3)**:
+   - Thích hợp khi hệ thống dùng **Tài khoản Tĩnh (Static Shared Account)** như Super Admin do DevOps cấp sẵn.
+   - Project `setup` đăng nhập 1 lần ➔ Ghi `.auth/staff-token.json` ➔ Worker đọc đĩa 1 lần nạp vào RAM ➔ `addInitScript` bơm vào Browser.
+2. **Biến thể 1B: Setup Trực Tiếp Trong Worker Process (Đỉnh cao Bài 24 & Proof 1)**:
+   - Thích hợp khi chạy **Đa luồng song song (Parallel Workers)** trên CI/CD.
+   - Không cần project `setup`, không cần ghi file đĩa. Mỗi Worker Process khi sinh ra tự chạy khối Setup của Worker đó (`staff_super_w0_...`, `staff_super_w1_...`) ➔ Lưu thẳng vào RAM Worker ➔ `addInitScript` bơm vào Browser.
+   - **Triệt tiêu 100% nguy cơ Deadlock / Lock file đĩa khi chạy 10 Worker song song!**
+
+---
+
+#### 🔬 4. Giải Mã Vị Trí Của addInitScript & Dây Chuyền 3 Trạm Cho Site Không Thể Login Bằng API (Dính Captcha/SSO)
+
+Một trong những thắc mắc kiến trúc có chiều sâu nhất mà các kỹ sư kiểm thử thường đặt ra khi triển khai xác thực Hybrid:
+
+> ❓ **Câu hỏi 1**: *"Ta có thể gọi `addInitScript` ở Global Setup / Dependency Setup một lần để toàn bộ các bài test sau tự động thừa hưởng phiên đăng nhập không?"*  
+> ❓ **Câu hỏi 2**: *"Với những website thực tế KHÔNG CHO PHÉP đăng nhập bằng API (bị chặn bởi Cloudflare Turnstile, reCAPTCHA v3, SSO Microsoft/Okta, hoặc mã hóa RSA mật khẩu client-side), ta phải phối hợp Global Setup, Worker Scope và `addInitScript` như thế nào?"*
+
+---
+
+##### 🚫 1. Bản Chất Kỹ Thuật: Vì Sao KHÔNG THỂ Tiêm `addInitScript` Ở Global Setup?
+
+> 👉 **NGUYÊN TẮC BẤT BIẾN CỦA PLAYWRIGHT & CHROMIUM CDP**:  
+> `addInitScript` **BẮT BUỘC PHẢI THỰC THI Ở TẦNG TEST SCOPE (`context` CỦA TỪNG BÀI TEST)**, hoàn toàn không thể "tiêm ở Global Setup rồi để các bài test sau dùng ké"!
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                      VÌ SAO addInitScript KHÔNG THỂ CHUYỂN GIAO TỪ GLOBAL SETUP SANG TEST?              │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                         │
+│  1️⃣ TẠI GLOBAL SETUP (PROJECT SETUP):                                                                   │
+│     • Playwright mở BrowserContext tạm thời để chạy kịch bản Setup.                                     │
+│     • Nếu bạn gọi context.addInitScript(...) ở đây, lệnh CDP 'Page.addScriptToEvaluateOnNewDocument'     │
+│       CHỈ ĐƯỢC ĐĂNG KÝ CHO RIÊNG CONTEXT TẠM THỜI NÀY!                                                 │
+│                                                                                                         │
+│  2️⃣ KHI GLOBAL SETUP HOÀN TẤT:                                                                         │
+│     • 💥 BROWSERCONTEXT CỦA SETUP BỊ TIÊU HỦY HOÀN TOÀN (DISPOSED / TERMINATED)!                         │
+│     • Toàn bộ script khởi tạo trong ngữ cảnh đó BỐC HƠI 100% KHỎI BỘ NHỚ!                               │
+│                                                                                                         │
+│  3️⃣ KHI CÁC BÀI TEST CHÍNH BẮT ĐẦU:                                                                    │
+│     • Mỗi bài test mở một BROWSERCONTEXT MỚI TINH (FRESH ISOLATED CONTEXT).                             │
+│     • File đĩa '.auth/admin.json' (nếu có) chỉ lưu được Cookies và chuỗi text thô của localStorage.     │
+│     • ⚠️ Chromium DevTools Protocol KHÔNG HỖ TRỢ XUẤT MÃ JAVASCRIPT RA FILE ĐĨA ĐỂ NẠP LẠI!             │
+│                                                                                                         │
+│  🏆 KẾT LUẬN: addInitScript BẮT BUỘC PHẢI ĐƯỢC GỌI TRONG CUSTOM FIXTURE 'page' Ở TEST SCOPE:             │
+│     • Mỗi khi bài test mở Context mới ➔ Fixture tự động kích hoạt context.addInitScript() cho Context đó! │
+│                                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+##### 🛡️ 2. Dây Chuyền 3 Trạm Thực Chiến: Trị Các Website Chặn API (Dính Captcha / SSO / Turnstile)
+
+Trong môi trường thực tế, không phải lúc nào Backend cũng mở sẵn endpoint API Login cho Tester. Nếu ứng dụng web bắt buộc phải đăng nhập qua giao diện người dùng, **DÂY CHUYỀN 3 TRẠM HYBRID** sẽ phối hợp nhịp nhàng như sau:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│              DÂY CHUYỀN 3 TRẠM HYBRID CHO SITE CHẶN API (BẮT BUỘC LOGIN FORM UI / CAPTCHA)              │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                         │
+│  🏛️ [TRẠM 1: GLOBAL SETUP PROJECT — ĐĂNG NHẬP UI ĐÚNG 1 LẦN DUY NHẤT]                                   │
+│  • Project 'setup' chạy trước toàn suite (api-auth.setup.ts / ui-auth.setup.ts).                        │
+│  • Mở Trình duyệt thật ➔ Vượt Captcha / Đăng nhập SSO / Gõ form Login UI 1 lần duy nhất.                │
+│  • Trích xuất Token (từ localStorage hoặc Cookie) ➔ Ghi ra file đĩa: '.auth/staff-token.json'.          │
+│                                                                                                         │
+│                                      │                                                                  │
+│                                      ▼ (Mỗi Worker Process đọc file đĩa ĐÚNG 1 LẦN khi khởi động)       │
+│                                                                                                         │
+│  🧠 [TRẠM 2: WORKER SCOPE RAM SNAPSHOT — NEO GIỮ PHIÊN TRONG BỘ NHỚ TIẾN TRÌNH]                         │
+│  • Khai báo: fixture 'workerStaffSnapshot' với { scope: 'worker' }.                                     │
+│  • Worker 0 khởi động ➔ Đọc file đĩa ĐÚNG 1 LẦN ➔ Cất Token vào RAM tiến trình:                         │
+│         const token = fs.readFileSync('.auth/staff-token.json', 'utf-8');                             │
+│         await use({ token, email: staffEmail, user });                                                  │
+│  • Lợi ích: Triệt tiêu hàng trăm lần đọc ổ cứng, triệt tiêu nguy cơ khóa file (Disk Lock) khi parallel!│
+│                                                                                                         │
+│                                      │                                                                  │
+│                                      ▼ (Từng bài test bắt đầu: Test Scope)                              │
+│                                                                                                         │
+│  💉 [TRẠM 3: TEST SCOPE FIXTURE — BƠM addInitScript VÀO TỪNG CONTEXT RIÊNG BIỆT]                        │
+│  • Fixture 'page' ở Test Scope lấy Token từ RAM của Trạm 2 ➔ Bơm vào 'context.addInitScript()':        │
+│         await context.addInitScript(({ token, user }) => {                                              │
+│           localStorage.setItem('neko_auth', JSON.stringify({ state: { accessToken: token } }));         │
+│         }, { token: workerStaffSnapshot.token, user: workerStaffSnapshot.user });                       │
+│  • Trình duyệt mở thẳng Dashboard Admin, BYPASS 100% MÀN HÌNH CAPTCHA / FORM LOGIN CHO 100 BÀI TEST!   │
+│                                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+##### 📊 3. Bảng Đối Chiếu Chiến Lược: Site Cho Phép Login API vs Site Bắt Buộc Login UI
+
+| Tiêu Chí So Sánh | 🌐 Nhóm 1: Site CÓ THỂ Đăng Nhập API | 🛡️ Nhóm 2: Site BẮT BUỘC Đăng Nhập UI (Captcha / SSO) |
+|---|---|---|
+| **Trạm 1: Khởi tạo (Setup)** | Gọi `request.post('/auth/login')` siêu tốc (100ms) ➔ Ghi file đĩa hoặc cấp trực tiếp Worker. | Mở Browser gõ form UI hoặc giải Captcha/SSO 1 lần duy nhất (3s - 5s) ➔ Ghi file đĩa. |
+| **Trạm 2: Neo giữ (Worker RAM)** | Worker đọc file đĩa (hoặc tự gọi API) nạp vào RAM tiến trình Worker. | **Worker đọc file đĩa `.auth/staff-token.json` ĐÚNG 1 LẦN** nạp vào RAM tiến trình Worker. |
+| **Trạm 3: Tiêm phiên (Test Scope)** | `context.addInitScript` rút Token từ RAM bơm vào `localStorage` của từng bài test. | **Y hệt nhóm 1**: `context.addInitScript` rút Token từ RAM bơm vào `localStorage` của từng bài test. |
+| **Trải nghiệm chạy test** | Thẳng Dashboard, bypass 100% form login. | **Thẳng Dashboard, bypass 100% login, không bao giờ phải gặp lại màn hình Captcha/SSO nữa!** |
+
+---
+
+##### 💡 4. Vì Sao Bắt Buộc Phải Có Trạm 2 (Worker RAM) Làm Cầu Nối Disk-to-RAM?
+
+Nhiều tester đặt câu hỏi: *"Nếu Trạm 1 đã tạo ra file đĩa `.auth/staff-token.json` rồi, sao ở Trạm 3 từng bài test không `fs.readFileSync` trực tiếp luôn mà phải trung chuyển qua Worker Scope RAM?"*
+
+👉 **2 lý do kỹ thuật chí mạng trong môi trường CI/CD Enterprise**:
+1. **Triệt tiêu lỗi khóa file đĩa (Disk Locking) khi chạy song song (Parallel)**:  
+   Khi chạy 10 Worker cùng lúc trên CI, nếu 100 bài test liên tục đọc/ghi file đĩa song song, hệ điều hành Windows/Linux rất dễ gây lỗi `EBUSY: resource busy or locked` hoặc đọc phải file rỗng do Race Condition. Đọc file 1 lần duy nhất lúc Worker mở máy sẽ triệt tiêu 100% rủi ro này!
+2. **Tối ưu hiệu năng bộ nhớ (Zero I/O Bottleneck)**:  
+   Đọc dữ liệu từ RAM tiến trình tốn **0 nano-giây**, trong khi đọc ổ đĩa SSD/HDD tốn từ **5ms - 20ms** cho mỗi bài test. Đưa vào Worker RAM giúp toàn bộ suite test tăng tốc vượt bậc!
+
+---
+
+#### 🍪🔗 5. Kết Hợp Cả Hai: `addCookies()` + `addInitScript()` Cho Site Dùng Cookie HttpOnly KẾT HỢP Client State
+
+> ❓ **Câu hỏi thực chiến**: *"Nếu website dùng Cookie HttpOnly (server-side session) thì `addInitScript` bất lực. Vậy nếu website dùng CẢ Cookie HttpOnly LẪN Client State (Zustand/Redux), ta phải phối hợp như thế nào? Có thể kết hợp cả Project Dependencies lẫn `addInitScript` không?"*
+
+👉 **Câu trả lời**: **CÓ THỂ VÀ CẦN PHẢI kết hợp cả hai!** Bản chất `addCookies()` và `addInitScript()` **KHÔNG THAY THẾ nhau — chúng BỔ SUNG cho nhau**, vì mỗi thứ hoạt động ở một tầng kiến trúc khác nhau hoàn toàn.
+
+---
+
+##### 🏗️ 5.1. Bản Chất: 2 Tầng Xác Thực Song Song Trong Ứng Dụng Web Hiện Đại
+
+Hầu hết ứng dụng web hiện đại (Next.js SSR, Nuxt SSR, Laravel + Inertia, Django + React SPA, ...) **không bao giờ chỉ dùng mỗi Cookie**. Chúng luôn kết hợp 2 tầng xác thực song song:
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│         ỨNG DỤNG WEB HIỆN ĐẠI: 2 TẦNG XÁC THỰC SONG SONG (COOKIE + CLIENT STATE)                      │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                          │
+│  🍪 TẦNG 1 — COOKIE HTTPONLY (Server-Side Session):                                                      │
+│     • Mục đích: Xác thực với Backend khi trình duyệt gửi HTTP Request.                                  │
+│     • Ví dụ framework: Laravel Sanctum, Django Session, Next.js iron-session, Spring Security.            │
+│     • Đặc điểm cốt lõi: Cờ HttpOnly BẬT → JavaScript HOÀN TOÀN BẤT LỰC trước Cookie này!               │
+│     • ✅ Playwright giải quyết bằng: context.addCookies() hoặc newContext({ storageState }).              │
+│                                                                                                          │
+│  💾 TẦNG 2 — CLIENT STATE (Client-Side UI State):                                                        │
+│     • Mục đích: React/Vue/Next.js cần biết "người dùng đã đăng nhập" để render đúng giao diện.           │
+│     • Ví dụ: Zustand Store { isAuthenticated: true, user: {...}, accessToken: '...' }.                   │
+│     • Đặc điểm cốt lõi: Nằm trong localStorage/sessionStorage → JavaScript CÓ THỂ ghi tự do.            │
+│     • ✅ Playwright giải quyết bằng: context.addInitScript() (bơm trước cả khi React boot).              │
+│                                                                                                          │
+│  ⚠️ HIỂM HỌA NẾU CHỈ NẠP 1 TẦNG MÀ THIẾU TẦNG CÒN LẠI:                                               │
+│                                                                                                          │
+│     ❌ Chỉ addCookies() mà THIẾU addInitScript():                                                        │
+│        Server nhận Cookie OK → trả HTML SSR chuẩn → NHƯNG khi React Hydrate trên client,                │
+│        Zustand Store vẫn RỖNG TRƠN → Auth Guard client-side đá văng về /login ngay lập tức!             │
+│                                                                                                          │
+│     ❌ Chỉ addInitScript() mà THIẾU addCookies():                                                        │
+│        React thấy Zustand OK → render Dashboard UI → NHƯNG khi gửi API fetch() lên Server,              │
+│        Browser KHÔNG GỬI Cookie HttpOnly → Server trả 401 Unauthorized → Toàn bộ API call fail!         │
+│                                                                                                          │
+│     ✅ KẾT HỢP CẢ HAI: addCookies() + addInitScript():                                                  │
+│        Server nhận Cookie ✓ + React nhận Zustand Store ✓ → Vào thẳng Dashboard, 0 redirect, 0 lỗi!     │
+│                                                                                                          │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+##### 📊 5.2. Bảng Phân Chia Trách Nhiệm: `addInitScript` vs `addCookies` — Ai Làm Gì?
+
+| Nhiệm vụ cụ thể | `addInitScript` làm được? | `addCookies` / `storageState` làm được? |
+|---|---|---|
+| **Ghi Cookie `HttpOnly`** | ❌ **BẤT LỰC** (Sandbox JS chặn hoàn toàn) | ✅ **100%** (Network Protocol Layer) |
+| **Ghi Cookie thường** (không cờ HttpOnly) | ✅ Được (qua `document.cookie = ...`) | ✅ Được |
+| **Khởi tạo `localStorage` / Zustand / Redux** | ✅ **CỰC MẠNH** (Trước cả React boot) | ❌ **BẤT LỰC** (`storageState` chỉ lưu cặp key-value thô, không tái tạo được cấu trúc JSON lồng nhau + `version` của Zustand Persist) |
+| **Gán biến `window.*` toàn cục** | ✅ Được | ❌ Không thể |
+| **Gửi Cookie về Server qua Header** | ❌ Không liên quan (DOM layer) | ✅ Tự động gửi `Cookie:` header |
+
+> 💡 **Kết luận**: `addInitScript` và `addCookies` **KHÔNG CẠNH TRANH** — chúng **BỔ SUNG** cho nhau. Cookie lo phần **Server** (Network Protocol), `addInitScript` lo phần **Client** (DOM Scripting).
+
+---
+
+##### 🏗️ 5.3. Dây Chuyền 3 Trạm Mở Rộng: Project Dependencies + Worker RAM + `addCookies` + `addInitScript`
+
+Khi ứng dụng sử dụng Cookie HttpOnly kết hợp Client State, và login bị chặn bởi Captcha/SSO (bắt buộc Project Dependencies):
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  DÂY CHUYỀN 3 TRẠM MỞ RỘNG: SITE DÙNG COOKIE HTTPONLY + CLIENT STATE (Next.js SSR + Zustand)           │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                          │
+│  🏛️ TRẠM 1: PROJECT SETUP (dependencies: ['setup'])                                                     │
+│     • Mở trình duyệt thật → Đăng nhập UI 1 lần (vượt Captcha / SSO / reCAPTCHA).                        │
+│     • Trình duyệt tự nhận Cookie HttpOnly từ Server qua Set-Cookie header.                               │
+│     • Ghi TOÀN BỘ trạng thái ra file đĩa (cookies + localStorage + sessionStorage):                     │
+│       await page.context().storageState({ path: '.auth/staff.json' });                                   │
+│     • File '.auth/staff.json' chứa:                                                                     │
+│       {                                                                                                  │
+│         "cookies": [                                                                                     │
+│           { "name": "session_id", "value": "abc123", "httpOnly": true, "domain": "..." },                │
+│           { "name": "csrf_token", "value": "xyz789", "httpOnly": false, "domain": "..." }                │
+│         ],                                                                                               │
+│         "origins": [                                                                                     │
+│           { "origin": "https://app.example.com", "localStorage": [                                      │
+│             { "name": "neko_auth", "value": "{\"state\":{...},\"version\":0}" }                          │
+│           ]}                                                                                             │
+│         ]                                                                                                │
+│       }                                                                                                  │
+│                                                                                                          │
+│                                    │                                                                     │
+│                                    ▼                                                                     │
+│                                                                                                          │
+│  🧠 TRẠM 2: WORKER SCOPE — ĐỌC FILE ĐĨA 1 LẦN VÀO RAM (1 lần / Worker Process)                        │
+│     workerStaffSnapshot: [                                                                               │
+│       async ({}, use) => {                                                                               │
+│         const raw = fs.readFileSync('.auth/staff.json', 'utf-8');                                        │
+│         const storageState = JSON.parse(raw);                                                            │
+│         // Trích xuất token chuỗi từ cookies để gắn cho API Client:                                     │
+│         const sessionCookie = storageState.cookies                                                       │
+│           .find(c => c.name === 'session_id');                                                           │
+│         // Trích xuất Zustand State từ localStorage (nếu có) cho addInitScript:                          │
+│         const localStorageAuth = storageState.origins?.[0]?.localStorage                                 │
+│           ?.find(item => item.name === 'neko_auth');                                                     │
+│         const zustandState = localStorageAuth                                                            │
+│           ? JSON.parse(localStorageAuth.value) : null;                                                   │
+│         await use({ storageState, sessionCookie, zustandState });                                        │
+│       },                                                                                                 │
+│       { scope: 'worker' }                                                                                │
+│     ]                                                                                                    │
+│                                                                                                          │
+│                                    │                                                                     │
+│                                    ▼                                                                     │
+│                                                                                                          │
+│  💉 TRẠM 3: TEST SCOPE — KẾT HỢP SONG SONG addCookies() + addInitScript()                               │
+│     page: async ({ context, workerStaffSnapshot }, use) => {                                             │
+│                                                                                                          │
+│       // ─── PHẦN A: NẠP COOKIE HTTPONLY QUA NETWORK PROTOCOL LAYER ───                                  │
+│       // addInitScript() KHÔNG LÀM ĐƯỢC phần này! (Sandbox JS chặn HttpOnly)                            │
+│       await context.addCookies(workerStaffSnapshot.storageState.cookies);                                │
+│                                                                                                          │
+│       // ─── PHẦN B: BƠM CLIENT STATE QUA DOM SCRIPTING LAYER ───                                       │
+│       // addCookies() KHÔNG LÀM ĐƯỢC phần này! (Không thể tái tạo Zustand Store)                        │
+│       if (workerStaffSnapshot.zustandState) {                                                            │
+│         await context.addInitScript(({ zustandState }) => {                                              │
+│           localStorage.setItem('neko_auth', JSON.stringify(zustandState));                                │
+│         }, { zustandState: workerStaffSnapshot.zustandState });                                           │
+│       }                                                                                                  │
+│                                                                                                          │
+│       const page = await context.newPage();                                                              │
+│       await use(page);                                                                                   │
+│     }                                                                                                    │
+│                                                                                                          │
+│  🎯 KẾT QUẢ:                                                                                            │
+│     Server nhận Cookie HttpOnly ✓ → Trả HTML SSR chính xác.                                             │
+│     React Hydrate thấy Zustand Store đầy đủ ✓ → KHÔNG redirect, KHÔNG flash.                            │
+│     Vào thẳng Dashboard 0ms, bypass 100% Captcha/SSO cho toàn bộ test suite!                             │
+│                                                                                                          │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+##### 💻 5.4. Mã Nguồn Fixture Mẫu: Kết Hợp `addCookies()` + `addInitScript()` Thực Chiến
+
+```typescript
+// fixtures/ssr-hybrid-auth.fixture.ts — KẾT HỢP Cookie HttpOnly + Client State (Zustand)
+import { test as base } from "@playwright/test";
+import * as fs from "fs";
+
+type HybridSnapshot = {
+  cookies: Array<{
+    name: string; value: string; httpOnly: boolean;
+    domain: string; path: string;
+  }>;
+  zustandState: Record<string, unknown> | null;
+  token: string;
+};
+
+export const test = base.extend<{}, { workerStaffSnapshot: HybridSnapshot }>({
+  // ── TRẠM 2: Worker Scope — Đọc file đĩa 1 lần nạp vào RAM ──
+  workerStaffSnapshot: [
+    async ({}, use) => {
+      const raw = fs.readFileSync(".auth/staff.json", "utf-8");
+      const storageState = JSON.parse(raw);
+
+      // Trích xuất Zustand State từ localStorage (nếu ứng dụng có Client State)
+      const localAuth = storageState.origins?.[0]?.localStorage
+        ?.find((item: { name: string }) => item.name === "neko_auth");
+      const zustandState = localAuth ? JSON.parse(localAuth.value) : null;
+
+      // Trích xuất token chuỗi cho API Client (nếu cần)
+      const sessionCookie = storageState.cookies
+        .find((c: { name: string }) => c.name === "session_id");
+
+      await use({
+        cookies: storageState.cookies,
+        zustandState,
+        token: sessionCookie?.value || "",
+      });
+    },
+    { scope: "worker" },
+  ],
+
+  // ── TRẠM 3: Test Scope — Song song addCookies() + addInitScript() ──
+  page: async ({ context, workerStaffSnapshot }, use) => {
+    // 🍪 PHẦN A: Nạp Cookie HttpOnly (Network Protocol Layer)
+    // → Server nhận được session_id trong Header Cookie:
+    await context.addCookies(workerStaffSnapshot.cookies);
+
+    // 💉 PHẦN B: Bơm Client State Zustand (DOM Scripting Layer)
+    // → React Hydrate thấy Store đầy đủ, KHÔNG redirect:
+    if (workerStaffSnapshot.zustandState) {
+      await context.addInitScript(
+        ({ state }) => {
+          localStorage.setItem("neko_auth", JSON.stringify(state));
+        },
+        { state: workerStaffSnapshot.zustandState },
+      );
+    }
+
+    const page = await context.newPage();
+    await use(page);
+    await page.close();
+  },
+});
+```
+
+---
+
+##### 🧭 5.5. Chỉ Dẫn Thực Chiến: Khi Nào Cần Cái Gì?
+
+| Loại ứng dụng | Chỉ `addCookies` | Chỉ `addInitScript` | Cần CẢ HAI |
+|---|---|---|---|
+| **SPA thuần Client** (React + JWT ở localStorage) | ❌ Không cần | ✅ Đủ rồi | ❌ Không cần |
+| **Server-Rendered thuần** (Laravel Blade, Django Template, Rails ERB) | ✅ Đủ rồi | ❌ Không cần | ❌ Không cần |
+| **Next.js SSR + Zustand** (Cookie session + Client State) | ❌ Thiếu | ❌ Thiếu | ✅ **BẮT BUỘC CẢ HAI** |
+| **Nuxt SSR + Pinia** (Cookie session + Client State) | ❌ Thiếu | ❌ Thiếu | ✅ **BẮT BUỘC CẢ HAI** |
+| **Laravel Sanctum + Inertia + Vue** (Cookie CSRF + Client Props) | ❌ Thiếu | ❌ Thiếu | ✅ **BẮT BUỘC CẢ HAI** |
+
+> 💡 **Quy tắc nhận biết đơn giản**: Nếu website vừa có **Session Cookie HttpOnly** (kiểm tra bằng DevTools → Application → Cookies → cột HttpOnly có tick ✓) VÀ vừa có **localStorage/Zustand/Redux** lưu trạng thái user, thì bạn cần kết hợp cả `addCookies()` + `addInitScript()` trong Fixture Trạm 3.
+
+---
+
+#### 📊 6. Đối Chiếu 2 Trường Phái Tiêu Biểu: Pre-baked Auth (Cách 1) vs Dynamic Injection (Cách 2)
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -2741,6 +3719,15 @@ test("Dùng token tĩnh từ file setup", async ({ authedStaffClient }) => {
 });
 ```
 
+###### 🖥️ Lệnh Chạy Riêng Kịch Bản Cách 1 (Storage State & File Đĩa):
+```bash
+# Chạy riêng bài test chứng minh xuất & nạp storageState file đĩa (Proof 3):
+npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/06-hybrid-full-e2e-workflow.spec.ts -g "STORAGE STATE" --config=configs/playwright.lesson24-network.config.ts
+
+# Hoặc chạy toàn bộ suite Bài 23 (Dùng Project Dependencies Setup & File đĩa):
+# npx playwright test modules/2-api/NekoCoffee/lesson-23/specs/ --config=configs/playwright.lesson23-hybrid-auth.config.ts
+```
+
 ##### ⚡ [MÃ NGUỒN CÁCH 2] — Dùng API Seeding Động & `page.addInitScript()` (Bài 24 `04-hybrid-api-ui-e2e.spec.ts`):
 
 ```typescript
@@ -2794,6 +3781,16 @@ test("01 - [HYBRID E2E FLOW] Khởi tạo tài khoản qua API -> Đăng nhập 
 });
 ```
 
+###### ⚡ Lệnh Chạy Riêng Kịch Bản Cách 2 (Dynamic Seeding & addInitScript):
+```bash
+# Chạy trực tiếp file kiểm thử thuần kịch bản Cách 2 (04-hybrid-api-ui-e2e):
+npm run test:lesson24-hybrid
+# (Lệnh chi tiết: npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/04-hybrid-api-ui-e2e.spec.ts --config=configs/playwright.lesson24-network.config.ts)
+
+# Hoặc chạy riêng Proof 2 (Dynamic Injection qua addInitScript) trong bài 06:
+# npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/06-hybrid-full-e2e-workflow.spec.ts -g "DYNAMIC INJECTION" --config=configs/playwright.lesson24-network.config.ts
+```
+
 ###### 🔬 Phân Tích Chuyên Sâu Các Bước Vận Hành Thực Tế (Execution Step-by-Step Breakdown):
 
 ```text
@@ -2829,48 +3826,54 @@ test("01 - [HYBRID E2E FLOW] Khởi tạo tài khoản qua API -> Đăng nhập 
 ```
 
 ##### 1️⃣ Bước 1: Khởi Tạo User Ngẫu Nhiên & API Fast Seeding Trong 200ms
-* **Bản chất kỹ thuật**: Thay vì phải khởi tạo trình duyệt, điều hướng tới trang đăng ký `/register`, gõ từng ký tự vào form và chờ đợi submit (mất từ 4.000ms - 6.000ms), Playwright sử dụng fixture `request` (tầng mạng Node.js thuần túy) bắn trực tiếp một HTTP POST request vào `/auth/register`.
-* **Cơ chế cô lập dữ liệu tuyệt đối (100% Data Isolation)**:
-  * Sử dụng `uniqueId = Date.now()` để tạo username `hybrid_user_${uniqueId}` và email `hybrid_${uniqueId}@nekocoffee.com`.
-  * Đảm bảo mỗi bài test sở hữu một thực thể người dùng hoàn toàn độc lập trong cơ sở dữ liệu. Không xảy ra hiện tượng xung đột dữ liệu (Race Condition) ngay cả khi chạy 10 Worker song song.
-* **Thời gian hoàn tất**: Chỉ mất **~150ms - 200ms** (nhanh gấp 30 lần so với thao tác UI).
-* **Kết quả thu được**: Trích xuất `access_token` và `user.id` lưu trực tiếp trên RAM (Node.js Heap Memory) của tiến trình test hiện tại, hoàn toàn không cần ghi bất kỳ file `.json` nào xuống ổ cứng.
+
+- **Bản chất kỹ thuật**: Thay vì phải khởi tạo trình duyệt, điều hướng tới trang đăng ký `/register`, gõ từng ký tự vào form và chờ đợi submit (mất từ 4.000ms - 6.000ms), Playwright sử dụng fixture `request` (tầng mạng Node.js thuần túy) bắn trực tiếp một HTTP POST request vào `/auth/register`.
+- **Cơ chế cô lập dữ liệu tuyệt đối (100% Data Isolation)**:
+  - Sử dụng `uniqueId = Date.now()` để tạo username `hybrid_user_${uniqueId}` và email `hybrid_${uniqueId}@nekocoffee.com`.
+  - Đảm bảo mỗi bài test sở hữu một thực thể người dùng hoàn toàn độc lập trong cơ sở dữ liệu. Không xảy ra hiện tượng xung đột dữ liệu (Race Condition) ngay cả khi chạy 10 Worker song song.
+- **Thời gian hoàn tất**: Chỉ mất **~150ms - 200ms** (nhanh gấp 30 lần so với thao tác UI).
+- **Kết quả thu được**: Trích xuất `access_token` và `user.id` lưu trực tiếp trên RAM (Node.js Heap Memory) của tiến trình test hiện tại, hoàn toàn không cần ghi bất kỳ file `.json` nào xuống ổ cứng.
 
 ##### 2️⃣ Bước 2: Tiêm Phiên Động Vào Trình Duyệt Qua `page.addInitScript()` (Zero-Race Guarantee)
-* **Bản chất kỹ thuật**: Playwright gửi lệnh tới Chromium DevTools Protocol (CDP) kích hoạt hàm `Page.addScriptToEvaluateOnNewDocument`.
-* **Cơ chế "Vượt Mặt" Vòng Đời Trình Duyệt**:
-  * Hàm JavaScript được truyền vào `page.addInitScript()` sẽ được trình duyệt tự động thực thi **ngay khi đối tượng `window` và `localStorage` vừa được khởi tạo, nhưng TRƯỚC KHI bất kỳ file mã nguồn HTML/JS nào của trang web (Next.js/React bundle) kịp tải về và chạy!**
-  * **Tại sao không thể dùng `page.evaluate()` ở bước này?**
-    * Nếu dùng `page.evaluate()`, bạn bắt buộc phải gọi `await page.goto()` trước để có trang web. Nhưng khi `page.goto()` vừa tải trang, mã nguồn Router Guard của React đã lập tức kiểm tra `localStorage.getItem("neko_access_token")`. Vì lúc này token chưa được tiêm, React sẽ lập tức phán quyết người dùng là "Khách vãng lai" và ném lệnh `router.push('/login')`! Đến khi bạn gọi `page.evaluate()` để tiêm token thì đã quá muộn!
-    * Với `page.addInitScript()`, token đã nằm sẵn trong `localStorage` từ lúc trang web còn chưa kịp render dòng HTML đầu tiên. Khi React nạp lên, nó thấy token có sẵn và lập tức kích hoạt trạng thái "Đã Đăng Nhập" mượt mà!
-* **Thời gian thực thi**: Gần như tức thì (**~1ms - 5ms**).
+
+- **Bản chất kỹ thuật**: Playwright gửi lệnh tới Chromium DevTools Protocol (CDP) kích hoạt hàm `Page.addScriptToEvaluateOnNewDocument`.
+- **Cơ chế "Vượt Mặt" Vòng Đời Trình Duyệt**:
+  - Hàm JavaScript được truyền vào `page.addInitScript()` sẽ được trình duyệt tự động thực thi **ngay khi đối tượng `window` và `localStorage` vừa được khởi tạo, nhưng TRƯỚC KHI bất kỳ file mã nguồn HTML/JS nào của trang web (Next.js/React bundle) kịp tải về và chạy!**
+  - **Tại sao không thể dùng `page.evaluate()` ở bước này?**
+    - Nếu dùng `page.evaluate()`, bạn bắt buộc phải gọi `await page.goto()` trước để có trang web. Nhưng khi `page.goto()` vừa tải trang, mã nguồn Router Guard của React đã lập tức kiểm tra `localStorage.getItem("neko_access_token")`. Vì lúc này token chưa được tiêm, React sẽ lập tức phán quyết người dùng là "Khách vãng lai" và ném lệnh `router.push('/login')`! Đến khi bạn gọi `page.evaluate()` để tiêm token thì đã quá muộn!
+    - Với `page.addInitScript()`, token đã nằm sẵn trong `localStorage` từ lúc trang web còn chưa kịp render dòng HTML đầu tiên. Khi React nạp lên, nó thấy token có sẵn và lập tức kích hoạt trạng thái "Đã Đăng Nhập" mượt mà!
+- **Thời gian thực thi**: Gần như tức thì (**~1ms - 5ms**).
 
 ##### 3️⃣ Bước 3: Điều Hướng UI Thẳng Vào Trang Nội Bộ & Bắt Mạng Đồng Bộ
-* **Bản chất kỹ thuật**: Mở trang web nội bộ hoặc kích hoạt hành động gọi API trên trình duyệt.
-* **Hành vi phía client**:
+
+- **Bản chất kỹ thuật**: Mở trang web nội bộ hoặc kích hoạt hành động gọi API trên trình duyệt.
+- **Hành vi phía client**:
   1. Trình duyệt tải bundle React.
   2. Component khởi tạo, đọc `localStorage.getItem("neko_access_token")` ➔ Nhận được JWT Token vừa tiêm từ Bước 2.
   3. Mã nguồn Frontend tự động gửi request `GET /auth/me` với header `Authorization: Bearer <access_token>`.
   4. Máy chủ Backend thật xác thực chữ ký JWT hợp lệ và trả về thông tin cá nhân.
   5. UI hiển thị thẳng giao diện nội bộ với thông tin chính xác của user động vừa tạo mà không hề xuất hiện màn hình đăng nhập.
-* **Thời gian thực thi**: Chỉ phụ thuộc vào tốc độ tải trang web (~1.000ms - 1.500ms).
+- **Thời gian thực thi**: Chỉ phụ thuộc vào tốc độ tải trang web (~1.000ms - 1.500ms).
 
 ##### 4️⃣ Bước 4: Hậu Kiểm Tính Toàn Vẹn Của Dữ Liệu Qua API (Audit Verification)
-* **Bản chất kỹ thuật**: Không chỉ kiểm tra xem UI có hiển thị hay không (vì UI có thể bị lỗi cache DOM), kịch bản tiếp tục dùng fixture `request` gọi trực tiếp `GET /auth/me` với token vừa tạo.
-* **Mục đích**: Khẳng định bản ghi trong cơ sở dữ liệu thật đã được lưu trữ toàn vẹn, quyền hạn `is_active` chính xác 100%.
+
+- **Bản chất kỹ thuật**: Không chỉ kiểm tra xem UI có hiển thị hay không (vì UI có thể bị lỗi cache DOM), kịch bản tiếp tục dùng fixture `request` gọi trực tiếp `GET /auth/me` với token vừa tạo.
+- **Mục đích**: Khẳng định bản ghi trong cơ sở dữ liệu thật đã được lưu trữ toàn vẹn, quyền hạn `is_active` chính xác 100%.
 
 ---
 
 ###### 📊 Bảng So Sánh Thời Gian Thực Thi (Execution Latency Timeline):
-| Giai Đoạn Vận Hành | 🐢 Cách Thuần UI (Form Login / Register) | ⚡ Cách 2 (API Seed + `addInitScript`) | Mức Độ Tối Ưu |
-|---|---|---|---|
-| **1. Khởi tạo tài khoản** | Mở form, gõ phím, submit UI (3.500ms) | Gọi `request.post('/auth/register')` (180ms) | **Nhanh gấp 20 lần** |
-| **2. Thiết lập phiên đăng nhập** | Chờ Backend trả cookie/token + redirect UI (1.500ms) | `page.addInitScript()` tiêm thẳng vào RAM (3ms) | **Nhanh gấp 500 lần** |
-| **3. Truy cập trang mục tiêu** | Chuyển hướng trang (1.200ms) | `page.goto()` mở thẳng trang mục tiêu (1.200ms) | Bằng nhau |
-| **4. Nguy cơ lỗi chập chờn (Flakiness)** | Rất cao (Lỗi mạng khi gõ phím, reCAPTCHA, animation) | **0% (Hoàn toàn miễn nhiễm với lỗi giao diện login)** | Tuyệt đối an toàn |
-| **⏱️ TỔNG THỜI GIAN** | **~6.200ms (6.2 giây)** | **~1.380ms (1.4 giây)** | **Tiết kiệm 78% thời gian!** |
+
+| Giai Đoạn Vận Hành                       | 🐢 Cách Thuần UI (Form Login / Register)             | ⚡ Cách 2 (API Seed + `addInitScript`)                | Mức Độ Tối Ưu                |
+| ---------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------- | ---------------------------- |
+| **1. Khởi tạo tài khoản**                | Mở form, gõ phím, submit UI (3.500ms)                | Gọi `request.post('/auth/register')` (180ms)          | **Nhanh gấp 20 lần**         |
+| **2. Thiết lập phiên đăng nhập**         | Chờ Backend trả cookie/token + redirect UI (1.500ms) | `page.addInitScript()` tiêm thẳng vào RAM (3ms)       | **Nhanh gấp 500 lần**        |
+| **3. Truy cập trang mục tiêu**           | Chuyển hướng trang (1.200ms)                         | `page.goto()` mở thẳng trang mục tiêu (1.200ms)       | Bằng nhau                    |
+| **4. Nguy cơ lỗi chập chờn (Flakiness)** | Rất cao (Lỗi mạng khi gõ phím, reCAPTCHA, animation) | **0% (Hoàn toàn miễn nhiễm với lỗi giao diện login)** | Tuyệt đối an toàn            |
+| **⏱️ TỔNG THỜI GIAN**                    | **~6.200ms (6.2 giây)**                              | **~1.380ms (1.4 giây)**                               | **Tiết kiệm 78% thời gian!** |
 
 ###### 🏆 Bằng Chứng Terminal Khi Chạy Thực Tế `04-hybrid-api-ui-e2e.spec.ts` (`2 passed in 2.9s`):
+
 ```bash
 > npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/04-hybrid-api-ui-e2e.spec.ts --config=configs/playwright.lesson24-network.config.ts
 # Hoặc chạy lệnh npm script ngắn gọn:
@@ -2887,6 +3890,119 @@ Running 2 tests using 1 worker
   ok 2 modules/2-api/NekoCoffee/lesson-24/specs/04-hybrid-api-ui-e2e.spec.ts:111:7 › 🤝 [LESSON 24] 04 - Hybrid API-UI End-to-End Workflow › 02 - [HYBRID TRANSACTION] Bắn đơn hàng mô phỏng trên Browser -> Bắt phản hồi -> Đối chiếu API (502ms)
 
   2 passed (2.9s)
+```
+
+---
+
+#### 🚨 2.0. Chú Ý Sống Còn: Vì Sao `addInitScript` BẤT LỰC Với Cookie (Case Study: Trang CRM Của Tester)?
+
+Rất nhiều kỹ sư kiểm thử khi học xong kỹ thuật `addInitScript` liền hào hứng áp dụng ngay cho dự án thực tế của công ty — điển hình là **Hệ thống Quản lý Khách hàng (CRM)** — nhưng lập tức gặp lỗi thảm hại: **Trang CRM không nhận phiên và đá văng về `/login`!**
+
+> ❓ **Câu hỏi kinh điển**: *"Tại sao tôi dùng `addInitScript` tiêm token vào trang Neko Coffee thì chạy êm ru, nhưng sang trang CRM thực tế của công ty lại hoàn toàn không dùng được?"*
+
+##### 🔬 Bản Chất: Rào Cản Sandbox Trình Duyệt Đối Với Cookie `HttpOnly`
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│              VÌ SAO addInitScript BẤT LỰC VỚI HỆ THỐNG CRM SỬ DỤNG COOKIE HTTPONLY?                      │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                         │
+│  🏢 THỰC TẾ HỆ THỐNG CRM DOANH NGHIỆP:                                                                  │
+│     • Các hệ thống CRM (Salesforce, HubSpot, SugarCRM, Laravel/Django CRM...) dùng Session Cookie.       │
+│     • Header trả về từ server: 'Set-Cookie: session_id=s%3Aabc...; Path=/; HttpOnly; Secure'           │
+│     • Cờ 'HttpOnly' là tiêu chuẩn an ninh IETF chống tấn công XSS (đánh cắp phiên qua mã độc JS).       │
+│                                                                                                         │
+│  ❌ KHI TESTER CỐ DÙNG addInitScript ĐỂ BƠM COOKIE:                                                     │
+│     await page.addInitScript(() => {                                                                    │
+│       document.cookie = "session_id=s%3Aabc...; HttpOnly; Secure"; // 👈 VÔ TÁC DỤNG HOÀN TOÀN!         │
+│     });                                                                                                 │
+│                                                                                                         │
+│  💥 HẬU QUẢ CHÍ MẠNG:                                                                                   │
+│     1. Sandbox của trình duyệt CHẶN TUYỆT ĐỐI không cho JavaScript DOM đọc/ghi Cookie có cờ 'HttpOnly'!│
+│     2. Trình duyệt lờ đi cờ HttpOnly hoặc từ chối tạo cookie hợp lệ.                                    │
+│     3. Khi 'page.goto('/crm/customers')', HTTP Request gửi lên server KHÔNG HỀ CÓ Cookie Session chuẩn! │
+│     4. Server CRM từ chối request ➔ Trả về 401 Unauthorized và đá văng về trang Login ngay lập tức!    │
+│                                                                                                         │
+│  🏆 GIẢI PHÁP ĐÚNG ĐẮN CHO TRANG CRM:                                                                   │
+│     👉 KHÔNG DÙNG addInitScript!                                                                        │
+│     👉 BẮT BUỘC DÙNG CÁCH 1: 'storageState' trong Project Setup (Ghi file đĩa '.auth/crm-state.json')    │
+│        hoặc nạp qua tầng Giao thức mạng: 'context.addCookies([ { name, value, httpOnly: true } ])'!     │
+│                                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+##### 📊 Bảng Đối Chiếu: Neko Coffee (SPA Token) vs Hệ Thống CRM (Cookie Session)
+
+| Tiêu Chí So Sánh | ☕ Neko Coffee (Lesson 24 - SPA Hybrid) | 🏢 Hệ Thống CRM Doanh Nghiệp (CRM Tester) |
+|---|---|---|
+| **Cơ chế lưu trữ phiên** | `localStorage` (`neko_access_token` & Zustand Store) | **Cookie `HttpOnly`** (`session_id`, `laravel_session`, `PHPSESSID`) |
+| **Quyền truy cập của JavaScript** | Toàn quyền đọc/ghi (`window.localStorage`) | **CẤM HOÀN TOÀN** (Bảo vệ Sandbox trình duyệt) |
+| **Có dùng được `addInitScript`?** | ✅ **TUYỆT VỜI** (Bơm trước khi React hydrate trong 5ms) | ❌ **HOÀN TOÀN BẤT LỰC (Không thể tạo HttpOnly cookie)** |
+| **Cơ chế nạp phiên chuẩn mực** | **Cách 2**: Dynamic Seeding API + `addInitScript` | **Cách 1**: `storageState` file đĩa HOẶC `context.addCookies()` |
+| **Lệnh Playwright giải cứu CRM** | `page.addInitScript(...)` | `await context.addCookies([{ name, value, httpOnly: true }])` |
+
+##### 💻 Bài Test Tự Động Chứng Minh Trực Quan Hiện Tượng Này (Proof 6)
+
+Để không chỉ dừng lại ở lý thuyết suông, kịch bản kiểm thử **Proof 6** trong file [`06-hybrid-full-e2e-workflow.spec.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-24/specs/06-hybrid-full-e2e-workflow.spec.ts) đã mô phỏng trực tiếp hệ thống CRM doanh nghiệp để chứng minh cả 2 mặt đối lập:
+
+```bash
+# 🧪 Lệnh chạy riêng bài test chứng minh hiện tượng này (Proof 6):
+npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/06-hybrid-full-e2e-workflow.spec.ts -g "PROOF 6" --config=configs/playwright.lesson24-network.config.ts
+```
+
+```typescript
+test("06 - [PROOF 6: HTTPONLY COOKIE & CRM CASE STUDY] Chứng minh addInitScript bất lực với Cookie HttpOnly, bắt buộc dùng context.addCookies", async ({ browser }) => {
+  const CRM_URL = "https://coffee.autoneko.com/crm/dashboard";
+  const CRM_COOKIE_NAME = "crm_session_token";
+  const CRM_VALID_TOKEN = "crm_auth_secret_999";
+
+  // ❌ THỬ NGHIỆM 1: Cố dùng addInitScript để bơm cookie HttpOnly
+  const badContext = await browser.newContext();
+  const badPage = await badContext.newPage();
+  await badPage.route(CRM_URL, (route) => {
+    const cookieHeader = route.request().headers()["cookie"] || "";
+    if (cookieHeader.includes(`${CRM_COOKIE_NAME}=${CRM_VALID_TOKEN}`)) {
+      route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: '<h1 id="crm-title">Chào mừng CRM</h1>' });
+    } else {
+      route.fulfill({ status: 401, contentType: "text/html; charset=utf-8", body: '<h1 id="crm-error">401 Unauthorized!</h1>' });
+    }
+  });
+
+  await badContext.addInitScript(() => {
+    document.cookie = `crm_session_token=crm_auth_secret_999; Path=/; HttpOnly; Secure`;
+  });
+  await badPage.goto(CRM_URL);
+
+  // 💥 KẾT QUẢ THẤT BẠI: Server trả về 401 Unauthorized! Trình duyệt tước bỏ cờ HttpOnly (httpOnly = false)!
+  await expect(badPage.locator("#crm-error")).toBeVisible();
+  const badCookies = await badContext.cookies();
+  const badCookie = badCookies.find((c) => c.name === CRM_COOKIE_NAME);
+  if (badCookie) expect(badCookie.httpOnly).toBe(false);
+  await badContext.close();
+
+  // ✅ THỬ NGHIỆM 2: Dùng context.addCookies() ở tầng Browser Protocol
+  const goodContext = await browser.newContext();
+  const goodPage = await goodContext.newPage();
+  await goodPage.route(CRM_URL, /* cùng route CRM */);
+
+  await goodContext.addCookies([{
+    name: CRM_COOKIE_NAME,
+    value: CRM_VALID_TOKEN,
+    domain: "coffee.autoneko.com",
+    path: "/",
+    httpOnly: true, // 👈 Gán thành công 100% cờ HttpOnly!
+    secure: true,
+  }]);
+
+  await goodPage.goto(CRM_URL);
+
+  // 🏆 KẾT QUẢ THÀNH CÔNG: Mở thẳng Dashboard CRM trong 0ms!
+  await expect(goodPage.locator("#crm-title")).toContainText("Chào mừng CRM");
+  // 🛡️ BẢO MẬT XSS: JavaScript trang web hoàn toàn KHÔNG THỂ đọc trộm HttpOnly cookie này!
+  const clientCookies = await goodPage.evaluate(() => document.cookie);
+  expect(clientCookies).not.toContain(CRM_VALID_TOKEN);
+  await goodContext.close();
+});
 ```
 
 ---
@@ -3000,6 +4116,152 @@ Dù **Cách 1** đã được nâng cấp tối ưu bằng **Worker Scope để 
 
 ---
 
+#### 6. 🔬 GIẢI MÃ CHUYÊN SÂU: PHẠM VI (SCOPE) & VÒNG ĐỜI CỦA `addInitScript` TRONG HYBRID FIXTURE
+
+Một trong những câu hỏi kiến trúc sâu sắc và quan trọng nhất mà học viên hay băn khoăn:
+
+> ❓ _"Trong fixture xác thực Hybrid, khi ta gọi `context.addInitScript(...)`, đoạn mã này thực sự sống ở phạm vi (Scope) nào? Nó tồn tại vĩnh viễn như file đĩa hay chỉ sống trong bài test? Tại sao nó lấy được Token từ Worker Scope mà lại chỉ có tác dụng trong Test Scope?"_
+
+👉 **CÂU TRẢ LỜI CỐT LÕI**:  
+`addInitScript` vận hành theo cơ chế **"CẦU NỐI LIÊN SCOPE" (Cross-Scope Bridge)** — Kết hợp nhịp nhàng giữa **3 Tầng Scope độc lập** từ tiến trình Node.js máy chủ cho tới tận nhân sâu thẳm của trình duyệt Chromium!
+
+---
+
+##### 1️⃣ Kiến Trúc 3 Tầng Scope Phối Hợp (Cross-Scope Architecture)
+
+Để đạt được tốc độ thực thi **0ms** mà vẫn đảm bảo **100% tính cô lập dữ liệu (Zero State Leakage)**, Playwright phân tách rõ ràng 3 tầng trách nhiệm:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                     KIẾN TRÚC 3 TẦNG SCOPE CỦA TIÊM PHIÊN HYBRID (CROSS-SCOPE BRIDGE)                   │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                         │
+│  🧠 [TẦNG 1: WORKER SCOPE (Node.js Heap Memory)]                                                        │
+│  • Khai báo: fixture 'workerStaffSnapshot' với { scope: 'worker' }.                                     │
+│  • Hành vi: Gửi API đăng ký / lấy Token Staff ĐÚNG 1 LẦN DUY NHẤT khi tiến trình Worker khởi động.      │
+│  • Tuổi thọ: Sống bền vững trong RAM suốt vòng đời của Worker (phục vụ 50 - 100 bài test liên tiếp).     │
+│  • Trách nhiệm: Giữ sẵn chuỗi JWT Token trong biến RAM, sẵn sàng cấp phát với độ trễ 0ms.               │
+│                                                                                                         │
+│                                    │                                                                    │
+│                                    │ (Bốc Token từ RAM chuyển giao vào mỗi bài test)                    │
+│                                    ▼                                                                    │
+│                                                                                                         │
+│  🧪 [TẦNG 2: TEST SCOPE (Playwright Fixture Lifecycle)]                                                 │
+│  • Khai báo: fixture 'page: async ({ page, context, workerStaffSnapshot }, use)' (mặc định Test Scope). │
+│  • Hành vi: Kích hoạt độc lập mỗi khi một BÀI TEST BẮT ĐẦU.                                             │
+│  • Trách nhiệm: Đóng vai "Người vận chuyển" — Lấy Token từ Tầng 1 và ra lệnh cho Chromium ở Tầng 3.    │
+│                                                                                                         │
+│                                    │                                                                    │
+│                                    │ (Gửi chỉ thị CDP 'Page.addScriptToEvaluateOnNewDocument')          │
+│                                    ▼                                                                    │
+│                                                                                                         │
+│  🌐 [TẦNG 3: BROWSER CONTEXT SCOPE (Chromium Engine Level)]                                             │
+│  • Khai báo: 'await context.addInitScript(({ token, user }) => { ... }, { token, user })'.             │
+│  • Hành vi: Ghim script tiêm Token vào ngay trước cổng 'New Document' của BrowserContext.               │
+│  • Phạm vi hiệu lực: Bao trùm TOÀN BỘ các Tab, Popup và mọi lần F5 / Reload của RIÊNG bài test đó!     │
+│  • Tuổi thọ: CHẾT NGAY LẬP TỨC khi bài test kết thúc (Context bị tiêu hủy, sạch bóng RAM 100%).         │
+│                                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+##### 💻 Minh Họa Trực Quan Bằng Mã Nguồn Thực Tế ([`hybrid-auth.fixture.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-24/fixtures/hybrid-auth.fixture.ts)):
+
+```typescript
+export const hybridAuth = base.extend<HybridAuthTestFixtures, HybridAuthWorkerFixtures>({
+  // ── TẦNG 1: WORKER SCOPE (Node.js RAM) ──
+  workerStaffSnapshot: [
+    async ({ playwright }, use, workerInfo) => {
+      // 1. Chỉ gọi API lấy token 1 lần duy nhất cho cả Worker
+      const token = await fetchStaffTokenViaApi(); 
+      // 2. Cất giữ token trong RAM của Worker Process
+      await use({ token, email: staffEmail, user }); 
+    },
+    { scope: "worker" }, // 👈 Ghim vào Worker Scope
+  ],
+
+  // ── TẦNG 2: TEST SCOPE (Fixture kích hoạt mỗi đầu bài test) ──
+  page: async ({ page, context, workerStaffSnapshot }, use) => {
+    // ── TẦNG 3: BROWSER CONTEXT SCOPE (Tiêm vào nhân Trình duyệt) ──
+    await context.addInitScript(
+      ({ token, user }) => {
+        // Chạy bên trong JavaScript Context của Trình duyệt TRƯỚC KHI web nạp
+        localStorage.setItem("access_token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+      },
+      // Nguồn dữ liệu truyền vào lấy trực tiếp từ RAM của Tầng 1:
+      { token: workerStaffSnapshot.token, user: workerStaffSnapshot.user },
+    );
+
+    await use(page); // Trình duyệt bước vào bài test với phiên đã sẵn sàng 100%!
+    // Hết bài test: Context tự động bị dispose() ➔ Toàn bộ script và storage biến mất sạch sẽ!
+  },
+});
+```
+
+---
+
+##### 2️⃣ Phân Biệt Sống Còn: `context.addInitScript()` vs `page.addInitScript()`
+
+Rất nhiều kỹ sư kiểm thử nhầm lẫn giữa hai hàm này. Việc chọn sai hàm có thể dẫn đến lỗi vỡ phiên khi mở nhiều tab:
+
+| Tiêu Chí Kỹ Thuật | `page.addInitScript()` (Page Scope) | `context.addInitScript()` (BrowserContext Scope) |
+|---|---|---|
+| **Cấp độ can thiệp** | Gắn vào một **Trang / Tab đơn lẻ** (`Page`). | Gắn vào **Toàn bộ Ngữ cảnh Trình duyệt** (`BrowserContext`). |
+| **Hành vi khi F5 / Reload** | ✅ **Sống sót**: Khi `page.reload()`, script vẫn chạy lại trước khi nạp DOM. | ✅ **Sống sót**: Script tự động tái nạp token trước mỗi lần F5. |
+| **Hỗ trợ Đa Tab (Multi-Tab / Popups)** | ❌ **Thất bại**: Nếu người dùng click link nhảy ra Tab thứ 2 (`target="_blank"`), Tab mới **KHÔNG HỀ CÓ TOKEN** ➔ Bị đá về màn hình đăng nhập! | 🏆 **Hoàn hảo**: Mọi Tab mới mở ra (`context.newPage()` hoặc popup) **TỰ ĐỘNG THỪA HƯỞNG TOKEN** ngay lập tức! |
+| **Trường hợp khuyên dùng** | Dùng trong các bài test đơn lẻ không can thiệp fixture hệ thống. | **Chuẩn mực bắt buộc cho Fixture dùng chung (Enterprise Standard)**. |
+
+> 💡 **Quy tắc Senior**: Trong Custom Fixture, **LUÔN DÙNG `context.addInitScript()`** thay vì `page.addInitScript()` để đảm bảo toàn bộ các tab con, popup hay iframe phát sinh trong bài test đều được bảo vệ phiên đăng nhập thông suốt!
+
+---
+
+##### 3️⃣ Vì Sao "Chỉ Sống Trong Scope Bài Test" Lại Là Vũ Khí Tối Thượng? (Zero State Leakage)
+
+Để hiểu giá trị của việc `addInitScript` chỉ sống trong bài test, hãy nhìn vào **nỗi ám ảnh lớn nhất của các đội ngũ Automation: Hiện Tượng Rò Rỉ Trạng Thái (State Leakage)**:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ⚠️ THẢM HỌA DÙNG CHUNG PHIÊN (STATE LEAKAGE KHI DÙNG FILE ĐĨA HOẶC BROWSER CŨ):                         │
+│                                                                                                         │
+│  [TEST 01: Mua hàng] ──► Cho 1 "Cà phê Muối" vào Giỏ hàng ──► Không kịp xóa / Test kết thúc.            │
+│                                     │                                                                   │
+│                                     ▼ (Phiên lưu vĩnh viễn trên đĩa lọt sang Test 02!)                  │
+│                                                                                                         │
+│  [TEST 02: Giỏ hàng rỗng] ──► Mở trang Giỏ Hàng ──► KỲ VỌNG: 0 Món ──► THỰC TẾ: Thấy 1 món của Test 01! │
+│  💥 KẾT QUẢ: TEST 02 BỊ FAIL OAN! (Flaky Test cực kỳ khó debug!)                                        │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 🏆 SỨC MẠNH CÔ LẬP TUYỆT ĐỐI CỦA CONTEXT-SCOPED ADDINITSCRIPT (ZERO STATE LEAKAGE):                    │
+│                                                                                                         │
+│  [TEST 01] Mở Context 1 ──► addInitScript tiêm Token ──► Thêm món ──► HẾT TEST: TIÊU HỦY CONTEXT 1!    │
+│                                                                            │                            │
+│                                               💥 BỐC HƠI HOÀN TOÀN KHỎI BỘ NHỚ RAM!                     │
+│                                                                            ▼                            │
+│  [TEST 02] Mở Context 2 MỚI TINH 100% ──► addInitScript tiêm Token ──► Giỏ hàng TRẮNG TINH KHIẾT 0 MÓN!│
+│  ✅ KẾT QUẢ: 1000 BÀI TEST CHẠY SONG SONG ĐỘC LẬP — KẾT QUẢ ĐỒNG NHẤT 100%!                            │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+- Nhờ `BrowserContext` tự động bị tiêu hủy khi hết test, toàn bộ các script khởi tạo `addInitScript`, dữ liệu rác trong `localStorage`, `sessionStorage`, `IndexedDB` và `Cookies` đều bị quét sạch khỏi bộ nhớ.
+- Bạn hoàn toàn không cần phải tốn công viết các hàm dọn rác thủ công (teardown) phức tạp như các framework kiểm thử đời cũ (Selenium / Cypress)!
+
+---
+
+##### 4️⃣ Bộ 3 Câu Hỏi Vấn Đáp Kinh Điển Của Học Viên (Real-World Enterprise FAQ)
+
+###### ❓ Câu hỏi 1: "Nếu trong bài test tôi gọi lệnh F5 tải lại trang (`await page.reload()`) thì Token có bị biến mất không?"
+> 👉 **Hoàn toàn KHÔNG!**  
+> Bản chất của `addInitScript` là được đăng ký trực tiếp vào tầng nhân Chromium thông qua sự kiện CDP `Page.addScriptToEvaluateOnNewDocument`. Do đó, mỗi khi trang web bắt đầu quá trình Reload, trước khi những byte HTML đầu tiên được render, script này **đã tự động chạy lại và ghi đè token vào `localStorage`**. Ứng dụng của bạn luôn giữ vững trạng thái đăng nhập sau bất kỳ lần F5 nào!
+
+###### ❓ Câu hỏi 2: "Nếu bài test click vào một đường link có `target='_blank'` mở ra Tab thứ hai, Tab mới có cần đăng nhập lại không?"
+> 👉 **Hoàn toàn KHÔNG CẦN!**  
+> Vì trong fixture [`hybrid-auth.fixture.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-24/fixtures/hybrid-auth.fixture.ts), chúng ta gắn script vào đối tượng `context` (`context.addInitScript`). Bất kỳ trang nào (`Page`) sinh ra từ ngữ cảnh này — dù là mở bằng tay (`context.newPage()`) hay do trình duyệt tự bật pop-up — đều lập tức sở hữu phiên đăng nhập đầy đủ.
+
+###### ❓ Câu hỏi 3: "Worker giữ Token trong RAM suốt vòng đời, vậy nếu tài khoản bị đổi mật khẩu hoặc hết hạn thì sao?"
+> 👉 **Đây là ưu thế độc quyền của Worker Scope**:  
+> Nếu bạn muốn mỗi Worker có một tài khoản riêng biệt để không đụng độ, `workerStaffSnapshot` tự động gắn `workerIndex` vào email: `staff_super_w${workerInfo.workerIndex}_${timestamp}@nekocoffee.com`. Mỗi Worker sở hữu một Staff User độc lập hoàn toàn. Khi chạy song song 4 Worker trên CI/CD, 4 Worker sẽ thao tác trên 4 tài khoản Staff khác nhau, triệt tiêu hoàn toàn 100% nguy cơ Deadlock hay Race Condition!
+
+---
+
 ### 🔹 5.5. 🏰 Nâng Tầm Lên Kiến Trúc "SIÊU APP AUTOMATION" (Unified Hybrid Super Framework)
 
 Sau khi làm chủ kỹ thuật Hybrid Sandwich cơ bản, trong các dự án Enterprise quy mô lớn, chúng ta **nâng tầm lên Siêu Ứng Dụng Hợp Nhất** kết hợp trọn vẹn:
@@ -3009,49 +4271,145 @@ Sau khi làm chủ kỹ thuật Hybrid Sandwich cơ bản, trong các dự án E
 - **API AOM** ([`AuthApiClient.ts`](../../lesson-23/clients/auth.api-client.ts), [`ProductApiClient.ts`](../../lesson-23/clients/product.api-client.ts)).
 - **Zod Runtime Contracts** (Validation 100% kiểu dữ liệu trả về từ Database).
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                          KIẾN TRÚC TOÀN DIỆN CỦA "SIÊU APP HYBRID AUTOMATION"                           │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                                         │
-│  🏛️ [TẦNG 1: GIAO DIỆN UI PAGE OBJECTS & CRM TABLE HELPERS]                                             │
-│  ├── NekoLoginPage: Quản lý Form đăng nhập, Validate Alert, Spinner Loading, Button Disabled.          │
-│  ├── NekoAdminOrdersPage: Quản lý Bảng đơn hàng Admin Neko Coffee (Kế thừa CRM TableColumnHelpers).    │
-│  └── NekoAdminProductsPage: Quản lý Bảng sản phẩm & Kho hàng (Kế thừa CRM TableColumnHelpers).          │
-│                                                                                                         │
-│       ▲                                                                 ▲                               │
-│       │ (Đọc dữ liệu DOM không hardcode index)                          │ (Tương tác UI & Table Audit)  │
-│       │                                                                 │                               │
-│  📋 [CRM TableColumnHelpers.ts] ────────────────────────────────────────┘                               │
-│  ├── createColumnMap: Quét <th> DOM thật ➔ Sinh ColumnMap động (camelCase + lowercase).                 │
-│  ├── findRowByColumnValueSimple: Quét dòng theo giá trị cột (Ví dụ: '#B2C-20260210-4528').             │
-│  ├── getRowDataByFiltersSimple: Bóc tách toàn bộ cells của 1 dòng thành Javascript Object sạch.         │
-│  └── getTableDataSimple: Trích xuất toàn bộ bảng thành mảng Objects để kiểm tra hàng loạt.              │
-│                                                                                                         │
-│                                      │                                                                  │
-│                                      ▼                                                                  │
-│  ⚡ [TẦNG 2: API SERVICE CLIENTS (AOM) & ZOD RUNTIME SCHEMA CONTRACTS]                                  │
-│  ├── AuthApiClient: Đăng ký (/auth/register), Đăng nhập (/auth/login), Hồ sơ (/auth/me).               │
-│  ├── ProductApiClient: Lấy danh mục (/public/products), Chi tiết, Upload ảnh CDN.                      │
-│  ├── EchoApiClient: Sức khỏe (/public/test/ping), Phản chiếu Payload (/public/test/echo).               │
-│  └── Zod Contracts: productDtoSchema, productListResponseSchema, userProfileSchema.                    │
-│                                                                                                         │
-│                                      │                                                                  │
-│                                      ▼                                                                  │
-│  🛡️ [TẦNG 3: CỔNG ĐIỀU PHỐI TỐI CAO - HYBRID SUPER GATEKEEPER FIXTURE]                                   │
-│  ├── Worker-Scoped RAM Snapshot: Tạo 1 tài khoản Staff/Worker trong RAM, tái sử dụng 100%.              │
-│  ├── authedStaffClient: API Client nạp sẵn Token Staff, sẵn sàng tạo dữ liệu hạt cà phê trong 50ms.     │
-│  ├── injectAuthSession Helper: Tiêm JWT Token trực tiếp vào Browser Storage, bypass Form Login UI.      │
-│  └── 100% Strict Type Safety: base.extend<HybridSuperTestFixtures, HybridSuperWorkerFixtures> (No Any).│
-│                                                                                                         │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+#### 🗺️ 1. Sơ Đồ Trực Quan 4 Tầng Kiến Trúc Của Siêu App (Visual Architecture Diagram)
+
+Để dễ hình dung và nắm bắt toàn diện, kiến trúc Siêu App được phân định rõ ràng thành **4 Tầng Phân Cấp (Hierarchical 4-Tier Architecture)** từ gốc rễ điều phối đến ngọn thực thi:
+
+```mermaid
+graph TB
+    %% STYLING
+    classDef gatekeeper fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef api fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#92400e;
+    classDef ui fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#166534;
+    classDef helper fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#6b21a8;
+    classDef spec fill:#ffe4e6,stroke:#e11d48,stroke-width:2px,color:#9f1239;
+
+    subgraph T1 ["🛡️ TẦNG 1: BỘ NÃO ĐIỀU PHỐI (HYBRID SUPER GATEKEEPER)"]
+        G1["🧠 Worker RAM Snapshot<br/>(Lưu Token Staff 0ms, không đụng độ)"]:::gatekeeper
+        G2["💉 addInitScript Bridge<br/>(Tiêm LocalStorage trước React DOM)"]:::gatekeeper
+        G3["👥 Dual-Session Router<br/>({ page } login vs { guestPage } sạch)"]:::gatekeeper
+    end
+
+    subgraph T2 ["⚡ TẦNG 2: DỊCH VỤ DỮ LIỆU & HỢP ĐỒNG API (AOM + ZOD)"]
+        A1["📦 AuthApiClient & ProductApiClient<br/>(Tạo & xóa data nhanh 100ms)"]:::api
+        A2["🛡️ Zod Runtime Schema Contracts<br/>(Thẩm định kiểu dữ liệu DB)"]:::api
+    end
+
+    subgraph T3 ["🖥️ TẦNG 3: GIAO DIỆN & MẮT THẦN SOI BẢNG (UI POM + HELPERS)"]
+        U1["📑 NekoAdminOrdersPage & ProductsPage<br/>(POM điều hướng & click UI)"]:::ui
+        U2["👁️ CRM TableColumnHelpers<br/>(Quét động &lt;th&gt; chống gãy tuyệt đối)"]:::helper
+    end
+
+    subgraph T4 ["🏆 TẦNG 4: SIÊU KỊCH BẢN THỰC CHIẾN (FULL E2E SPECS)"]
+        S1["🧪 Spec 06: Hybrid Full E2E Workflow<br/>(9 Tests Proofs + Live E2E)"]:::spec
+        S2["🧪 Spec 08: Real-World E-commerce<br/>(Dual-Role Staff API & Guest UI)"]:::spec
+    end
+
+    %% DATA FLOW
+    G1 -->|"Cấp Token trong RAM (0ms)"| A1
+    G1 -->|"Cấp Token để tiêm"| G2
+    G2 -->|"Bơm phiên vào Browser"| U1
+    G3 -.->|"Cấp Browser sạch 100%"| U1
+
+    A1 -->|"Pha 1: Fast Seed Data (100ms)"| S1
+    U1 -->|"Pha 2: Thao tác UI & Bảng đơn"| S1
+    U2 -->|"Đọc cell chính xác theo tên cột"| U1
+    A2 -->|"Pha 3: Hậu kiểm tính toàn vẹn DB"| S1
 ```
+
+```text
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                               KIẾN TRÚC SIÊU APP HYBRID AUTOMATION (4 TẦNG LIÊN HOÀN)                                     │
+├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                                           │
+│  [TẦNG 1: CỔNG ĐIỀU PHỐI TỐI CAO] ➔ hybrid-super-gatekeeper.fixture.ts                                                   │
+│  ├── 🧠 Worker Scope RAM: Giữ Token Staff trong bộ nhớ tiến trình Node.js (cấp phát 0ms delay).                          │
+│  ├── 💉 addInitScript Bridge: Rút Token từ RAM tiêm vào localStorage trước khi React hydrate.                            │
+│  └── 👥 Dual-Session Isolation: Cung cấp song song { page } (đã login) và { guestPage } (sạch 100%).                    │
+│                                              │                                                                            │
+│                     ┌────────────────────────┴────────────────────────┐                                                   │
+│                     ▼ (Cấp Token cho API)                             ▼ (Cấp Trình duyệt cho UI)                          │
+│                                                                                                                           │
+│  [TẦNG 2: DỊCH VỤ DỮ LIỆU & CONTRACTS]               [TẦNG 3: GIAO DIỆN & MẮT THẦN BẢNG BIỂU]                              │
+│  (API Object Model & Zod Validation)                 (Page Object Model & CRM Helpers)                                    │
+│  ├── AuthApiClient: Đăng ký, login nhanh.            ├── NekoAdminOrdersPage / ProductsPage: POM Admin.                   │
+│  ├── ProductApiClient: CRUD kho hàng, đơn.           ├── NekoLoginPage: Quản lý Form Login UI.                           │
+│  └── Zod Schemas: Thẩm định cấu trúc DB.             └── 👁️ TableColumnHelpers: Quét thẻ <th> động, không hardcode.        │
+│                     │                                                 │                                                   │
+│                     └────────────────────────┬────────────────────────┘                                                   │
+│                                              ▼ (Hiệp đồng tác chiến)                                                      │
+│                                                                                                                           │
+│  [TẦNG 4: SIÊU KỊCH BẢN THỰC CHIẾN HYBRID E2E] ➔ 06-hybrid-full-e2e-workflow.spec.ts                                    │
+│  • BƯỚC 1 (API Fast Seed): Tạo sản phẩm / đơn hàng mẫu trong 100ms (dùng Tầng 2).                                         │
+│  • BƯỚC 2 (UI Admin Audit): Mở UI, TableColumnHelpers quét bảng đối soát trực quan (dùng Tầng 3).                        │
+│  • BƯỚC 3 (API DB Verify): Dùng Zod đối soát tính toàn vẹn dữ liệu trong cơ sở dữ liệu thật (dùng Tầng 2).               │
+│                                                                                                                           │
+└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+#### 🏭 Dây Chuyền Hiệp Đồng Tác Chiến Của 4 Tầng Code Thực Tế
+
+Để người học hình dung rõ vai trò cụ thể của từng tệp mã nguồn trong dự án khi ráp nối lại thành cỗ máy Siêu App:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                DÂY CHUYỀN HIỆP ĐỒNG TÁC CHIẾN CỦA 4 TẦNG CODE                                           │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                                         │
+│  1️⃣ TẦNG FIXTURE CỔNG (hybrid-super-gatekeeper.fixture.ts):                                                            │
+│     • Đóng vai trò: "TRƯỞNG BAN TỔ CHỨC & ĐIỀU PHỐI"                                                                    │
+│     • Cung cấp: authedStaffClient (đã có Token trong RAM) + injectAuthSession (tiêm thẳng vào Browser).                 │
+│     • Nhiệm vụ: Đảm bảo bài test không bao giờ phải gõ form Login, khởi động với độ trễ 0ms.                           │
+│                                                                                                                         │
+│  2️⃣ TẦNG API OBJECT MODEL & ZOD (AuthApiClient.ts, ProductApiClient.ts, product.schema.ts):                           │
+│     • Đóng vai trò: "ĐỘI PHẢN ỨNG NHANH & GIÁM ĐỊNH KỸ THUẬT"                                                           │
+│     • Nhiệm vụ Pha 1 (Setup): Bắn API tạo hàng trăm dữ liệu mẫu chỉ trong 100ms.                                        │
+│     • Nhiệm vụ Pha 3 (Audit): Dùng BaseApiClient.parseResponse() thẩm định cấu trúc Database, không để lọt lỗi ngầm.    │
+│                                                                                                                         │
+│  3️⃣ TẦNG UI PAGE OBJECTS (NekoAdminProductsPage.ts, NekoAdminOrdersPage.ts):                                            │
+│     • Đóng vai trò: "NGƯỜI DÙNG THỰC THI (ACTOR TRÊN TRÌNH DUYỆT)"                                                      │
+│     • Nhiệm vụ Pha 2 (Action): Click chuột, gõ phím, mở modal, kích hoạt animation và kiểm tra Toast hiển thị.         │
+│                                                                                                                         │
+│  4️⃣ TẦNG CRM TABLE HELPERS (TableColumnHelpers.ts):                                                                     │
+│     • Đóng vai trò: "MẮT THẦN SOI BẢNG DỮ LIỆU"                                                                         │
+│     • Nhiệm vụ: Đọc động thẻ <th> trên UI thật, biến bảng HTML phức tạp thành mảng Javascript Object sạch sẽ.           │
+│     • Loại bỏ hoàn toàn lỗi gãy test kinh điển do Dev đổi thứ tự cột (không bao giờ dùng row.locator('td').nth(2)).   │
+│                                                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+#### ⚖️ Bảng Tổng Kết: Tại Sao Phải Kết Hợp Cả 4 Thành Phần Này?
+
+| Nếu thiếu thành phần nào... | Hệ thống sẽ gặp thảm họa gì? |
+|---|---|
+| **Thiếu Worker Scope RAM Snapshot** | Mỗi bài test phải mở trình duyệt gõ login hoặc gọi API login lại từ đầu ➔ Bộ 200 test chạy mất 30 phút thay vì 2 phút! |
+| **Thiếu `context.addInitScript`** | Phải dùng `page.goto('/login')` gõ form UI ➔ Dễ dính Flaky do animation, mạng chập chờn, captcha. |
+| **Thiếu TableColumnHelpers** | Phải hardcode chỉ số cột kiểu `locator('td').nth(4)` ➔ Ngày mai Dev thêm 1 cột "Ảnh" vào bảng là 50 bài test gãy sạch! |
+| **Thiếu Zod Schema Contracts** | UI chỉ thấy chữ "500" màu đen trên màn hình, nhưng không biết trong Database trường đó bị lưu thành chuỗi `"500"` hay số thực `500.00` ➔ Lọt lỗi nghiêm trọng xuống Backend! |
 
 #### 💡 Mổ Xẻ Cơ Chế Auth Trong Siêu App: Ứng Dụng Chuẩn Nấc 2 (Worker Scope RAM) Kết Hợp addInitScript
 
 Trong kiến trúc Siêu App (`hybrid-super-gatekeeper.fixture.ts`), câu hỏi cốt lõi là: **Siêu App xác thực danh tính như thế nào để vừa thần tốc vừa phục vụ được cả UI lẫn API?**
 
 👉 **CÂU TRẢ LỜI: SIÊU APP CHÍNH LÀ ĐỈNH CAO ỨNG DỤNG CỦA NẤC 2 (WORKER SCOPE LƯU RAM) KẾT HỢP VỚI addInitScript!**
+
+```mermaid
+flowchart TD
+    W["👷 1. Worker Process Khởi Động<br/>({ scope: 'worker' } lấy Token Staff)"] --> R[("🧠 2. Worker Scope RAM<br/>workerStaffSnapshot = { token, user }")]
+    
+    R -->|"Nhánh 1: Cấp Token cho API"| C["⚡ authedStaffClient<br/>(Header Bearer sẵn sàng 0ms)"]
+    R -->|"Nhánh 2: Cấp Token cho Browser"| I["💉 context.addInitScript()<br/>(Tiêm LocalStorage trước DOM)"]
+    
+    C --> A["🚀 Gọi API Seed Data / Audit trong 50ms"]
+    I --> B["🌐 Browser mở thẳng Dashboard trong 50ms"]
+    
+    A --> E["🏆 Toàn Bộ Kịch Bản Đạt Độ Trễ 0ms (Zero Disk I/O Bottleneck)"]
+    B --> E
+```
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -3096,34 +4454,61 @@ Trong kiến trúc Siêu App (`hybrid-super-gatekeeper.fixture.ts`), câu hỏi 
 
 ---
 
-### 🔹 5.6. 💡 Giải Mã: "Tiêm Phiên Trình Duyệt Siêu Tốc" vs "Đăng Nhập Form UI" & Phối Hợp 2 Tầng Auth
+### 🔹 5.6. 💡 Giải Mã: Kiến Trúc Đa Phiên (Dual-Session Architecture: Staff Authed Page vs Guest Page) & Phối Hợp 2 Tầng Auth
+
+Trong kiến trúc Siêu App Hybrid Automation, một câu hỏi hóc búa thường nảy sinh:
+> **"Nếu fixture `page` mặc định đã được Gatekeeper tự động tiêm sẵn Token Staff vào RAM & `localStorage` để vào thẳng Admin Dashboard (0ms), thì làm sao ta có thể kiểm thử chính form Đăng nhập (`/login`) hoặc các luồng Khách vãng lai (Guest Checkout, Guest Tracking) mà không bị hệ thống tự động redirect?"**
+
+👉 **GIẢI PHÁP ĐỈNH CAO: KIẾN TRÚC ĐA PHIÊN (DUAL-SESSION ARCHITECTURE) TRONG SIÊU APP!**
+
+Siêu App phân tách rõ ràng làm **2 nhánh phiên trình duyệt độc lập**:
+1. **Nhánh 1 - Phiên Quản Trị Viên (Staff Authed Session - `page`)**: Tự động gài sẵn `context.addInitScript()` tiêm token từ RAM Worker. Phục vụ 98% kịch bản Admin, Quản lý đơn hàng, Thao tác bảng biểu.
+2. **Nhánh 2 - Phiên Khách Vãng Lai Sạch Bóng (Guest Session - `guestContext` & `guestPage`)**: Trình duyệt sạch 100%, không dính bất kỳ script, cookie hay token nào. Phục vụ Form Login (`loginPage`, `guestLoginPage`), Khách vãng lai tra cứu đơn hàng, và mua hàng.
 
 ```mermaid
 flowchart TD
-    Start["Khởi Động Bài Test"] --> Decision{"Mục tiêu bài test là gì?"}
+    Start["🛡️ HYBRID SUPER GATEKEEPER FIXTURE"] --> Decision{"Mục tiêu kịch bản kiểm thử là gì?"}
 
-    Decision -->|"Kiểm thử chính tính năng Login"| PathUI["🖥️ CƠ CHẾ 1: ĐĂNG NHẬP FORM UI<br/>(NekoLoginPage.login)"]
-    PathUI --> UI1["1. Mở trang /login"]
-    UI1 --> UI2["2. Gõ username/password"]
-    UI2 --> UI3["3. Click button #btn-login"]
-    UI3 --> UI4["4. Assert Spinner, Error Alert 401/429"]
+    Decision -->|"Kiểm thử Quản trị Admin / E2E sâu (98% test)"| BranchStaff["👑 NHÁNH STAFF AUTHED SESSION<br/>({ page, adminOrdersPage, authedStaffClient })"]
+    BranchStaff --> S1["1. Worker RAM cấp Token Staff trong 0ms"]
+    S1 --> S2["2. context.addInitScript tiêm vào localStorage"]
+    S2 --> S3["3. Mở thẳng /admin/orders (Đã đăng nhập sẵn)"]
+    S3 --> S4["⚡ Tốc độ cực hạn, bỏ qua Form Login!"]
 
-    Decision -->|"Kiểm thử nghiệp vụ sâu (Đơn hàng, Báo cáo)"| PathInject["⚡ CƠ CHẾ 2: TIÊM PHIÊN SIÊU TỐC<br/>(Worker RAM Snapshot + addInitScript)"]
-    PathInject --> API1["1. Worker RAM cấp Token trong 0ms"]
-    API1 --> API2["2. Tiêm Token vào localStorage qua page.addInitScript"]
-    API2 --> API3["3. Mở thẳng /admin/orders (Đã đăng nhập sẵn)"]
-    API3 --> API4["4. Tiết kiệm 95% thời gian thực thi!"]
+    Decision -->|"Kiểm thử Form Login / Khách vãng lai (Guest)"| BranchGuest["👥 NHÁNH GUEST CLEAN SESSION<br/>({ guestPage, guestLoginPage, loginPage })"]
+    BranchGuest --> G1["1. browser.newContext() sạch 100%"]
+    G1 --> G2["2. KHÔNG có addInitScript, KHÔNG có Token"]
+    G2 --> G3["3. Mở /login hoặc /order-tracking an toàn"]
+    G3 --> G4["🎯 Test Form Validation, 401, 429, Guest Shopping mà không bị Auto-Redirect!"]
+
+    Decision -->|"Phối hợp Đa vai trò (Multi-Role)"| BranchDual["🤝 KỊCH BẢN ĐA VAI TRÒ SONG SONG<br/>({ authedStaffClient, guestPage })"]
+    BranchDual --> D1["Staff: Bắn API qua authedStaffClient (Node.js RAM 0ms)"]
+    BranchDual --> D2["Guest: Thao tác UI trên guestPage độc lập"]
+    BranchDual --> D3["🚀 Zero Session Clashing & Tăng tốc 90%!"]
 ```
 
 #### 1. Bảng Phân Định Bản Chất & Chiến Lược Áp Dụng
 
 | Tiêu Chí                 | 🖥️ Đăng Nhập Form UI ([`NekoLoginPage`](../pom/NekoLoginPage.ts))                                                                                                               | ⚡ Tiêm Phiên Siêu Tốc (`injectAuthSession` / Storage State)                                                                                                              |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Mục đích thiết kế**    | Kiểm tra **chính luồng đăng nhập** của người dùng.                                                                                                                              | Bỏ qua màn hình Login để **vào thẳng tính năng nghiệp vụ sâu**.                                                                                                           |
-| **Các kịch bản áp dụng** | 1. Đăng nhập thành công (Happy path).<br>2. Sai mật khẩu hiển thị Alert đỏ (401).<br>3. Spam đăng nhập bị khóa tạm thời (429).<br>4. Mạng chậm hiển thị nút Disabled & Spinner. | 1. Quản trị đơn hàng Neko Admin.<br>2. Thêm mới sản phẩm & kiểm kê kho hàng.<br>3. Xuất báo cáo tài chính & doanh thu.<br>4. Hơn 98% toàn bộ test suite dự án Enterprise. |
+| **Mục đích thiết kế**    | Kiểm tra **chính luồng đăng nhập** của người dùng hoặc kiểm thử luồng khách vãng lai.                                                                                           | Bỏ qua màn hình Login để **vào thẳng tính năng nghiệp vụ sâu**.                                                                                                           |
+| **Cơ chế hoạt động**     | Sử dụng **`guestPage`** (hoàn toàn sạch bóng, `isAuthenticated: false`), tương tác form qua `loginPage` hoặc `guestLoginPage`.                                                 | Sử dụng **`page`** kết hợp `context.addInitScript` tiêm token Staff từ RAM Worker vào `localStorage` trước khi tải trang.                                                |
+| **Các kịch bản áp dụng** | 1. Đăng nhập thành công (Happy path).<br>2. Sai mật khẩu hiển thị Alert đỏ (401).<br>3. Spam đăng nhập bị khóa tạm thời (429).<br>4. Mạng chậm hiển thị nút Disabled & Spinner.<br>5. Khách vãng lai tra cứu đơn hàng hoặc thanh toán. | 1. Quản trị đơn hàng Neko Admin.<br>2. Thêm mới sản phẩm & kiểm kê kho hàng.<br>3. Xuất báo cáo tài chính & doanh thu.<br>4. Hơn 98% toàn bộ test suite dự án Enterprise. |
 | **Thời gian thực thi**   | **2.5s – 4.5s** / test case (DOM Render, input, network).                                                                                                                       | **50ms – 100ms** / test case (Nạp token từ RAM vào Storage).                                                                                                              |
 | **Độ rủi ro Flakiness**  | Dễ dính Flaky do Animation, DOM Lag, Render Debounce.                                                                                                                           | **Ổn định 100%**, tuyệt đối không bị ảnh hưởng bởi lỗi UI Login.                                                                                                          |
-| **Tần suất khuyên dùng** | **Chỉ 1 – 2 test cases** duy nhất trong toàn bộ Test Suite.                                                                                                                     | **Hàng trăm test cases còn lại** trên hệ thống CI/CD.                                                                                                                     |
+| **Tần suất khuyên dùng** | **Chỉ 1 – 2 test cases** duy nhất trong toàn bộ Test Suite (hoặc các bài test khách vãng lai).                                                                                 | **Hàng trăm test cases còn lại** trên hệ thống CI/CD.                                                                                                                     |
+
+#### 2. Ma Trận Điều Phối Fixture Của Siêu App: Khi Nào Dùng Gì?
+
+| Mục Tiêu Kịch Bản | Fixture Cần Gọi | Kiểu Trang / Client | Trạng Thái Xác Thực | Hành Vi Thực Tế Trình Duyệt |
+|---|---|---|---|---|
+| **Xem bảng đơn hàng Admin** | `{ adminOrdersPage }` | `page` (POM) | Staff Bearer Token (RAM Worker) | Mở thẳng `/admin/orders` trong 50ms, không bị redirect. |
+| **Quản lý sản phẩm Admin** | `{ adminProductsPage }` | `page` (POM) | Staff Bearer Token (RAM Worker) | Mở thẳng `/admin/products` trong 50ms, đầy đủ quyền quản trị. |
+| **Gọi API backend quyền Staff** | `{ authedStaffClient }` | API Client (`request`) | Gắn Bearer Token từ RAM Worker | Bắn API CRUD, cập nhật trạng thái đơn hàng trong 50ms. |
+| **Gọi API public / unauthenticated** | `{ authApi, productApi }` | API Client (`request`) | Không gắn Token | Kiểm thử API đăng ký, đăng nhập hoặc lấy danh mục công khai. |
+| **Kiểm thử Form Login UI** | `{ loginPage }` hoặc `{ guestLoginPage }` | `guestPage` (POM) | Sạch 100% (`isAuthenticated: false`) | Hiển thị Form Đăng nhập, test gõ pass sai (401), rate limit (429). |
+| **Khách vãng lai tra cứu đơn** | `{ guestPage }` | `guestPage` (Page) | Sạch 100% (Guest, không cookie/token) | Mở `/order-tracking`, tra cứu mã đơn không dính quyền Staff. |
+| **Phối hợp Đa vai trò (Multi-Role)** | `{ authedStaffClient, guestPage }` | Phối hợp API (Staff) + UI (Guest) | Độc lập song song | Staff API kiểm kê kho, Guest UI tra cứu thời gian thực. |
 
 #### 2. Mô Hình Chuẩn 3 Tầng Auth: Setup Project (Disk) ➔ Worker Scope (RAM) ➔ Test Scope (0ms)
 
@@ -3474,12 +4859,14 @@ Trong thư viện Zod, sự khác biệt giữa hai phương thức thẩm đị
 ```
 
 ##### 📊 Minh Họa Báo Cáo Lỗi Khi Backend Vi Phạm Hợp Đồng:
+
 Giả sử Backend đổi kiểu của `price_per_unit` từ `number` thành `string` ("250000").
-* Nếu dùng `schema.parse()`: Bài test sập với stacktrace rác `at node_modules/zod/lib/types.js:54`.
-* Nhờ `schema.safeParse()` kết hợp `result.error.format()`, Terminal của bạn sẽ in ra bảng báo cáo chuẩn chỉ:
+
+- Nếu dùng `schema.parse()`: Bài test sập với stacktrace rác `at node_modules/zod/lib/types.js:54`.
+- Nhờ `schema.safeParse()` kết hợp `result.error.format()`, Terminal của bạn sẽ in ra bảng báo cáo chuẩn chỉ:
 
 ```text
-Error: 
+Error:
 ❌ [VI PHẠM HỢP ĐỒNG DỮ LIỆU BACKEND - CONTRACT VIOLATION]
 📍 Endpoint  : https://api-neko-coffee.autoneko.com/public/products/285
 📊 Mã Status : 200 OK
@@ -3521,6 +4908,7 @@ Một API Client chuẩn Senior ([`ProductApiClient.ts`](file:///E:/playwright-p
 ```
 
 ##### 💻 Minh Họa Code Smart Data Method Tự Động Thẩm Định:
+
 ```typescript
 export class ProductApiClient extends BaseApiClient {
   // Lớp 1: Raw Method
@@ -3529,7 +4917,9 @@ export class ProductApiClient extends BaseApiClient {
   }
 
   // Lớp 2: Smart Data Method (Tự động gọi parseResponse)
-  public async getProductDetailData(id: number | string): Promise<NekoProductDetail> {
+  public async getProductDetailData(
+    id: number | string,
+  ): Promise<NekoProductDetail> {
     const response = await this.getProductById(id);
     return this.parseResponse(response, nekoProductDetailSchema);
   }
@@ -3558,12 +4948,14 @@ const auditBody = await productApi.parseResponse(auditRes, productDtoSchema);
 // 3. Khẳng định dữ liệu backend trùng khớp hoàn toàn với những gì người dùng thấy trên UI:
 expect(auditBody.id).toBe(targetProduct.id);
 expect(auditBody.name).toBe(targetProduct.name);
-console.log(`✅ [API AUDIT] Đã hậu kiểm Database thành công cho sản phẩm #${auditBody.id}!`);
+console.log(
+  `✅ [API AUDIT] Đã hậu kiểm Database thành công cho sản phẩm #${auditBody.id}!`,
+);
 ```
 
 > 💡 **Ý NGHĨA KẾT HỢP API & UI ĐẲNG CẤP**:  
-> Giao diện người dùng (UI) chỉ có thể xác nhận: *"Chữ 'Test Coffee' có hiển thị trên màn hình"*.  
-> Nhưng chỉ có **AOM kết hợp `schema.safeParse()`** mới có thể khẳng định: *"Trường ID trong Database chắc chắn là số nguyên (number), trường giá bán là kiểu số thực hợp lệ, và các cờ trạng thái boolean không bị corrupt thành chuỗi rác"*. Đây chính là sức mạnh tối thượng của **Hybrid Super Framework**!
+> Giao diện người dùng (UI) chỉ có thể xác nhận: _"Chữ 'Test Coffee' có hiển thị trên màn hình"_.  
+> Nhưng chỉ có **AOM kết hợp `schema.safeParse()`** mới có thể khẳng định: _"Trường ID trong Database chắc chắn là số nguyên (number), trường giá bán là kiểu số thực hợp lệ, và các cờ trạng thái boolean không bị corrupt thành chuỗi rác"_. Đây chính là sức mạnh tối thượng của **Hybrid Super Framework**!
 
 ---
 
@@ -3609,9 +5001,10 @@ Trong kiểm thử phần mềm chuyên nghiệp (đồng bộ hoàn hảo với
 
 #### 2. Mã Nguồn 4 File Fixture Chi Tiết:
 
-##### 🔐 Tệp 1: Tầng Xác Thực & Tiêm Phiên RAM ([`hybrid-auth.fixture.ts`](../fixtures/hybrid-auth.fixture.ts))
+##### 🔐 Tệp 1: Tầng Xác Thực & Đa Phiên Dual-Session ([`hybrid-auth.fixture.ts`](../fixtures/hybrid-auth.fixture.ts))
+
 ```typescript
-import { test as base } from "@playwright/test";
+import { test as base, type BrowserContext, type Page } from "@playwright/test";
 import { AuthApiClient } from "../../lesson-23/clients/auth.api-client";
 import { ProductApiClient } from "../../lesson-23/clients/product.api-client";
 
@@ -3630,18 +5023,26 @@ export interface WorkerStaffSnapshot {
 }
 
 export interface HybridAuthTestFixtures {
+  // Client API đã xác thực với Staff token trong RAM Worker
   authedStaffClient: {
     authApi: AuthApiClient;
     productApi: ProductApiClient;
   };
+  // BrowserContext độc lập sạch 100%, không bị tiêm token/script của Staff
+  guestContext: BrowserContext;
+  // Page sạch dành cho kiểm thử Form Login hoặc luồng Khách vãng lai
+  guestPage: Page;
 }
 
 export interface HybridAuthWorkerFixtures {
   workerStaffSnapshot: WorkerStaffSnapshot;
 }
 
-export const hybridAuth = base.extend<HybridAuthTestFixtures, HybridAuthWorkerFixtures>({
-  // Worker Scope: Nạp và lưu token Staff vào RAM tiến trình Worker
+export const hybridAuth = base.extend<
+  HybridAuthTestFixtures,
+  HybridAuthWorkerFixtures
+>({
+  // ── 1. WORKER SCOPE: NẠP VÀ LƯU TRỮ TOKEN TRONG RAM CỦA WORKER (0ms) ──
   workerStaffSnapshot: [
     async ({ playwright }, use, workerInfo) => {
       const requestContext = await playwright.request.newContext({
@@ -3674,41 +5075,263 @@ export const hybridAuth = base.extend<HybridAuthTestFixtures, HybridAuthWorkerFi
         if (body.user) user = body.user as NekoUserDto;
       }
 
-      await use({ token: token || "mock_super_staff_jwt_token_2026", email: staffEmail, user });
+      await use({
+        token: token || "mock_super_staff_jwt_token_2026",
+        email: staffEmail,
+        user,
+      });
       await requestContext.dispose();
     },
     { scope: "worker" },
   ],
 
-  // Tiêm Token từ RAM vào localStorage của Browser Context qua CDP (0ms)
+  // ── 2. TỰ ĐỘNG TIÊM PHIÊN STAFF ĐỘNG TỪ RAM VÀO BROWSER CONTEXT (0ms) ──
   page: async ({ page, context, workerStaffSnapshot }, use) => {
     await context.addInitScript(
       ({ token, user }) => {
         localStorage.setItem("access_token", token);
         localStorage.setItem("refresh_token", token);
         localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("neko_auth", JSON.stringify({
-          state: { user, accessToken: token, refreshToken: token, isAuthenticated: true },
-          version: 0,
-        }));
+        localStorage.setItem(
+          "neko_auth",
+          JSON.stringify({
+            state: {
+              user,
+              accessToken: token,
+              refreshToken: token,
+              isAuthenticated: true,
+            },
+            version: 0,
+          }),
+        );
       },
       { token: workerStaffSnapshot.token, user: workerStaffSnapshot.user },
     );
     await use(page);
   },
 
+  // ── 3. TẦNG AUTHENTICATED STAFF CLIENT (TEST SCOPE) ──
   authedStaffClient: async ({ request, workerStaffSnapshot }, use) => {
     await use({
       authApi: new AuthApiClient(request, workerStaffSnapshot.token),
       productApi: new ProductApiClient(request, workerStaffSnapshot.token),
     });
   },
+
+  // ── 4. PHIÊN TRÌNH DUYỆT KHÁCH VÃNG LAI ĐỘC LẬP (GUEST / CLEAN SESSION) ──
+  guestContext: async ({ browser }, use) => {
+    const context = await browser.newContext();
+    await use(context);
+    await context.close();
+  },
+
+  guestPage: async ({ guestContext }, use) => {
+    const page = await guestContext.newPage();
+    await use(page);
+  },
 });
 ```
 
-##### 🌐 Tệp 2: Tầng API Services AOM ([`hybrid-services.fixture.ts`](../fixtures/hybrid-services.fixture.ts))
+---
+
+#### 🔬 Mổ Xẻ Chi Tiết Từng Dòng Code (Line-by-Line Breakdown) Của `hybrid-auth.fixture.ts`
+
+Để hiểu thấu đáo từng cơ chế bên trong tệp xương sống này, chúng ta giải phẫu chi tiết theo **4 Tầng Kiến Trúc Tự Động Hóa**:
+
+```text
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   KIẾN TRÚC 4 TẦNG CODE TRONG hybrid-auth.fixture.ts                                      │
+├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                                           │
+│  🧠 [TẦNG 1: WORKER SCOPE RAM SNAPSHOT] (Dòng 53 - 102)                                                                   │
+│     • Chạy ĐÚNG 1 LẦN khi Worker mở máy ➔ Bắn API tạo Staff ➔ Cất Token vào biến RAM 'workerStaffSnapshot' (0ms delay).    │
+│                                                                                                                           │
+│                     │ (Cấp Token cho cả 2 nhánh độc lập)                                                                 │
+│                     ├─────────────────────────────────────────────────────────┐                                           │
+│                     ▼                                                         ▼                                           │
+│  💉 [TẦNG 2: BƠM VÀO BROWSER CHO UI TEST] (Dòng 105 - 129)   ⚡ [TẦNG 3: BƠM VÀO CLIENT CHO API TEST] (Dòng 132 - 137)     │
+│     • Fixture 'page' (Test Scope).                           • Fixture 'authedStaffClient' (Test Scope).                  │
+│     • context.addInitScript() lấy Token từ RAM Worker        • Truyền token từ RAM vào constructor Client:                │
+│       bơm vào localStorage (Zustand Persist).                  new ProductApiClient(request, workerStaffSnapshot.token)   │
+│     • Trình duyệt mở thẳng Dashboard Admin trong 50ms!       • Mọi request tự động gắn 'Authorization: Bearer <token>'!   │
+│                                                                                                                           │
+│                     │ (Tách biệt hoàn toàn)                                                                               │
+│                     ▼                                                                                                     │
+│  🧼 [TẦNG 4: PHIÊN KHÁCH SẠCH 100%] (Dòng 140 - 150)                                                                      │
+│     • Fixture 'guestContext' & 'guestPage' (Test Scope).                                                                  │
+│     • Khởi tạo browser.newContext() nguyên bản, TUYỆT ĐỐI KHÔNG addInitScript, KHÔNG Cookie.                              │
+│     • Chuyên trị test Form Login (/login), sai pass 401, rate limit 429, chống Auto-Redirect!                             │
+│                                                                                                                           │
+└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+##### 🧠 TẦNG 1: WORKER SCOPE RAM SNAPSHOT (Khởi Tạo & Lưu Trữ Token 0ms)
+
 ```typescript
-import { test as base } from "@playwright/test";
+// ── Dòng 53 - 54: Khai báo Fixture cấp Worker (Worker Scope) ──
+workerStaffSnapshot: [
+  async ({ playwright }, use, workerInfo) => {
+```
+* **Bản chất**: Tham số `{ scope: "worker" }` ở dòng 101 chỉ định rằng hàm này **chỉ thực thi duy nhất 1 lần** khi tiến trình Worker Node.js bắt đầu, và tồn tại bền bỉ phục vụ hàng chục bài test tiếp theo.
+* **Tham số `workerInfo`**: Cung cấp `workerInfo.workerIndex` (0, 1, 2...) giúp định danh luồng song song.
+
+```typescript
+// ── Dòng 55 - 62: Tạo ngữ cảnh API độc lập & Sinh danh tính Staff ngẫu nhiên ──
+    const requestContext = await playwright.request.newContext({
+      baseURL: "https://api-neko-coffee.autoneko.com",
+    });
+    const authApi = new AuthApiClient(requestContext);
+    const timestamp = Date.now();
+    const staffEmail = `staff_super_w${workerInfo.workerIndex}_${timestamp}@nekocoffee.com`;
+    const staffPassword = `StaffSuperPass_${timestamp}!`;
+```
+* `playwright.request.newContext()`: Mở kết nối mạng cấp thấp trong Node.js, không cần mở trình duyệt Chromium GUI (tiết kiệm 99% RAM).
+* `staff_super_w${workerInfo.workerIndex}_...`: **Worker Isolation Strategy** — Đảm bảo mỗi Worker dùng một email Staff hoàn toàn riêng biệt. Khi chạy song song 4 workers (`npx playwright test --workers=4`), các tài khoản không bao giờ bị đụng độ hoặc ghi đè dữ liệu của nhau.
+
+```typescript
+// ── Dòng 63 - 86: Gửi REST API đăng ký & bóc tách JWT Token ──
+    const regRes = await authApi.register({
+      username: `staff_w${workerInfo.workerIndex}_${timestamp}`,
+      email: staffEmail,
+      password: staffPassword,
+      role: "staff",
+    });
+
+    let token = "";
+    if (regRes.ok()) {
+      const body = await regRes.json();
+      token = body.access_token || "";
+      if (body.user) user = body.user as NekoUserDto;
+    }
+```
+* Gọi endpoint `/auth/register` với quyền `role: "staff"`. Chỉ tốn **~150ms** để có ngay một tài khoản Staff thật kèm JWT Token hợp lệ từ cơ sở dữ liệu.
+
+```typescript
+// ── Dòng 95 - 99: Đóng băng phiên vào RAM và Đăng ký Teardown dọn dẹp ──
+    await use({ token, email: staffEmail, user });
+    await requestContext.dispose();
+```
+* `await use({ token, email, user })`: **Mắt xích quan trọng nhất của Trạm 2!** Dữ liệu phiên được đưa vào bộ nhớ RAM (Node.js Heap). Quá trình thực thi của Worker tạm dừng tại dòng này, sẵn sàng cấp phát token cho mọi bài test với độ trễ **0 nano-giây**.
+* `await requestContext.dispose()`: Mã Teardown tự động kích hoạt khi Worker kết thúc toàn bộ suite test, giải phóng kết nối mạng sạch sẽ.
+
+---
+
+##### 💉 TẦNG 2: TỰ ĐỘNG TIÊM PHIÊN VÀO BROWSER (Fixture `page` Ở Test Scope)
+
+```typescript
+// ── Dòng 105: Ghi đè Fixture 'page' mặc định của Playwright ──
+page: async ({ page, context, workerStaffSnapshot }, use) => {
+```
+* Fixture chạy ở **Test Scope**: Mỗi bài test bắt đầu sẽ gọi khối mã này một lần.
+* Lấy `workerStaffSnapshot` từ Tầng 1: Không tốn thêm bất kỳ request API nào, không đọc file đĩa.
+
+```typescript
+// ── Dòng 107 - 126: Tiêm Token và Zustand Store vào Browser qua CDP ──
+  await context.addInitScript(
+    ({ token, user }) => {
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("refresh_token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem(
+        "neko_auth",
+        JSON.stringify({
+          state: {
+            user,
+            accessToken: token,
+            refreshToken: token,
+            isAuthenticated: true,
+          },
+          version: 0,
+        }),
+      );
+    },
+    { token: workerStaffSnapshot.token, user: workerStaffSnapshot.user },
+  );
+
+  await use(page);
+```
+* `context.addInitScript()`: Đăng ký lệnh `Page.addScriptToEvaluateOnNewDocument` với Chrome DevTools Protocol.
+* **Thời điểm chạy**: Thực thi ngay khi Document vừa khởi tạo, **TRƯỚC KHI** HTML và bundle mã nguồn Next.js/React kịp tải về!
+* **Bơm chuẩn cấu trúc Zustand Store (`neko_auth`)**:
+  - Không chỉ lưu key thô `access_token`, mã nguồn tái tạo hoàn chỉnh cấu trúc `{ state: { accessToken, user, isAuthenticated: true }, version: 0 }`.
+  - Cờ `version: 0` là bắt buộc đối với Zustand Persist Middleware để tránh việc Store bị coi là lỗi thời và tự động xóa sạch dữ liệu phiên!
+* `await use(page)`: Bàn giao trình duyệt đã có sẵn phiên cho bài test. Test gọi `page.goto('/admin/orders')` là vào thẳng trang trong **50ms**, bypass 100% màn hình đăng nhập!
+
+---
+
+##### ⚡ TẦNG 3: BƠM TOKEN CHO API CLIENT (Fixture `authedStaffClient`)
+
+Đây chính là câu trả lời cho câu hỏi: *"Trong code, token được bơm cho API ở đâu, truyền như thế nào và chạy ra sao?"*
+
+```typescript
+// ── Dòng 132 - 137: Khởi tạo API Clients kèm Token Staff từ RAM ──
+authedStaffClient: async ({ request, workerStaffSnapshot }, use) => {
+  await use({
+    authApi: new AuthApiClient(request, workerStaffSnapshot.token),
+    productApi: new ProductApiClient(request, workerStaffSnapshot.token),
+  });
+},
+```
+
+###### 🔍 Cơ Chế Bơm Token Chạy Ngầm (Behind The Scenes):
+1. **Tiếp nhận Token từ RAM**: `workerStaffSnapshot.token` (chuỗi Bearer JWT Token được giữ trong RAM Worker từ Tầng 1) được truyền trực tiếp vào vị trí **tham số thứ 2** của `AuthApiClient` và `ProductApiClient`.
+2. **Lưu trữ trong Class Instance**: Trong lớp cha [`BaseApiClient.ts`](file:///e:/playwright-pro/202603-PW_BASIC/modules/2-api/NekoCoffee/lesson-23/clients/base.api-client.ts):
+   ```typescript
+   export abstract class BaseApiClient {
+     constructor(
+       protected request: APIRequestContext,
+       protected token?: string, // 👈 Nhận token từ workerStaffSnapshot.token
+     ) {}
+   }
+   ```
+3. **Tự động gắn Header `Authorization` cho mọi Request HTTP**: Khi bất kỳ phương thức API nào được gọi (ví dụ `authedStaffClient.productApi.createProduct(...)`), Client tự động đính kèm Token vào Header:
+   ```typescript
+   const headers = {
+     "Content-Type": "application/json",
+     ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}), // 👈 Token được bơm tại đây!
+   };
+   return await this.request.post(endpoint, { headers, data: payload });
+   ```
+4. **Hiệu năng**: Tốc độ cấp phát là **0ms** vì chuỗi token đã có sẵn trong biến bộ nhớ Node.js. Không mất thời gian gọi lại API Login, không phải đọc file đĩa!
+
+---
+
+##### 🧼 TẦNG 4: PHIÊN KHÁCH VÃNG LAI ĐỘC LẬP (`guestContext` & `guestPage`)
+
+```typescript
+// ── Dòng 140 - 144: Tạo Context nguyên bản sạch 100% ──
+guestContext: async ({ browser }, use) => {
+  const context = await browser.newContext(); // 👈 Khởi tạo Context mới toanh
+  await use(context);
+  await context.close(); // 👈 Tự động dọn dẹp khi bài test kết thúc
+},
+
+// ── Dòng 146 - 149: Mở Page từ Context sạch ──
+guestPage: async ({ guestContext }, use) => {
+  const page = await guestContext.newPage();
+  await use(page);
+},
+```
+
+###### 🎯 Vì Sao Bắt Buộc Phải Có Tầng Này?
+* **Tránh bẫy sập Auto-Redirect (Guard Trap)**: Nếu dùng fixture `page` ở Tầng 2 để test trang Login (`/login`), Next.js Auth Guard thấy Token có sẵn trong LocalStorage sẽ tự động chuyển hướng `307 Redirect` sang Dashboard Admin ➔ Form đăng nhập biến mất và test case bị fail!
+* **Bảo đảm tính nguyên bản**: `guestContext` được sinh ra từ `browser.newContext()` nguyên thủy:
+  - ❌ **KHÔNG** gọi `addInitScript`.
+  - ❌ **KHÔNG** nạp bất kỳ Cookie hay LocalStorage Token nào.
+* **Kịch bản phục vụ**:
+  1. Kiểm thử chính Form Đăng Nhập (`/login` qua `loginPage`).
+  2. Kiểm thử nhập sai mật khẩu (401 Unauthorized).
+  3. Kiểm thử giới hạn tần suất gửi yêu cầu (429 Rate Limit).
+  4. Kiểm thử giỏ hàng Khách vãng lai (Guest Cart).
+
+---
+
+##### 🌐 Tệp 2: Tầng API Services AOM ([`hybrid-services.fixture.ts`](../fixtures/hybrid-services.fixture.ts))
+
+```typescript
+import { test as base, type APIRequestContext } from "@playwright/test";
 import { AuthApiClient } from "../../lesson-23/clients/auth.api-client";
 import { ProductApiClient } from "../../lesson-23/clients/product.api-client";
 import { EchoApiClient } from "../../lesson-23/clients/echo.api-client";
@@ -3720,41 +5343,135 @@ export interface HybridServicesFixtures {
 }
 
 export const hybridServicesFixtures = {
-  authApi: async ({ request }: any, use: (r: AuthApiClient) => Promise<void>) => {
+  authApi: async (
+    { request }: { request: APIRequestContext },
+    use: (r: AuthApiClient) => Promise<void>,
+  ) => {
     await use(new AuthApiClient(request));
   },
-  productApi: async ({ request }: any, use: (r: ProductApiClient) => Promise<void>) => {
+  productApi: async (
+    { request }: { request: APIRequestContext },
+    use: (r: ProductApiClient) => Promise<void>,
+  ) => {
     await use(new ProductApiClient(request));
   },
-  echoApi: async ({ request }: any, use: (r: EchoApiClient) => Promise<void>) => {
+  echoApi: async (
+    { request }: { request: APIRequestContext },
+    use: (r: EchoApiClient) => Promise<void>,
+  ) => {
     await use(new EchoApiClient(request));
   },
 };
 
-export const hybridServices = base.extend<HybridServicesFixtures>(hybridServicesFixtures);
+export const hybridServices = base.extend<HybridServicesFixtures>(
+  hybridServicesFixtures,
+);
 ```
 
-##### 🖥️ Tệp 3: Tầng UI Page Objects POM ([`hybrid-app.fixture.ts`](../fixtures/hybrid-app.fixture.ts))
+---
+
+#### 🔬 Mổ Xẻ Chi Tiết Từng Dòng Code Của `hybrid-services.fixture.ts`
+
+Tệp này chuyên trách cung cấp **Các API Client Mở (Unauthenticated / Public API Clients)** — nơi các bài test cần gọi API mà KHÔNG bị ép buộc gắn Token Staff, ví dụ: kiểm thử đăng ký user mới, đăng nhập tài khoản sai pass, hoặc gọi API public.
+
 ```typescript
-import { test as base } from "@playwright/test";
+// ── Dòng 1 - 4: Strict Typing từ Playwright và AOM Clients ──
+import { test as base, type APIRequestContext } from "@playwright/test";
+import { AuthApiClient } from "../../lesson-23/clients/auth.api-client";
+import { ProductApiClient } from "../../lesson-23/clients/product.api-client";
+import { EchoApiClient } from "../../lesson-23/clients/echo.api-client";
+```
+* `APIRequestContext`: Interface kiểu chuẩn mực của Playwright cho môi trường mạng HTTP trong Node.js (thay thế hoàn toàn `any`).
+* Các Client từ Bài 23 kế thừa `BaseApiClient`, gói gọn toàn bộ endpoints và phương thức HTTP (GET/POST/PUT/DELETE).
+
+```typescript
+// ── Dòng 6 - 10: Interface định hình các API Client có sẵn trong bài test ──
+export interface HybridServicesFixtures {
+  authApi: AuthApiClient;
+  productApi: ProductApiClient;
+  echoApi: EchoApiClient;
+}
+```
+* Bất kỳ bài test nào khai báo `{ authApi, productApi, echoApi }` đều nhận được auto-complete và type check 100% từ TypeScript IDE.
+
+```typescript
+// ── Dòng 12 - 31: Object chứa danh sách fixtures độc lập ──
+export const hybridServicesFixtures = {
+  authApi: async (
+    { request }: { request: APIRequestContext },
+    use: (r: AuthApiClient) => Promise<void>,
+  ) => {
+    await use(new AuthApiClient(request));
+  },
+  productApi: async (
+    { request }: { request: APIRequestContext },
+    use: (r: ProductApiClient) => Promise<void>,
+  ) => {
+    await use(new ProductApiClient(request));
+  },
+  echoApi: async (
+    { request }: { request: APIRequestContext },
+    use: (r: EchoApiClient) => Promise<void>,
+  ) => {
+    await use(new EchoApiClient(request));
+  },
+};
+```
+* **Tại sao tách riêng `hybridServicesFixtures` thành Object thuần?**:
+  - Để có thể dùng toán tử Spread `...hybridServicesFixtures` khi gộp vào Gatekeeper ở Tệp 4 mà **không bị lỗi vòng lặp phụ thuộc (circular dependency)** hoặc lồng fixture phức tạp.
+* **Cơ chế khởi tạo**:
+  - Nhận fixture `request` tích hợp sẵn của Playwright (đã cấu hình sẵn `baseURL`).
+  - `await use(new AuthApiClient(request))`: Tạo mới Client **KHÔNG TRUYỀN TOKEN** vào constructor ➔ Client này hoàn toàn sạch, phục vụ kịch bản bắn API tự do.
+
+```typescript
+// ── Dòng 33 - 35: Export extension độc lập ──
+export const hybridServices = base.extend<HybridServicesFixtures>(
+  hybridServicesFixtures,
+);
+```
+* Cho phép các file test API thuần túy có thể `import { test } from './hybrid-services.fixture'` chạy siêu nhẹ mà không cần nạp UI Page Objects!
+
+---
+
+##### 🖥️ Tệp 3: Tầng UI Page Objects POM ([`hybrid-app.fixture.ts`](../fixtures/hybrid-app.fixture.ts))
+
+```typescript
+import { test as base, type Page } from "@playwright/test";
 import { NekoLoginPage } from "../pom/NekoLoginPage";
 import { NekoAdminOrdersPage } from "../pom/NekoAdminOrdersPage";
 import { NekoAdminProductsPage } from "../pom/NekoAdminProductsPage";
 
 export interface HybridAppFixtures {
   loginPage: NekoLoginPage;
+  guestLoginPage: NekoLoginPage;
   adminOrdersPage: NekoAdminOrdersPage;
   adminProductsPage: NekoAdminProductsPage;
 }
 
 export const hybridAppFixtures = {
-  loginPage: async ({ page }: any, use: (r: NekoLoginPage) => Promise<void>) => {
-    await use(new NekoLoginPage(page));
+  // Gắn với guestPage sạch bóng để kiểm thử Form Login không bị auto-redirect!
+  loginPage: async (
+    { guestPage, page }: { guestPage?: Page; page: Page },
+    use: (r: NekoLoginPage) => Promise<void>,
+  ) => {
+    await use(new NekoLoginPage(guestPage || page));
   },
-  adminOrdersPage: async ({ page }: any, use: (r: NekoAdminOrdersPage) => Promise<void>) => {
+  guestLoginPage: async (
+    { guestPage, page }: { guestPage?: Page; page: Page },
+    use: (r: NekoLoginPage) => Promise<void>,
+  ) => {
+    await use(new NekoLoginPage(guestPage || page));
+  },
+  adminOrdersPage: async (
+    { page }: { page: Page },
+    use: (r: NekoAdminOrdersPage) => Promise<void>,
+  ) => {
     await use(new NekoAdminOrdersPage(page));
   },
-  adminProductsPage: async ({ page }: any, use: (r: NekoAdminProductsPage) => Promise<void>) => {
+  adminProductsPage: async (
+    { page }: { page: Page },
+    use: (r: NekoAdminProductsPage) => Promise<void>,
+  ) => {
     await use(new NekoAdminProductsPage(page));
   },
 };
@@ -3762,7 +5479,79 @@ export const hybridAppFixtures = {
 export const hybridApp = base.extend<HybridAppFixtures>(hybridAppFixtures);
 ```
 
+---
+
+#### 🔬 Mổ Xẻ Chi Tiết Từng Dòng Code Của `hybrid-app.fixture.ts`
+
+Tệp này là nơi khởi tạo toàn bộ **Page Object Models (POM)** của giao diện người dùng, đồng thời **giải quyết bài toán chí mạng: Gắn POM vào trang đã đăng nhập (`page`) hay trang sạch (`guestPage`)?**
+
+```typescript
+// ── Dòng 1 - 5: Import các lớp Page Object Models ──
+import { test as base, type Page } from "@playwright/test";
+import { NekoLoginPage } from "../pom/NekoLoginPage";
+import { NekoAdminOrdersPage } from "../pom/NekoAdminOrdersPage";
+import { NekoAdminProductsPage } from "../pom/NekoAdminProductsPage";
+```
+* Nhập các lớp POM đã được đóng gói kỹ lưỡng:
+  - `NekoLoginPage`: Màn hình Đăng nhập (Resilient Locators, Spinner, Alert).
+  - `NekoAdminOrdersPage`: Bảng Quản lý Đơn hàng (kế thừa `TableColumnHelpers`).
+  - `NekoAdminProductsPage`: Bảng Quản lý Sản phẩm cà phê & Kho hàng.
+
+```typescript
+// ── Dòng 7 - 12: Interface hợp nhất các Page Objects ──
+export interface HybridAppFixtures {
+  loginPage: NekoLoginPage;
+  guestLoginPage: NekoLoginPage;
+  adminOrdersPage: NekoAdminOrdersPage;
+  adminProductsPage: NekoAdminProductsPage;
+}
+```
+
+```typescript
+// ── Dòng 14 - 27: GẮN LOGIN PAGE VÀO GUEST PAGE (Chống Auto-Redirect) ──
+export const hybridAppFixtures = {
+  loginPage: async (
+    { guestPage, page }: { guestPage?: Page; page: Page },
+    use: (r: NekoLoginPage) => Promise<void>,
+  ) => {
+    await use(new NekoLoginPage(guestPage || page));
+  },
+  guestLoginPage: async (
+    { guestPage, page }: { guestPage?: Page; page: Page },
+    use: (r: NekoLoginPage) => Promise<void>,
+  ) => {
+    await use(new NekoLoginPage(guestPage || page));
+  },
+```
+* **Bí quyết kiến trúc**:
+  - `loginPage` khai báo phụ thuộc `{ guestPage, page }`.
+  - Nhờ `guestPage || page`, Playwright sẽ ưu tiên kích hoạt `guestPage` (Browser Context sạch 100%, không dính token Staff).
+  - Khi bài test gọi `{ loginPage }`, trang web mở `/login` sẽ hiển thị đầy đủ Form đăng nhập, **tuyệt đối không bị Next.js Auth Guard đá văng sang Dashboard**!
+  - `guestLoginPage`: Alias tường minh cho các kỹ sư muốn code đọc rõ nghĩa "Đây là Login Page của Khách".
+
+```typescript
+// ── Dòng 28 - 39: GẮN CÁC TRANG ADMIN VÀO PAGE ĐÃ TIÊM PHIÊN STAFF ──
+  adminOrdersPage: async (
+    { page }: { page: Page },
+    use: (r: NekoAdminOrdersPage) => Promise<void>,
+  ) => {
+    await use(new NekoAdminOrdersPage(page));
+  },
+  adminProductsPage: async (
+    { page }: { page: Page },
+    use: (r: NekoAdminProductsPage) => Promise<void>,
+  ) => {
+    await use(new NekoAdminProductsPage(page));
+  },
+```
+* `adminOrdersPage` & `adminProductsPage` phụ thuộc trực tiếp vào `{ page }`.
+* Nhớ lại ở Tệp 1: `{ page }` đã được `addInitScript` tiêm sẵn Token Staff từ RAM Worker!
+* Do đó, khi test gọi `await adminOrdersPage.navigate(...)`, trình duyệt mở thẳng vào `/admin/orders` trong **50ms** với đầy đủ quyền quản trị viên, không tốn 1 mili-giây nào gõ form login!
+
+---
+
 ##### 🏰 Tệp 4: Cổng Điều Phối Tối Cao ([`hybrid-super-gatekeeper.fixture.ts`](../fixtures/hybrid-super-gatekeeper.fixture.ts))
+
 ```typescript
 import {
   hybridAuth,
@@ -3781,7 +5570,10 @@ import {
 } from "./hybrid-app.fixture";
 
 export type { NekoUserDto, WorkerStaffSnapshot };
-export type { HybridAuthTestFixtures, HybridAuthWorkerFixtures } from "./hybrid-auth.fixture";
+export type {
+  HybridAuthTestFixtures,
+  HybridAuthWorkerFixtures,
+} from "./hybrid-auth.fixture";
 export type { HybridServicesFixtures } from "./hybrid-services.fixture";
 export type { HybridAppFixtures } from "./hybrid-app.fixture";
 
@@ -3803,6 +5595,76 @@ export const test = hybridAuth.extend<
 
 export { expect } from "@playwright/test";
 ```
+
+---
+
+#### 🔬 Mổ Xẻ Chi Tiết Từng Dòng Code Của `hybrid-super-gatekeeper.fixture.ts`
+
+Tệp Gatekeeper đóng vai trò **Single Source of Truth (Điểm chạm duy nhất)** cho toàn bộ dự án, hợp nhất cả 3 tầng thành cỗ máy hoàn chỉnh.
+
+```typescript
+// ── Dòng 1 - 13: Import và Re-export Type Definitions từ 3 tầng ──
+import {
+  hybridAuth,
+  type HybridAuthTestFixtures,
+  type HybridAuthWorkerFixtures,
+  type NekoUserDto,
+  type WorkerStaffSnapshot,
+} from "./hybrid-auth.fixture";
+import {
+  hybridServicesFixtures,
+  type HybridServicesFixtures,
+} from "./hybrid-services.fixture";
+import {
+  hybridAppFixtures,
+  type HybridAppFixtures,
+} from "./hybrid-app.fixture";
+
+export type { NekoUserDto, WorkerStaffSnapshot };
+export type {
+  HybridAuthTestFixtures,
+  HybridAuthWorkerFixtures,
+} from "./hybrid-auth.fixture";
+export type { HybridServicesFixtures } from "./hybrid-services.fixture";
+export type { HybridAppFixtures } from "./hybrid-app.fixture";
+```
+* **Kỹ thuật Re-export**: Gom toàn bộ interfaces về 1 file duy nhất. Kỹ sư viết test chỉ cần import từ Gatekeeper, không cần nhớ `NekoUserDto` nằm ở file nào.
+
+```typescript
+// ── Dòng 15 - 19: Hợp nhất kiểu dữ liệu toàn hệ thống (Intersection Types) ──
+export type HybridSuperTestFixtures = HybridAuthTestFixtures &
+  HybridServicesFixtures &
+  HybridAppFixtures;
+
+export type HybridSuperWorkerFixtures = HybridAuthWorkerFixtures;
+```
+* Dùng toán tử `&` (Intersection) trong TypeScript để ghép 3 bộ fixture lại:
+  `HybridSuperTestFixtures` = `{ authedStaffClient, guestContext, guestPage }` & `{ authApi, productApi, echoApi }` & `{ loginPage, guestLoginPage, adminOrdersPage, adminProductsPage }`.
+* IDE nhận diện 100% tất cả các fixtures này khi tester gõ code.
+
+```typescript
+// ── Dòng 21 - 29: Kế thừa và Hợp nhất 3 Tầng Fixtures ──
+export const test = hybridAuth.extend<
+  HybridSuperTestFixtures,
+  HybridSuperWorkerFixtures
+>({
+  ...hybridServicesFixtures,
+  ...hybridAppFixtures,
+});
+
+export { expect } from "@playwright/test";
+```
+* **Cơ chế kế thừa `hybridAuth.extend(...)`**:
+  1. Lấy nền tảng là `hybridAuth` (đã chứa Tầng 1 Worker Scope RAM Snapshot và Tầng 2 override `page`).
+  2. Mở rộng thêm danh sách `hybridServicesFixtures` (Tầng 2 API AOM).
+  3. Mở rộng thêm danh sách `hybridAppFixtures` (Tầng 3 UI POM).
+* **Kết quả**: Tạo ra runner `test` tối thượng. Mọi kịch bản chỉ cần:
+  ```typescript
+  import { test, expect } from "../fixtures/hybrid-super-gatekeeper.fixture";
+  ```
+  Và gọi bất kỳ fixture nào trong 12 fixtures trên một cách hoàn toàn tự nhiên, mượt mà và an toàn kiểu dữ liệu 100%!
+
+---
 
 ##### 🔬 Phân Tích Chuyên Sâu 5 Trụ Cột Thiết Kế Của Gatekeeper Fixture:
 
@@ -3830,11 +5692,18 @@ export { expect } from "@playwright/test";
    - Cơ chế này tự động nạp cấu trúc Zustand (`neko_auth`) và Bearer Token vào `localStorage` của trình duyệt trước khi client load trang.
    - **Lợi ích tối thượng**: Trình duyệt có thể mở thẳng các trang quản trị bí mật (`https://coffee.autoneko.com/admin/orders`, `/admin/products`) với quyền Staff trong **0 mili-giây**, không bao giờ bị redirect về trang `/login` và không tốn dù chỉ 1 giây để gõ form!
 
+6. **Trụ Cột 6: Kiến Trúc Đa Phiên & Cô Lập Khách Vãng Lai (Dual-Session Isolation)**:
+   - **Xóa bỏ bẫy Auto-Redirect**: Nếu dùng `page` mặc định để kiểm thử trang Login (`/login`), Next.js Router sẽ tự động đẩy sang `/admin` vì đã có Staff token gài sẵn trong `localStorage`.
+   - **Tách bạch 2 môi trường**:
+     - `page`: Dành cho Quản trị viên Staff (có `addInitScript` từ RAM Worker, vào thẳng Dashboard trong 50ms).
+     - `guestPage` / `guestContext`: Trình duyệt hoàn toàn sạch bóng, không gài token hay init script nào.
+   - **Tự động gắn kết**: `loginPage` và `guestLoginPage` tự động phụ thuộc vào `guestPage`. Khi viết test kiểm thử Form đăng nhập, form validation hoặc khách vãng lai, kỹ sư hoàn toàn yên tâm trang luôn ở trạng thái Unauthenticated sạch sẽ 100%!
+
 ---
 
 #### 2. File Siêu Kịch Bản Thực Chiến E2E: [`06-hybrid-full-e2e-workflow.spec.ts`](../specs/06-hybrid-full-e2e-workflow.spec.ts)
 
-##### 💻 Mã Nguồn Thực Chiến Đầy Đủ 7 Bài Test (4 Proofs Auth Core + 3 Live Super E2E Workflows):
+##### 💻 Mã Nguồn Thực Chiến Đầy Đủ 8 Bài Test (5 Proofs Auth Core + 3 Live Super E2E Workflows):
 
 ```typescript
 import { test, expect } from "../fixtures/hybrid-super-gatekeeper.fixture";
@@ -4019,14 +5888,51 @@ test.describe("🏆 [LESSON 24] 06 - Hybrid Super App Workflow (Core Auth Proofs
         "✅ [Proof 4 - Session Isolation] Tài khoản tạm độc lập không gây ô nhiễm Worker RAM Snapshot!",
       );
     });
+
+    test("05 - [PROOF 5: GUEST DUAL-SESSION ISOLATION] Chứng minh guestPage & loginPage độc lập 100%, không bị tiêm Staff Token và hiển thị Form Login sạch", async ({
+      loginPage,
+      guestPage,
+      workerStaffSnapshot,
+    }) => {
+      // 1. Mở trang đăng nhập qua loginPage (vốn đã được gắn với guestPage sạch bóng)
+      await loginPage.navigate("https://coffee.autoneko.com/login");
+
+      // 2. Thẩm định URL và các phần tử UI của Form Login hiển thị đầy đủ (không bị auto-redirect sang Admin)
+      expect(guestPage.url()).toContain("/login");
+      await loginPage.expectOnPage();
+
+      // 3. Khẳng định localStorage của guestPage là phiên khách (chưa xác thực, không dính token Staff)
+      const guestAuthRaw = await guestPage.evaluate(() =>
+        localStorage.getItem("neko_auth"),
+      );
+      if (guestAuthRaw) {
+        const guestAuth = JSON.parse(guestAuthRaw);
+        expect(guestAuth.state.isAuthenticated).toBe(false);
+        expect(guestAuth.state.accessToken).toBeNull();
+        expect(guestAuth.state.user).toBeNull();
+      }
+
+      const guestToken = await guestPage.evaluate(() =>
+        localStorage.getItem("access_token"),
+      );
+      expect(guestToken).toBeNull();
+
+      // 4. Khẳng định: workerStaffSnapshot trong RAM vẫn vẹn nguyên quyền Staff
+      expect(workerStaffSnapshot.user.role).toBe("staff");
+      expect(workerStaffSnapshot.token).toBeTruthy();
+
+      console.log(
+        "✅ [Proof 5 - Guest Dual-Session] loginPage & guestPage sạch 100%, không dính Staff Token từ RAM!",
+      );
+    });
   });
 
   // ──────────────────────────────────────────────────────────────────────────
   // 🏆 PHẦN 2: SIÊU KỊCH BẢN THỰC CHIẾN E2E FULL WORKFLOW TRÊN WEBSITE THẬT
   // ──────────────────────────────────────────────────────────────────────────
   test.describe("🏆 PHẦN 2: SIÊU KỊCH BẢN THỰC CHIẾN E2E TRÊN NEKO COFFEE LIVE", () => {
-    // 🧪 5. LUỒNG FULL UI: XÁC THỰC BẢNG ĐƠN HÀNG ADMIN BẰNG TABLECOLUMNHELPERS
-    test("05 - [UI TABLE POM] Quét bản đồ cột tự động và trích xuất dữ liệu đơn hàng Neko Admin qua TableColumnHelpers", async ({
+    // 🧪 6. LUỒNG FULL UI: XÁC THỰC BẢNG ĐƠN HÀNG ADMIN BẰNG TABLECOLUMNHELPERS
+    test("06 - [UI TABLE POM] Quét bản đồ cột tự động và trích xuất dữ liệu đơn hàng Neko Admin qua TableColumnHelpers", async ({
       adminOrdersPage,
     }) => {
       // 1. Điều hướng thẳng vào trang Admin Orders thật (đã được auto-login qua Gatekeeper RAM snapshot)
@@ -4062,8 +5968,8 @@ test.describe("🏆 [LESSON 24] 06 - Hybrid Super App Workflow (Core Auth Proofs
       );
     });
 
-    // 🧪 6. LUỒNG HYBRID: LẤY/TẠO DỮ LIỆU QUA API (AOM) ➔ ĐỐI SOÁT TRÊN UI BẰNG TABLE HELPERS ➔ HẬU KIỂM
-    test("06 - [HYBRID E2E] Chuẩn bị dữ liệu siêu tốc qua API AOM -> Mở UI Admin đối soát bằng TableColumnHelpers", async ({
+    // 🧪 7. LUỒNG HYBRID: LẤY/TẠO DỮ LIỆU QUA API (AOM) ➔ ĐỐI SOÁT TRÊN UI BẰNG TABLE HELPERS ➔ HẬU KIỂM
+    test("07 - [HYBRID E2E] Chuẩn bị dữ liệu siêu tốc qua API AOM -> Mở UI Admin đối soát bằng TableColumnHelpers", async ({
       productApi,
       adminProductsPage,
     }) => {
@@ -4080,7 +5986,7 @@ test.describe("🏆 [LESSON 24] 06 - Hybrid Super App Workflow (Core Auth Proofs
       expect(targetProduct).toBeDefined();
       expect(targetProduct.id).toBeGreaterThan(0);
       console.log(
-        `✅ [API SEED] Dữ liệu chuẩn bị: #➔{targetProduct.id} - ➔{targetProduct.name} (➔{targetProduct.price_per_unit}đ)`,
+        `✅ [API SEED] Dữ liệu chuẩn bị: #${targetProduct.id} - ${targetProduct.name} (${targetProduct.price_per_unit}đ)`,
       );
 
       // ══════════════════════════════════════════════════════════════════════════
@@ -4107,7 +6013,7 @@ test.describe("🏆 [LESSON 24] 06 - Hybrid Super App Workflow (Core Auth Proofs
 
       expect(productData["tênSảnPhẩm"]).toContain(targetProduct.name);
       expect(productData["giáBán"]).toBe(
-        `➔{targetProduct.price_per_unit.toLocaleString("vi-VN")}đ`,
+        `${targetProduct.price_per_unit.toLocaleString("vi-VN")}đ`,
       );
       if (targetProduct.stock_status === "out_of_stock") {
         expect(productData["trạngThái"]).toBe("Hết hàng");
@@ -4125,12 +6031,12 @@ test.describe("🏆 [LESSON 24] 06 - Hybrid Super App Workflow (Core Auth Proofs
       expect(auditBody.id).toBe(targetProduct.id);
       expect(auditBody.name).toBe(targetProduct.name);
       console.log(
-        `✅ [API AUDIT] Đã hậu kiểm Database thành công cho sản phẩm #➔{auditBody.id}!`,
+        `✅ [API AUDIT] Đã hậu kiểm Database thành công cho sản phẩm #${auditBody.id}!`,
       );
     });
 
-    // 🧪 7. LUỒNG FILTER & SEARCH TRÊN UI TABLE THẬT
-    test("07 - [UI TABLE FILTER] Kiểm thử ô tìm nhanh và bộ lọc bảng đơn hàng", async ({
+    // 🧪 8. LUỒNG FILTER & SEARCH TRÊN UI TABLE THẬT
+    test("08 - [UI TABLE FILTER] Kiểm thử ô tìm nhanh và bộ lọc bảng đơn hàng", async ({
       adminOrdersPage,
     }) => {
       await adminOrdersPage.navigate(
@@ -4155,14 +6061,14 @@ test.describe("🏆 [LESSON 24] 06 - Hybrid Super App Workflow (Core Auth Proofs
       const restoredOrders = await adminOrdersPage.getAllOrdersTableData();
       expect(restoredOrders.length).toBeGreaterThan(1);
       console.log(
-        `✅ [UI FILTER] Đã kiểm thử thành công tính năng lọc và hoàn tác bảng (phục hồi ➔{restoredOrders.length} dòng)!`,
+        `✅ [UI FILTER] Đã kiểm thử thành công tính năng lọc và hoàn tác bảng (phục hồi ${restoredOrders.length} dòng)!`,
       );
     });
   });
 });
 ```
 
-##### 🔬 Phân Tích Cơ Chế Vận Hành 7 Bài Test Trên Neko Coffee Web Thật:
+##### 🔬 Phân Tích Cơ Chế Vận Hành 8 Bài Test Trên Neko Coffee Web Thật:
 
 ```mermaid
 sequenceDiagram
@@ -4332,82 +6238,103 @@ Trên trang quản trị Neko Coffee (`https://coffee.autoneko.com/upload/1` ho�
 └─────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-##### 💻 Code Chuẩn Mực Giải Quyết Bằng `waitForResponse`:
+##### 💻 Code Chuẩn Mực Thực Chiến Trên Live UI ([`03-wait-for-response-and-ui-sync.spec.ts`](../specs/03-wait-for-response-and-ui-sync.spec.ts#L145)):
+
+> 🌟 **Tại sao phải dùng Live UI thay vì Mock trong Case Study này?**  
+> Ứng dụng Neko Coffee cung cấp sẵn màn hình quản trị thực tế tại **`https://coffee.autoneko.com/vi/upload/1`**, tích hợp sẵn checkbox **"Mô phỏng độ trễ (Demo)"** (tự động gắn query parameter `?delay=3` lên request upload).  
+> Việc kiểm thử trực tiếp trên giao diện thực tế này giúp học viên trải nghiệm chuẩn mực E2E: Đăng nhập Staff tự động -> Mở giao diện thật -> Chọn checkbox độ trễ -> Đính tệp ảnh -> Dùng `waitForResponse` đón bắt máy chủ CDN nén ảnh xong và trả URL thật!
 
 ```typescript
+// 📸 5. CASE 1: XỬ LÝ TÁC VỤ BẤT ĐỒNG BỘ NẶNG TRÊN LIVE UI (UPLOAD ẢNH & CDN PROCESSING)
 test("05 - [CASE 1: ASYNC UPLOAD] Upload ảnh Neko Coffee -> Đón bắt đúng thời khắc Server nén ảnh xong và trả CDN URL", async ({
   page,
 }) => {
-  // Giả lập máy chủ Backend xử lý nén ảnh trong 800ms
-  await page.route("**/api/products/upload", async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      headers: { "access-control-allow-origin": "*" },
-      body: JSON.stringify({
-        status: "success",
-        image_url:
-          "https://images.autoneko.com/products/arabica-beans-2026.webp",
-        thumbnail_url:
-          "https://images.autoneko.com/thumbnails/arabica-beans-100x100.webp",
-        file_size_bytes: 420512,
-        processing_time_ms: 782,
-      }),
-    });
-  });
+  // 1. Mở trang quản trị Upload ảnh sản phẩm Neko Coffee với phiên Staff đã tiêm tự động từ RAM
+  await page.goto("https://coffee.autoneko.com/vi/upload/1");
+  await page.waitForLoadState("domcontentloaded");
+
+  // 2. Kích hoạt tính năng "Mô phỏng độ trễ (Demo)" trên giao diện thực tế (tạo trễ ?delay=3)
+  const latencyCheckbox = page.locator('input[type="checkbox"]');
+  if ((await latencyCheckbox.count()) > 0) {
+    await latencyCheckbox.check();
+  }
+
+  // 3. Chuẩn bị file ảnh mẫu cà phê dạng buffer nhị phân trong RAM
+  const tempImgBuffer = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "base64",
+  );
 
   const startTime = Date.now();
 
-  // 🎯 GIĂNG LƯỚI LẮNG NGHE ĐÚNG API UPLOAD PHẢN HỒI 200 OK
+  // 🎯 4. GIĂNG LƯỚI BẮT ĐÚNG THỜI KHẮC MÁY CHỦ CDN NÉN VÀ TRẢ URL (Thay vì waitForTimeout đoán mò)
   const [uploadResponse] = await Promise.all([
     page.waitForResponse(
       (res) =>
-        res.url().includes("/api/products/upload") &&
+        res.url().includes("/api/products/1/image") &&
         res.request().method() === "POST" &&
         res.status() === 200,
-      { timeout: 10000 },
+      { timeout: 20000 },
     ),
-    page.evaluate(() => {
-      return fetch("https://api-neko-coffee.autoneko.com/api/products/upload", {
-        method: "POST",
-        body: JSON.stringify({
-          filename: "arabica-beans.png",
-          raw_size: 5242880,
-        }),
-      });
+    page.locator('input[type="file"]').setInputFiles({
+      name: "arabica-specialty-2026.png",
+      mimeType: "image/png",
+      buffer: tempImgBuffer,
     }),
   ]);
 
   const elapsedTime = Date.now() - startTime;
   const uploadData = await uploadResponse.json();
 
+  // 🎯 5. THẨM ĐỊNH KẾT QUẢ TỪ CDN & BACKEND THỰC TẾ
   expect(uploadResponse.status()).toBe(200);
-  expect(uploadData.image_url).toBe(
-    "https://images.autoneko.com/products/arabica-beans-2026.webp",
-  );
-  expect(uploadData.thumbnail_url).toContain("100x100.webp");
-  expect(elapsedTime).toBeGreaterThanOrEqual(750);
+  expect(uploadData.image_url).toContain("https://images.autoneko.com/upload/");
+  expect(uploadData.thumbnail_url).toContain("w_200,h_200");
+  expect(elapsedTime).toBeGreaterThanOrEqual(1000);
 
   console.log(
-    `✅ [CASE 1 - UPLOAD] Đón bắt thành công phản hồi CDN sau ➔{elapsedTime}ms! Link ảnh: ➔{uploadData.image_url}`,
+    `✅ [CASE 1 - LIVE UI UPLOAD] Đón bắt thành công phản hồi CDN sau ${elapsedTime}ms! Link ảnh: ${uploadData.image_url}`,
   );
 });
 ```
 
-##### 📊 Bằng Chứng Terminal & Phân Tích Kết Quả Chạy Thực Tế:
+##### 🚀 Cách Chạy Lệnh Terminal:
+
+- **Chạy riêng biệt bài test Case 1 này**:
+  ```powershell
+  npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/03-wait-for-response-and-ui-sync.spec.ts -g "05 - \[CASE 1: ASYNC UPLOAD\]" --config=configs/playwright.lesson24-network.config.ts
+  ```
+- **Chạy toàn bộ 8 bài test đồng bộ hóa mạng**:
+  ```powershell
+  npm run test:lesson24-sync
+  ```
+
+##### 📊 Bằng Chứng Terminal Thực Tế (100% Passed):
 
 ```text
-✅ [CASE 1 - UPLOAD] Đón bắt thành công phản hồi CDN sau 809ms! Link ảnh: https://images.autoneko.com/products/arabica-beans-2026.webp
-  ok 13 [CASE 1: ASYNC UPLOAD] Upload ảnh Neko Coffee -> Đón bắt đúng thời khắc Server nén ảnh xong và trả CDN URL (924ms)
+> npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/03-wait-for-response-and-ui-sync.spec.ts -g "05 - [CASE 1: ASYNC UPLOAD]" --config=configs/playwright.lesson24-network.config.ts
+
+Running 1 test using 1 worker
+
+[SUPER WORKER 0] 🚀 Khởi tạo Staff RAM Snapshot: staff_super_w0_1789196498702@nekocoffee.com
+✅ [CASE 1 - LIVE UI UPLOAD] Đón bắt thành công phản hồi CDN sau 5551ms! Link ảnh: https://images.autoneko.com/upload/v1789196459/neko-coffee/products/prod_1.webp
+  ok 1 modules\2-api\NekoCoffee\lesson-24\specs\03-wait-for-response-and-ui-sync.spec.ts:145:7 › 🧠 [LESSON 24] 03 - UI-API Synchronization & waitForResponse › 05 - [CASE 1: ASYNC UPLOAD] Upload ảnh Neko Coffee -> Đón bắt đúng thời khắc Server nén ảnh xong và trả CDN URL (7.4s)
+[SUPER WORKER 0] 📤 Giải phóng Staff RAM Snapshot
+
+  1 passed (9.5s)
 ```
 
-##### 🔬 Giải Phẫu Tiến Trình Thực Thi Từng Bước (Execution Breakdown):
+##### 🔬 Giải Phẫu Tiến Trình Thực Thi Từng Bước & Đầu Ra Thực Tế (Output Breakdown):
 
-1. **0ms - Đăng ký Listener trên CDP**: `page.waitForResponse` thiết lập bộ lọc trên giao thức Chrome DevTools Protocol, sẵn sàng đón bắt event `Network.responseReceived` khớp với endpoint `/api/products/upload`.
-2. **5ms - Kích hoạt tải file**: Trình duyệt gửi gói tin Multipart dung lượng 5MB.
-3. **5ms ➔ 805ms - Server xử lý nén**: Backend nén ảnh, tạo thumbnail và upload lên CDN. Trong suốt 800ms này, Playwright hoàn toàn không chiếm dụng CPU hay lãng phí chu kỳ chờ lặp vô nghĩa.
-4. **809ms - Đón bắt phản hồi tức thì (Exact Millisecond)**: Ngay tại khoảnh khắc byte phản hồi cuối cùng của HTTP 200 OK cập bến, Promise được resolve ngay lập tức. Đoạn code assert `image_url` và `thumbnail_url` tiếp tục chạy mà **không lãng phí thêm dù chỉ 1 mili-giây**!
+1. **Khởi tạo phiên Staff (0ms)**: Nhờ kế thừa fixture Siêu App `hybrid-super-gatekeeper.fixture`, `{ page }` mở thẳng URL quản trị `https://coffee.autoneko.com/vi/upload/1` mà không bị Next.js Middleware chặn đá về Login.
+2. **Kích hoạt trễ mô phỏng (`?delay=3`)**: Checkbox *"Mô phỏng độ trễ (Demo)"* được tick, chỉ thị máy chủ CDN trì hoãn xử lý trong ít nhất 3 giây để giả lập tác vụ nén ảnh nặng.
+3. **Đăng ký Listener trên CDP trước khi tải file**: `Promise.all` kích hoạt `page.waitForResponse` song song với `setInputFiles`. Tuyệt đối không bị Race Condition!
+4. **Đón bắt chính xác phản hồi CDN sau 5551ms (`elapsedTime`)**:
+   - Con số **5551ms** phản ánh đúng độ trễ mạng thực tế (3000ms delay của server + thời gian nén WebP + độ trễ mạng Internet thực tế).
+   - Assertion `expect(elapsedTime).toBeGreaterThanOrEqual(1000)` khẳng định test không hề đoán mò.
+5. **Dữ liệu CDN trả về (`uploadData`)**:
+   - `uploadData.image_url`: `https://images.autoneko.com/upload/v1789196459/neko-coffee/products/prod_1.webp` (Ảnh gốc WebP tối ưu hóa).
+   - `uploadData.thumbnail_url`: `https://images.autoneko.com/upload/w_200,h_200,c_fill,f_webp/...` (Ảnh thumbnail 200x200 cắt chuẩn).
 
 ---
 
@@ -4513,11 +6440,17 @@ test("06 - [CASE 2: DEEP DATA INSPECTION] Chộp Order ID ngầm từ mạng khi
 });
 ```
 
+##### 🚀 Cách Chạy Lệnh Terminal:
+
+```powershell
+npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/03-wait-for-response-and-ui-sync.spec.ts -g "06 - \[CASE 2: DEEP DATA INSPECTION\]" --config=configs/playwright.lesson24-network.config.ts
+```
+
 ##### 📊 Bằng Chứng Terminal & Phân Tích Kết Quả Chạy Thực Tế:
 
 ```text
 ✅ [CASE 2 - DATA INSPECTION] Chộp thành công mã ẩn: ORD-2026-98765 ➔ Đối chiếu API thành công!
-  ok 14 [CASE 2: DEEP DATA INSPECTION] Chộp Order ID ngầm từ mạng khi UI không hiển thị ID -> Chuyển giao sang API hậu kiểm (446ms)
+  ok 6 modules\2-api\NekoCoffee\lesson-24\specs\03-wait-for-response-and-ui-sync.spec.ts:197:7 › 🧠 [LESSON 24] 03 - UI-API Synchronization & waitForResponse › 06 - [CASE 2: DEEP DATA INSPECTION] Chộp Order ID ngầm từ mạng khi UI không hiển thị ID -> Chuyển giao sang API hậu kiểm (627ms)
 ```
 
 ##### 🔬 Giải Phẫu Tiến Trình Thực Thi Từng Bước (Execution Breakdown):
@@ -4617,11 +6550,17 @@ test("07 - [CASE 3: ZERO-UI AUTO-SAVE] Xác thực cơ chế Auto-Save Debounce 
 });
 ```
 
+##### 🚀 Cách Chạy Lệnh Terminal:
+
+```powershell
+npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/03-wait-for-response-and-ui-sync.spec.ts -g "07 - \[CASE 3: ZERO-UI AUTO-SAVE\]" --config=configs/playwright.lesson24-network.config.ts
+```
+
 ##### 📊 Bằng Chứng Terminal & Phân Tích Kết Quả Chạy Thực Tế:
 
 ```text
 ✅ [CASE 3 - ZERO-UI] Đã bắt trọn gói tin Auto-save ngầm Revision #104!
-  ok 15 [CASE 3: ZERO-UI AUTO-SAVE] Xác thực cơ chế Auto-Save Debounce ngầm khi không có bất kỳ phản hồi nào trên DOM (434ms)
+  ok 7 modules\2-api\NekoCoffee\lesson-24\specs\03-wait-for-response-and-ui-sync.spec.ts:278:7 › 🧠 [LESSON 24] 03 - UI-API Synchronization & waitForResponse › 07 - [CASE 3: ZERO-UI AUTO-SAVE] Xác thực cơ chế Auto-Save Debounce ngầm khi không có bất kỳ phản hồi nào trên DOM (505ms)
 ```
 
 ##### 🔬 Giải Phẫu Tiến Trình Thực Thi Từng Bước (Execution Breakdown):
@@ -4697,11 +6636,17 @@ test("08 - [CASE 4: NAVIGATION RACE CONDITION] Đảm bảo API lưu form hoàn 
 });
 ```
 
+##### 🚀 Cách Chạy Lệnh Terminal:
+
+```powershell
+npx playwright test modules/2-api/NekoCoffee/lesson-24/specs/03-wait-for-response-and-ui-sync.spec.ts -g "08 - \[CASE 4: NAVIGATION RACE CONDITION\]" --config=configs/playwright.lesson24-network.config.ts
+```
+
 ##### 📊 Bằng Chứng Terminal & Phân Tích Kết Quả Chạy Thực Tế:
 
 ```text
 ✅ [CASE 4 - RACE CONDITION] Bảo đảm an toàn 100% dữ liệu Bước 1 trước khi tiến vào Bước 2!
-  ok 16 [CASE 4: NAVIGATION RACE CONDITION] Đảm bảo API lưu form hoàn tất trước khi chuyển trang để chống hủy gói tin (574ms)
+  ok 8 modules\2-api\NekoCoffee\lesson-24\specs\03-wait-for-response-and-ui-sync.spec.ts:350:7 › 🧠 [LESSON 24] 03 - UI-API Synchronization & waitForResponse › 08 - [CASE 4: NAVIGATION RACE CONDITION] Đảm bảo API lưu form hoàn tất trước khi chuyển trang để chống hủy gói tin (638ms)
 ```
 
 ##### 🔬 Giải Phẫu Tiến Trình Thực Thi Từng Bước (Execution Breakdown):
@@ -4810,7 +6755,7 @@ expect(orderData.status).toBe("CREATED");
 
 4. **Test 04 — [LATENCY INJECTION] Giả lập mạng chậm 1000ms**:
    - _Kỹ thuật_: Chèn `setTimeout(1000)` trước khi gọi `route.continue()`.
-   - _Nghiệp vụ_: Đo đạc thời gian phản hồi đạt ➔\ge 1300	ext{ms}➔, kiểm tra giao diện hiển thị đúng Skeleton Loading.
+   - _Nghiệp vụ_: Đo đạc thời gian phản hồi đạt ➔\ge 1300 ext{ms}➔, kiểm tra giao diện hiển thị đúng Skeleton Loading.
    - _Thời gian chạy_: **1.4s**.
 
 ---
@@ -5092,13 +7037,13 @@ Running 2 tests using 2 workers
 - **Lệnh thực thi**: `npm run test:lesson24-full-e2e`
 - **Mục tiêu kiến trúc**: Kiến trúc 2 tầng toàn diện: Vừa chứng minh cô lập 4 cơ chế xác thực Auth Core cốt lõi, vừa kiểm chứng 3 siêu kịch bản Hybrid E2E chạy 100% trên website thực tế **Neko Coffee** (`https://coffee.autoneko.com/admin/orders` và `https://coffee.autoneko.com/admin/products`).
 
-#### 🔬 Chi Tiết 7 Bài Test Đỉnh Cao Trong Spec 06:
+#### 🔬 Chi Tiết 9 Bài Test Đỉnh Cao Trong Spec 06:
 
 ##### 🧩 Phần 1: Các Bài Test Nhỏ Chứng Minh Cơ Chế Auth Core (Atomic Proofs):
 
 1. **Proof 1 — [WORKER SCOPE RAM] Nạp Token vào RAM của Worker (0ms), tái sử dụng không login lại**:
    - _Kỹ thuật_: Truy xuất `workerStaffSnapshot` từ RAM của Worker, gọi `authedStaffClient.authApi.getMe()`.
-   - _Nghiệp vụ_: Xác thực quyền `staff` và email của Worker trong **568ms** mà không hề tốn thời gian gõ form login hay gọi API `/auth/login`.
+   - _Nghiệp vụ_: Xác thực quyền `staff` và email của Worker trong **413ms** mà không hề tốn thời gian gõ form login hay gọi API `/auth/login`.
 2. **Proof 2 — [DYNAMIC INJECTION] Tiêm phiên qua `context.addInitScript` vào `localStorage`**:
    - _Kỹ thuật_: Khởi tạo trang qua Gatekeeper, đọc `localStorage.getItem('neko_auth')`.
    - _Nghiệp vụ_: Truy cập trực diện `https://coffee.autoneko.com/admin/orders` mà không bị Next.js Auth Guard đẩy về `/login`. Thẩm định trạng thái Zustand `isAuthenticated: true`.
@@ -5108,17 +7053,23 @@ Running 2 tests using 2 workers
 4. **Proof 4 — [SESSION ISOLATION] Tạo tài khoản tạm thời (Disposable User) không làm ô nhiễm Worker RAM Snapshot**:
    - _Kỹ thuật_: Tạo user tạm thời bằng `authApi.register()`, nạp vào Browser Context riêng biệt.
    - _Nghiệp vụ_: Khẳng định Context tạm sở hữu token và email của Disposable User, trong khi biến `workerStaffSnapshot` trong RAM của Worker vẫn vẹn nguyên quyền `staff` và token gốc.
+5. **Proof 5 — [GUEST DUAL-SESSION ISOLATION] Chứng minh `guestPage` & `loginPage` độc lập 100%, không bị tiêm Staff Token và hiển thị Form Login sạch**:
+   - _Kỹ thuật_: Mở trang đăng nhập qua `loginPage.navigate()`, thẩm định trạng thái `guestPage` không hề bị redirect về Dashboard. Thẩm định `localStorage` sạch bóng (`isAuthenticated: false`, `accessToken: null`).
+   - _Nghiệp vụ_: Đảm bảo các kịch bản kiểm thử Form Đăng nhập, Validation lỗi, Rate Limit 429 hoặc Khách vãng lai luôn chạy trên môi trường sạch sẽ tuyệt đối, không bị xung đột với Token Staff trong RAM.
+6. **Proof 6 — [HTTPONLY COOKIE & CRM CASE STUDY] Chứng minh `addInitScript` bất lực với Cookie HttpOnly, bắt buộc dùng `context.addCookies` hoặc `storageState`**:
+   - _Kỹ thuật_: Giả lập endpoint CRM doanh nghiệp đòi hỏi session cookie HttpOnly. Chứng minh việc dùng `addInitScript` chạy `document.cookie` bị sandbox trình duyệt tước bỏ cờ HttpOnly dẫn đến lỗi 401 Unauthorized; sau đó chứng minh `context.addCookies` ở tầng Browser Protocol nạp thành công cookie HttpOnly, mở thẳng trang CRM và ngăn chặn hoàn toàn rủi ro XSS.
+   - _Nghiệp vụ_: Đập tan ngộ nhận của tester khi nghĩ `addInitScript` có thể áp dụng cho mọi loại web, giải mã thực tế vì sao các trang CRM dùng cookie bắt buộc phải nạp cookie ở tầng context.
 
 ##### 🏆 Phần 2: Siêu Kịch Bản Thực Chiến E2E Trên Neko Coffee Web Thật:
 
-5. **Test 05 — [UI TABLE POM] Quét bản đồ cột tự động và trích xuất đơn hàng Neko Admin Thật**:
+7. **Test 07 — [UI TABLE POM] Quét bản đồ cột tự động và trích xuất đơn hàng Neko Admin Thật**:
    - _Kỹ thuật_: Dùng `NekoAdminOrdersPage` gọi `findOrderRowByCode('#B2C-20260210-4528')` và `getOrderRowData()`.
    - _Nghiệp vụ_: Đọc chính xác mã đơn, khách hàng (`A | aaa | aa@gmail.com`), ngày đặt, tổng tiền (`380.000đ`) và trạng thái (`Đã giao hàng`) qua `TableColumnHelpers`. Đọc trọn vẹn 20 dòng bảng đơn hàng thật.
-6. **Test 06 — [HYBRID E2E] Chuẩn bị dữ liệu qua API AOM ➔ Mở UI Admin đối soát qua TableColumnHelpers ➔ Hậu kiểm DB**:
+8. **Test 08 — [HYBRID E2E] Chuẩn bị dữ liệu qua API AOM ➔ Mở UI Admin đối soát qua TableColumnHelpers ➔ Hậu kiểm DB**:
    - _Pha 1 (API Seed)_: Dùng `productApi.getProducts({ page: 1, limit: 1 })` lấy thông tin sản phẩm mẫu `#285` trong **200ms**.
    - _Pha 2 (UI Audit)_: Dùng `NekoAdminProductsPage` quét bảng sản phẩm Admin thật, định vị đúng dòng bằng `findProductRowByName()` và kiểm tra giá tiền (`20.000đ`), tồn kho (`0`), trạng thái (`Hết hàng`).
    - _Pha 3 (API Audit)_: Gọi `productApi.getProductById(285)` xác minh tính toàn vẹn của sản phẩm qua Zod Schema `productDtoSchema`.
-7. **Test 07 — [UI TABLE FILTER] Kiểm thử ô tìm nhanh và bộ lọc bảng đơn hàng Thật**:
+9. **Test 09 — [UI TABLE FILTER] Kiểm thử ô tìm nhanh và bộ lọc bảng đơn hàng Thật**:
    - _Kỹ thuật_: Thao tác tìm kiếm mã `#B2C-SEED-0100` trên ô "Tìm nhanh...", bảng lọc còn 1 dòng đơn hàng bị hủy của khách hàng `Ngô Thị K` (`550.000đ`). Bấm nút "Đặt lại bộ lọc" và xác thực bảng phục hồi đầy đủ 20 dòng ban đầu.
 
 ---
@@ -5193,8 +7144,8 @@ Running 2 tests using 2 workers
 3. **Test 03 — [DUAL-ROLE COLLABORATION] Phối hợp song song giữa Quản trị viên (Staff API) và Khách hàng (Customer UI)**:
    - _Mục đích nghiệp vụ_: Mô phỏng kịch bản đa vai trò (Multi-Role Coordination) trên cùng 1 bài test mà **không bao giờ bị xung đột phiên (Zero Session Clashing)**.
    - _Role 1 (Staff API)_: Sử dụng `authedStaffClient` đã được nạp sẵn Token trong RAM (Worker Scope) để kiểm kê kho hàng và truy xuất sản phẩm ID `#285` trong **0ms**.
-   - _Role 2 (Customer UI)_: Đồng thời mở Browser Context của khách hàng để tra cứu tiến độ đơn hàng trên giao diện công khai `https://coffee.autoneko.com/order-tracking`.
-   - _Lợi ích_: Tách biệt hoàn toàn Session, tăng tốc 90% so với việc phải login/logout liên tục trên cùng trình duyệt.
+   - _Role 2 (Customer UI)_: Sử dụng trực tiếp fixture **`guestPage`** sạch bóng từ Gatekeeper để tra cứu tiến độ đơn hàng trên giao diện công khai `https://coffee.autoneko.com/order-tracking`.
+   - _Lợi ích_: Tách biệt hoàn toàn Session, không cần khởi tạo context thủ công, tăng tốc 90% so với việc phải login/logout liên tục trên cùng trình duyệt.
 
 4. **Test 04 — [HYBRID REVERSE AUDIT] Thao tác bảng Admin UI ➔ Chộp phản hồi mạng ➔ Hậu kiểm Hợp đồng Zod Database**:
    - _Mục đích nghiệp vụ_: Kỹ thuật "Đi ngược luồng" (Reverse Auditing) — Bắt nguồn từ thao tác người dùng gõ tìm kiếm đơn `#B2C-SEED-0100` trên bảng Admin UI, dùng `Promise.all([page.waitForResponse(...), adminOrdersPage.filterByKeyword(...)])` để tóm gói tin Response ngầm.

@@ -8,7 +8,10 @@ import path from "path";
  */
 
 export default defineConfig({
-  testDir: path.resolve(__dirname, "../modules/2-api/NekoCoffee/lesson-25/specs"),
+  testDir: path.resolve(
+    __dirname,
+    "../modules/2-api/NekoCoffee/lesson-25/specs",
+  ),
   testMatch: /.*\.spec\.ts$/,
   workers: 1,
   fullyParallel: false, // Chạy tuần tự các kịch bản multi-tab để kiểm soát tài nguyên trình duyệt tối ưu
@@ -26,7 +29,7 @@ export default defineConfig({
   ],
   use: {
     baseURL: "https://api-neko-coffee.autoneko.com",
-    headless: true,
+    headless: false,
     extraHTTPHeaders: {
       Accept: "application/json",
     },
