@@ -2,6 +2,7 @@
 # 🌐 BÀI 26: PLAYWRIGHT CROSS-BROWSER MATRIX PIPELINE (ENTERPRISE GRID)
 # ══════════════════════════════════════════════════════════════════════════════
 # Mô phỏng kiểm thử song song đa trình duyệt: Chromium (Blink) + Firefox (Gecko) + WebKit (Safari)
+# Tích hợp tự động ghép báo cáo (Merge Reports) thành ĐÚNG 1 FILE HTML DUY NHẤT
 # ══════════════════════════════════════════════════════════════════════════════
 
 name: 🌐 Lesson 26 - Cross-Browser Matrix Simulation
@@ -37,7 +38,7 @@ concurrency:
 # ── 3. KHỐI CÔNG VIỆC THỰC THI (JOBS) ────────────────────────────────────────
 jobs:
   # ════════════════════════════════════════════════════════════════════════════
-  # 🧪 JOB 1: CHẠY MA TRẬN 3 TRÌNH DUYỆT TRÊN 3 MÁY ẢO LINUX ĐỘC LẬP
+  # 🧪 JOB 1: CHẠY MA TRẬN 3 TRÌNH DUYỆT TRÊN 3 MÁY ẢO LINUX ĐỘC LẬP (FAN-OUT)
   # ════════════════════════════════════════════════════════════════════════════
   matrix-cross-browser:
     name: 🧪 Run on [${{ matrix.browser }}]
@@ -80,7 +81,7 @@ jobs:
           echo "runner_cpu_cores=$(nproc)" >> $GITHUB_OUTPUT
           echo "✅ Đã nạp thành công biến động trên máy ảo [${{ matrix.browser }}]!"
 
-      # ── THỰC THI PLAYWRIGHT THEO ĐÚNG PROJECT MATRIX ───────────────────────
+      # ── THỰC THI PLAYWRIGHT THEO ĐÚNG PROJECT MATRIX & XUẤT BLOB REPORT ────
       - name: 🎭 Execute Playwright Suite on [${{ matrix.browser }}]
         run: |
           TARGET_SPEC=""
@@ -107,7 +108,8 @@ jobs:
             --config=configs/playwright.lesson26-cicd.config.ts \
             --project=${{ matrix.browser }} \
             --workers=1 \
-            --retries=1
+            --retries=1 \
+            --reporter=list,blob
         env:
           CI: true
           NODE_ENV: ${{ github.event.inputs.target_env || 'production' }}
@@ -116,31 +118,66 @@ jobs:
           STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD || 'NekoStaffVaultPass2026!' }}
           NEKO_API_KEY: ${{ secrets.NEKO_API_KEY || 'neko_sec_live_998877665544' }}
 
-      # ── ĐÓNG GÓI ARTIFACTS THEO TÊN TRÌNH DUYỆT (CHỐNG GHI ĐÈ) ─────────────
-      - name: "📊 Upload HTML Report for [${{ matrix.browser }}] [if: always()]"
+      # ── ĐÓNG GÓI DỮ LIỆU BLOB REPORT THEO TÊN TRÌNH DUYỆT (CHỐNG GHI ĐÈ) ───
+      - name: "📦 Upload Blob Report for [${{ matrix.browser }}] [if: always()]"
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report-${{ matrix.browser }}-${{ github.run_id }}
-          path: playwright-report-lesson26/
-          retention-days: 7
+          name: blob-report-${{ matrix.browser }}
+          path: blob-report/
+          retention-days: 1
 
   # ════════════════════════════════════════════════════════════════════════════
-  # 📊 JOB 2: HỘI TỤ (FAN-IN) — DÙNG 'needs' ĐỂ TỔNG KẾT VÀ BÁO CÁO TOÀN CỤC
+  # 📊 JOB 2: HỘI TỤ (FAN-IN) — DÙNG 'needs' ĐỂ GỘP BÁO CÁO VÀ CHỐT QUALITY GATE
   # ════════════════════════════════════════════════════════════════════════════
   matrix-summary:
-    name: 📊 Matrix Quality Gate Summary
+    name: 📊 Matrix Quality Gate & Merge Reports
     needs: [matrix-cross-browser] # 👈 BẮT BUỘC ĐỢI CẢ 3 TRÌNH DUYỆT CHẠY XONG
     runs-on: ubuntu-latest
     if: always() # ⚡ Đảm bảo luôn chạy dù có trình duyệt nào bị fail
     steps:
+      - name: 📥 Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js v20 with NPM Cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Install NPM Dependencies (Clean Install)
+        run: npm ci
+
+      # ── TẢI TOÀN BỘ BLOB REPORT TỪ 3 MÁY ẢO VỀ CHUNG 1 THƯ MỤC ────────────
+      - name: 📥 Download all blob reports from matrix jobs
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+
+      # ── THỰC THI LỆNH GHÉP BÁO CÁO THẦN THÁNH CỦA PLAYWRIGHT ────────────────
+      - name: 🔄 Merge Reports into Single Unified HTML Report
+        run: |
+          npx playwright merge-reports --reporter html ./all-blob-reports
+
+      # ── XUẤT BẢN ĐÚNG 1 GÓI HTML REPORT DUY NHẤT (CHỨA ĐẦY ĐỦ CẢ 3 BROWSER) ─
+      - name: "📊 Upload Merged HTML Report [if: always()]"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-merged-${{ github.run_id }}
+          path: playwright-report/
+          retention-days: 14
+
+      # ── BÁO CÁO TỔNG KẾT CỔNG GÁC CHẤT LƯỢNG TOÀN CỤC ──────────────────────
       - name: 📢 Tổng Kết Trạng Thái Kiểm Thử Đa Trình Duyệt
         run: |
           echo "════════════════════════════════════════════════════════════════"
           echo "🏁 BÁO CÁO TỔNG KẾT MATRIX CROSS-BROWSER QUALITY GATE"
           echo "📌 Matrix Result : ${{ needs.matrix-cross-browser.result }}"
           echo "🌐 Trình duyệt   : Chromium (Blink), Firefox (Gecko), WebKit (Safari)"
-          echo "📦 Artifacts     : 3 gói báo cáo độc lập đã được lưu trữ thành công!"
+          echo "📦 HTML Report   : Đã gộp thành công 3 trình duyệt vào 1 file duy nhất!"
           echo "════════════════════════════════════════════════════════════════"
           if [ "${{ needs.matrix-cross-browser.result }}" != "success" ]; then
             echo "⚠️ CẢNH BÁO: Phát hiện có ít nhất 1 trình duyệt kiểm thử không đạt!"

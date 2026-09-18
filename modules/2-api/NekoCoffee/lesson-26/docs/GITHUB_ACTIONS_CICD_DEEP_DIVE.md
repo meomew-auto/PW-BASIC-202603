@@ -44,7 +44,8 @@
 6. [🌐 Phần 6: Chiến Lược Chạy Song Song Đa Trình Duyệt Với Matrix Strategy Chuyên Sâu](#-phần-6-chiến-lược-chạy-song-song-đa-trình-duyệt-với-matrix-strategy-chuyên-sâu)
    - 6.1. Bản chất & Nguyên lý hoạt động của Matrix Strategy (Tích Descartes, `fail-fast: false`, `max-parallel`).
    - 6.2. Kiến trúc Đa Job: Mô hình Fan-Out (Matrix) & Fan-In (Tổng kết) kết hợp `needs:`.
-   - 6.3. Giải phẫu chi tiết file Workflow `.github/workflows/playwright-lesson26-matrix.yml`.
+   - 6.3. File Workflow Ma Trận `.github/workflows/playwright-lesson26-matrix.yml` (Tích Hợp Tự Động Ghép Báo Cáo).
+   - 6.3.1. Giải phẫu & phân tích kỹ thuật chi tiết 7 khối (blocks) trong file `playwright-lesson26-matrix.yml` (Cơ chế gộp ĐÚNG 1 Report duy nhất).
    - 6.4. Ghép nối kịch bản thực nghiệm: CASE 08 (Headless & Viewport Matrix Integrity).
    - 6.5. Cẩm nang lệnh thực thi và đối chiếu Log Terminal thực tế 3 Browser Engines.
 7. [📊 Phần 7: Xuất Bản Báo Cáo Tự Động Lên GitHub Pages (Khái Quát Lộ Trình)](#-phần-7-xuất-bản-báo-cáo-tự-động-lên-github-pages-khái-quát-lộ-trình)
@@ -2632,13 +2633,21 @@ Giải pháp là xây dựng mô hình **Đa Job: Fan-Out / Fan-In** phối hợ
 
 ---
 
-### 6.3. Giải Phẫu Chi Tiết File Workflow `.github/workflows/playwright-lesson26-matrix.yml`
+### 6.3. File Workflow Ma Trận: `.github/workflows/playwright-lesson26-matrix.yml` (Tích Hợp Merge Reports)
 
-Dưới đây là toàn bộ mã nguồn của pipeline thực chiến đa trình duyệt chuẩn Enterprise:
+Dưới đây là toàn bộ mã nguồn của pipeline thực chiến đa trình duyệt chuẩn Enterprise, tích hợp sẵn **cơ chế tự động gom và ghép toàn bộ báo cáo từ 3 máy ảo thành ĐÚNG 1 FILE BÁO CÁO HTML DUY NHẤT**:
 
 ```yaml
+# ══════════════════════════════════════════════════════════════════════════════
+# 🌐 BÀI 26: PLAYWRIGHT CROSS-BROWSER MATRIX PIPELINE (ENTERPRISE GRID)
+# ══════════════════════════════════════════════════════════════════════════════
+# Mô phỏng kiểm thử song song đa trình duyệt: Chromium (Blink) + Firefox (Gecko) + WebKit (Safari)
+# Tích hợp tự động ghép báo cáo (Merge Reports) thành ĐÚNG 1 FILE HTML DUY NHẤT
+# ══════════════════════════════════════════════════════════════════════════════
+
 name: 🌐 Lesson 26 - Cross-Browser Matrix Simulation
 
+# ── 1. ĐIỀU KIỆN KÍCH HOẠT (TRIGGERS) ────────────────────────────────────────
 on:
   workflow_dispatch:
     inputs:
@@ -2651,6 +2660,7 @@ on:
           - 'case-08-headless-viewport'
           - 'case-10-live-smoke'
           - 'all'
+
       target_env:
         description: '🌐 Chọn Tầng Môi Trường (GitHub Environments)'
         required: true
@@ -2660,10 +2670,12 @@ on:
           - 'production'
           - 'staging'
 
+# ── 2. TỐI ƯU CHI PHÍ VÀ HÀNG ĐỢI (CONCURRENCY) ──────────────────────────────
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# ── 3. KHỐI CÔNG VIỆC THỰC THI (JOBS) ────────────────────────────────────────
 jobs:
   # ════════════════════════════════════════════════════════════════════════════
   # 🧪 JOB 1: CHẠY MA TRẬN 3 TRÌNH DUYỆT TRÊN 3 MÁY ẢO LINUX ĐỘC LẬP (FAN-OUT)
@@ -2672,13 +2684,16 @@ jobs:
     name: 🧪 Run on [${{ matrix.browser }}]
     timeout-minutes: 15
     runs-on: ubuntu-latest
+
+    # ── TẦNG 3: GITHUB ENVIRONMENTS ─────────────────────────────────────────
     environment: ${{ github.event.inputs.target_env || 'production' }}
 
+    # ── CHIẾN LƯỢC MA TRẬN (MATRIX STRATEGY) ─────────────────────────────────
     strategy:
       fail-fast: false      # ⚡ SỐNG CÒN: 1 browser fail thì 2 browser kia vẫn chạy tiếp
       max-parallel: 3       # Khởi tạo tối đa 3 máy ảo chạy đồng thời
       matrix:
-        browser: [chromium, firefox, webkit] # 👈 Ma trận 3 trình duyệt
+        browser: [chromium, firefox, webkit] # 👈 3 trình duyệt đại diện 3 engine
 
     steps:
       - name: 📥 Checkout Repository Code
@@ -2693,10 +2708,11 @@ jobs:
       - name: 📦 Install NPM Dependencies (Clean Install)
         run: npm ci
 
-      # ⚡ TỐI ƯU SIÊU TỐC: Mỗi máy ảo chỉ tải đúng 1 trình duyệt của nó!
+      # ⚡ TIẾT KIỆM TÀI NGUYÊN: Mỗi máy ảo chỉ tải đúng trình duyệt của nó!
       - name: 🌐 Install Browser [${{ matrix.browser }}] & OS Dependencies
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
+      # ── NẠP BIẾN ĐỘNG RUNTIME CHO TỪNG MÁY ẢO ─────────────────────────────
       - name: ⚙️ Dynamic Runtime Env Injection
         id: dynamic_env_builder
         run: |
@@ -2705,6 +2721,7 @@ jobs:
           echo "runner_cpu_cores=$(nproc)" >> $GITHUB_OUTPUT
           echo "✅ Đã nạp thành công biến động trên máy ảo [${{ matrix.browser }}]!"
 
+      # ── THỰC THI PLAYWRIGHT THEO ĐÚNG PROJECT MATRIX & XUẤT BLOB REPORT ────
       - name: 🎭 Execute Playwright Suite on [${{ matrix.browser }}]
         run: |
           TARGET_SPEC=""
@@ -2720,7 +2737,19 @@ jobs:
               ;;
           esac
 
-          npx playwright test $TARGET_SPEC             --config=configs/playwright.lesson26-cicd.config.ts             --project=${{ matrix.browser }}             --workers=1             --retries=1
+          echo "════════════════════════════════════════════════════════════════"
+          echo "🌐 MATRIX BROWSER: ${{ matrix.browser }}"
+          echo "🚀 TARGET SPEC   : $TARGET_SPEC"
+          echo "🌐 TARGET ENV    : ${{ github.event.inputs.target_env || 'production' }}"
+          echo "💻 CPU CORES     : ${{ steps.dynamic_env_builder.outputs.runner_cpu_cores }}"
+          echo "════════════════════════════════════════════════════════════════"
+
+          npx playwright test $TARGET_SPEC \
+            --config=configs/playwright.lesson26-cicd.config.ts \
+            --project=${{ matrix.browser }} \
+            --workers=1 \
+            --retries=1 \
+            --reporter=list,blob
         env:
           CI: true
           NODE_ENV: ${{ github.event.inputs.target_env || 'production' }}
@@ -2729,31 +2758,66 @@ jobs:
           STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD || 'NekoStaffVaultPass2026!' }}
           NEKO_API_KEY: ${{ secrets.NEKO_API_KEY || 'neko_sec_live_998877665544' }}
 
-      # ── ĐÓNG GÓI ARTIFACTS THEO TÊN TRÌNH DUYỆT (CHỐNG GHI ĐÈ FILE) ─────────
-      - name: "📊 Upload HTML Report for [${{ matrix.browser }}] [if: always()]"
+      # ── ĐÓNG GÓI DỮ LIỆU BLOB REPORT THEO TÊN TRÌNH DUYỆT (CHỐNG GHI ĐÈ) ───
+      - name: "📦 Upload Blob Report for [${{ matrix.browser }}] [if: always()]"
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report-${{ matrix.browser }}-${{ github.run_id }}
-          path: playwright-report-lesson26/
-          retention-days: 7
+          name: blob-report-${{ matrix.browser }}
+          path: blob-report/
+          retention-days: 1
 
   # ════════════════════════════════════════════════════════════════════════════
-  # 📊 JOB 2: HỘI TỤ (FAN-IN) — DÙNG 'needs' ĐỂ TỔNG KẾT VÀ BÁO CÁO TOÀN CỤC
+  # 📊 JOB 2: HỘI TỤ (FAN-IN) — DÙNG 'needs' ĐỂ GỘP BÁO CÁO VÀ CHỐT QUALITY GATE
   # ════════════════════════════════════════════════════════════════════════════
   matrix-summary:
-    name: 📊 Matrix Quality Gate Summary
+    name: 📊 Matrix Quality Gate & Merge Reports
     needs: [matrix-cross-browser] # 👈 BẮT BUỘC ĐỢI CẢ 3 TRÌNH DUYỆT CHẠY XONG
     runs-on: ubuntu-latest
-    if: always() # ⚡ Luôn chạy dù có trình duyệt nào bị fail
+    if: always() # ⚡ Đảm bảo luôn chạy dù có trình duyệt nào bị fail
     steps:
+      - name: 📥 Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js v20 with NPM Cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Install NPM Dependencies (Clean Install)
+        run: npm ci
+
+      # ── TẢI TOÀN BỘ BLOB REPORT TỪ 3 MÁY ẢO VỀ CHUNG 1 THƯ MỤC ────────────
+      - name: 📥 Download all blob reports from matrix jobs
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+
+      # ── THỰC THI LỆNH GHÉP BÁO CÁO THẦN THÁNH CỦA PLAYWRIGHT ────────────────
+      - name: 🔄 Merge Reports into Single Unified HTML Report
+        run: |
+          npx playwright merge-reports --reporter html ./all-blob-reports
+
+      # ── XUẤT BẢN ĐÚNG 1 GÓI HTML REPORT DUY NHẤT (CHỨA ĐẦY ĐỦ CẢ 3 BROWSER) ─
+      - name: "📊 Upload Merged HTML Report [if: always()]"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-merged-${{ github.run_id }}
+          path: playwright-report/
+          retention-days: 14
+
+      # ── BÁO CÁO TỔNG KẾT CỔNG GÁC CHẤT LƯỢNG TOÀN CỤC ──────────────────────
       - name: 📢 Tổng Kết Trạng Thái Kiểm Thử Đa Trình Duyệt
         run: |
           echo "════════════════════════════════════════════════════════════════"
           echo "🏁 BÁO CÁO TỔNG KẾT MATRIX CROSS-BROWSER QUALITY GATE"
           echo "📌 Matrix Result : ${{ needs.matrix-cross-browser.result }}"
           echo "🌐 Trình duyệt   : Chromium (Blink), Firefox (Gecko), WebKit (Safari)"
-          echo "📦 Artifacts     : 3 gói báo cáo độc lập đã được lưu trữ thành công!"
+          echo "📦 HTML Report   : Đã gộp thành công 3 trình duyệt vào 1 file duy nhất!"
           echo "════════════════════════════════════════════════════════════════"
           if [ "${{ needs.matrix-cross-browser.result }}" != "success" ]; then
             echo "⚠️ CẢNH BÁO: Phát hiện có ít nhất 1 trình duyệt kiểm thử không đạt!"
@@ -2763,16 +2827,212 @@ jobs:
           fi
 ```
 
-#### 🔍 Điểm Nhấn Kỹ Thuật Độc Nhất Vô Nhị:
-1. **Tối ưu băng thông mạng với `--with-deps ${{ matrix.browser }}`**:
-   Thay vì chạy `npx playwright install --with-deps` (tải cả 3 browser nặng ~800MB trên mỗi máy ảo), chúng ta truyền thẳng biến `${{ matrix.browser }}`. Máy ảo Chromium chỉ tải đúng Chromium (~150MB), máy ảo Firefox chỉ tải Firefox (~120MB), máy ảo WebKit chỉ tải WebKit (~110MB). Tiết kiệm hơn **66% băng thông và rút ngắn 90 giây setup** cho mỗi runner!
-2. **Ngăn chặn triệt để xung đột Artifacts (Collision Guard)**:
-   Nếu bạn đặt tên artifact cố định là `playwright-report`, 3 máy ảo chạy đồng thời sẽ cùng tải file zip lên cùng một tên, dẫn tới lỗi ghi đè hoặc crash upload. Bằng cách chèn biến `${{ matrix.browser }}`:
-   `name: playwright-report-${{ matrix.browser }}-${{ github.run_id }}`
-   Sau khi hoàn tất, trang GitHub Actions sẽ hiển thị rõ ràng 3 gói báo cáo riêng biệt:
-   - `playwright-report-chromium-12345678`
-   - `playwright-report-firefox-12345678`
-   - `playwright-report-webkit-12345678`
+---
+
+### 🔹 6.3.1. Giải Phẫu & Phân Tích Kỹ Thuật Chi Tiết 7 Khối (Blocks) Trong File `playwright-lesson26-matrix.yml`
+
+Khác với pipeline đơn Job truyền thống, file `playwright-lesson26-matrix.yml` áp dụng **Kiến trúc Lưới Ma Trận Phân Tán (Distributed Matrix Grid Architecture)**. Toàn bộ file được cấu thành từ **7 khối kỹ thuật độc lập**, phối hợp nhịp nhàng giữa phân tán (Fan-Out) và hội tụ (Fan-In) để giải quyết triệt để bài toán kiểm thử đa nền tảng:
+
+```mermaid
+graph TD
+    M1["Khối 1: Name<br/>(Định Danh Matrix Pipeline)"] --> M2["Khối 2: On Triggers<br/>(Cổng Tự Phục Vụ 2 Tham Số)"]
+    M2 --> M3["Khối 3: Concurrency<br/>(Hủy 3 Máy Ảo Cũ Khi Có Commit Mới)"]
+    M3 --> M4["Khối 4: Job 1 Hạ Tầng & Strategy<br/>(3 Máy Ảo Song Song, fail-fast: false)"]
+    M4 --> M5["Khối 5: Job 1 Execution Steps<br/>(Cài Đặt Riêng Trình Duyệt & Xuất Blob Report)"]
+    M5 --> M6["Khối 6: Job 2 Hạ Tầng Hội Tụ<br/>(needs: [matrix-cross-browser], if: always())"]
+    M6 --> M7["Khối 7: Job 2 Merge & Quality Gate<br/>(merge-reports ➔ 1 HTML Duy Nhất ➔ Chốt Pass/Fail)"]
+```
+
+---
+
+#### 🧱 KHỐI 1: METADATA ĐỊNH DANH PIPELINE MA TRẬN (`name`)
+
+```yaml
+name: 🌐 Lesson 26 - Cross-Browser Matrix Simulation
+```
+
+* **Ý nghĩa kiến trúc**: Định danh tách biệt với pipeline sandbox đơn lẻ (`playwright-lesson26.yml`). Biểu tượng quả cầu `🌐` thể hiện tính năng Cross-Browser toàn cầu (Chromium, Firefox, WebKit).
+* **Hiển thị trên hệ thống**:
+  - Xuất hiện trên GitHub Web UI trong danh sách Actions.
+  - Khi gõ lệnh GitHub CLI: `gh workflow list` ➔ quản trị viên nhận diện tức thì pipeline ma trận để kích hoạt.
+
+---
+
+#### 🧱 KHỐI 2: CỔNG TỰ PHỤC VỤ CHỌN MÔI TRƯỜNG & KỊCH BẢN (`on.workflow_dispatch`)
+
+```yaml
+on:
+  workflow_dispatch:
+    inputs:
+      test_case:
+        description: '🎯 Chọn Kịch Bản Muốn Chạy Matrix'
+        required: true
+        default: 'case-08-headless-viewport'
+        type: choice
+        options:
+          - 'case-08-headless-viewport'
+          - 'case-10-live-smoke'
+          - 'all'
+
+      target_env:
+        description: '🌐 Chọn Tầng Môi Trường (GitHub Environments)'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - 'production'
+          - 'staging'
+```
+
+* **Phân tích kỹ thuật**:
+  - `test_case`: Cho phép người vận hành chỉ định chính xác kịch bản cần test đa trình duyệt. Mặc định là `case-08-headless-viewport` (kịch bản đo lường dấu vân tay và layout DOM trên 3 engine). Có thể chọn chạy `case-10-live-smoke` hoặc toàn bộ `all`.
+  - `target_env`: Kết nối trực tiếp vào hệ thống **GitHub Environments** (`production` hoặc `staging`). Giúp ma trận tự động nạp đúng bộ Secrets và Variables của môi trường mục tiêu mà không phải sửa code.
+
+---
+
+#### 🧱 KHỐI 3: KIỂM SOÁT HÀNG ĐỢI & CHỐNG LÃNG PHÍ TÀI NGUYÊN (`concurrency`)
+
+```yaml
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+```
+
+* **Tầm quan trọng sống còn trong Matrix**:
+  - Mỗi lần chạy ma trận, GitHub Actions phải cấp phát cùng lúc **3 máy ảo Ubuntu**.
+  - Nếu một lập trình viên liên tục push 3 commit trong vòng 2 phút, nếu không có `concurrency`, GitHub sẽ ngốn tới $3 	imes 3 = 9$ máy ảo chạy song song, làm cạn sạch hạn ngạch (Runner Quota) của tổ chức.
+  - Nhờ `cancel-in-progress: true`, ngay khi phát hiện có commit mới, GitHub sẽ **lập tức triệt tiêu 3 máy ảo cũ đang chạy dở**, chỉ dành tài nguyên chạy bộ mã nguồn mới nhất.
+
+---
+
+#### 🧱 KHỐI 4: JOB 1 — KHAI BÁO HẠ TẦNG & CHIẾN LƯỢC MA TRẬN (`jobs.matrix-cross-browser`)
+
+```yaml
+  matrix-cross-browser:
+    name: 🧪 Run on [${{ matrix.browser }}]
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.target_env || 'production' }}
+
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        browser: [chromium, firefox, webkit]
+```
+
+* **Giải mã 5 trụ cột cấu hình**:
+  1. `name: 🧪 Run on [${{ matrix.browser }}]`: Đặt tên động cho từng máy ảo. Trên giao diện GitHub sẽ hiển thị rõ 3 tiến trình con: `Run on [chromium]`, `Run on [firefox]`, `Run on [webkit]`.
+  2. `timeout-minutes: 15`: Cổng gác an toàn chống treo runner quá 15 phút.
+  3. `matrix.browser: [chromium, firefox, webkit]`: Mảng ma trận 3 phần tử kích hoạt tích Descartes, sinh ra 3 máy ảo Linux độc lập.
+  4. `fail-fast: false`: **Nguyên tắc bất di bất dịch của QA Automation**. Nếu máy ảo Firefox bị lỗi assertion, GitHub **không được phép hủy** 2 máy ảo Chromium và WebKit, mà phải để chúng chạy trọn vẹn để thu thập đủ báo cáo.
+  5. `max-parallel: 3`: Giới hạn tối đa 3 máy ảo chạy đồng thời, tránh làm quá tải hạ tầng mạng của hệ thống đích (AUT).
+
+---
+
+#### 🧱 KHỐI 5: JOB 1 — CHUỖI STEPS THỰC THI & XUẤT DỮ LIỆU NHỊ PHÂN BLOB
+
+Đây là chuỗi hành động diễn ra bên trong từng máy ảo của Job 1:
+
+1. **Checkout mã nguồn & Cài Node 20**:
+   ```yaml
+   - uses: actions/checkout@v4
+   - uses: actions/setup-node@v4
+     with: { node-version: 20, cache: 'npm' }
+   - run: npm ci
+   ```
+2. **Tối ưu siêu tốc cài đặt trình duyệt theo biến Ma trận**:
+   ```yaml
+   - name: 🌐 Install Browser [${{ matrix.browser }}] & OS Dependencies
+     run: npx playwright install --with-deps ${{ matrix.browser }}
+   ```
+   - ⚡ **Khác biệt đẳng cấp**: Thay vì chạy lệnh chung `npx playwright install --with-deps` (tải toàn bộ 3 trình duyệt nặng ~800MB trên mỗi máy ảo), ta truyền thẳng biến `${{ matrix.browser }}`. 
+   - Máy ảo Chromium chỉ tải Chromium (~150MB), máy Firefox chỉ tải Firefox (~120MB), máy WebKit chỉ tải WebKit (~110MB).
+   - **Hiệu quả**: Tiết kiệm hơn 66% lưu lượng mạng và rút ngắn gần 2 phút chuẩn bị trên mỗi runner!
+3. **Thực thi kịch bản với cờ `--reporter=list,blob`**:
+   ```yaml
+   npx playwright test $TARGET_SPEC      --config=configs/playwright.lesson26-cicd.config.ts      --project=${{ matrix.browser }}      --workers=1      --retries=1      --reporter=list,blob
+   ```
+   - Cờ `--project=${{ matrix.browser }}` ép Playwright chỉ chạy đúng project của máy ảo đó.
+   - Cờ `--reporter=list,blob`:
+     - `list`: In tiến độ chi tiết từng test ra màn hình console Linux để QA theo dõi live.
+     - `blob`: Xuất dữ liệu kiểm thử thô dưới dạng file nhị phân nén siêu nhẹ vào thư mục `blob-report/`. Đây chính là "nguyên liệu thô" để Job 2 tiến hành ghép báo cáo!
+4. **Đóng gói dữ liệu Blob lên Artifacts ngắn hạn**:
+   ```yaml
+   - uses: actions/upload-artifact@v4
+     if: always()
+     with:
+       name: blob-report-${{ matrix.browser }}
+       path: blob-report/
+       retention-days: 1
+   ```
+   - Mỗi máy ảo tải lên gói blob riêng: `blob-report-chromium`, `blob-report-firefox`, `blob-report-webkit`.
+   - `retention-days: 1`: Chỉ lưu 1 ngày vì các file thô này sẽ được Job 2 gộp thành file HTML hoàn chỉnh, không cần lưu trữ lâu gây tốn dung lượng GitHub Storage.
+
+---
+
+#### 🧱 KHỐI 6: JOB 2 — HẠ TẦNG HỘI TỤ FAN-IN & GÁC CỔNG CHẤT LƯỢNG (`jobs.matrix-summary`)
+
+```yaml
+  matrix-summary:
+    name: 📊 Matrix Quality Gate & Merge Reports
+    needs: [matrix-cross-browser]
+    runs-on: ubuntu-latest
+    if: always()
+```
+
+* **Bản chất kỹ thuật**:
+  - Đây là **Job Hội Tụ (Fan-In)** trong đồ thị DAG (Directed Acyclic Graph) của GitHub Actions.
+  - `needs: [matrix-cross-browser]`: Khóa chặn bắt buộc Job 2 phải đợi toàn bộ 3 máy ảo của Job 1 kết thúc vòng đời.
+  - `if: always()`: **Điều kiện sống còn**. Đảm bảo Job 2 luôn luôn được kích hoạt kể cả khi có 1 hoặc 2 trình duyệt ở Job 1 bị FAIL. Nếu không có `if: always()`, khi có test fail, GitHub sẽ tự động bỏ qua (skip) Job 2, dẫn tới không thể gộp báo cáo và không có HTML report để điều tra nguyên nhân!
+
+---
+
+#### 🧱 KHỐI 7: JOB 2 — CHUỖI STEPS GHÉP BÁO CÁO THẦN THÁNH & ĐÓNG GÓI 1 HTML DUY NHẤT
+
+Đây chính là câu trả lời toàn diện cho câu hỏi *"Làm sao để gom thành 1 Report duy nhất?"*:
+
+1. **Chuẩn bị môi trường Playwright CLI**:
+   Checkout code và chạy `npm ci` để nạp bộ thư viện Playwright CLI vào máy ảo Job 2.
+2. **Kéo toàn bộ Blob Reports từ 3 máy ảo về 1 chỗ**:
+   ```yaml
+   - name: 📥 Download all blob reports from matrix jobs
+     uses: actions/download-artifact@v4
+     with:
+       path: all-blob-reports
+       pattern: blob-report-*
+       merge-multiple: true
+   ```
+   - `pattern: blob-report-*`: Tự động tìm kiếm và tải toàn bộ các gói artifact có tên bắt đầu bằng `blob-report-` (cả 3 trình duyệt).
+   - `merge-multiple: true`: Đổ phẳng tất cả các file zip nhị phân vào chung một thư mục đích `all-blob-reports/`.
+3. **Thực thi lệnh ghép báo cáo của Playwright**:
+   ```yaml
+   - name: 🔄 Merge Reports into Single Unified HTML Report
+     run: |
+       npx playwright merge-reports --reporter html ./all-blob-reports
+   ```
+   - Lệnh `npx playwright merge-reports` giải nén toàn bộ các file zip, đọc toàn bộ sự kiện kiểm thử (test runs, steps, screenshots, traces, console logs), và **tổng hợp thành đúng 1 thư mục HTML Report duy nhất**: `playwright-report/`!
+4. **Đóng gói ĐÚNG 1 Artifact duy nhất gửi lên GitHub**:
+   ```yaml
+   - name: "📊 Upload Merged HTML Report [if: always()]"
+     uses: actions/upload-artifact@v4
+     if: always()
+     with:
+       name: playwright-report-merged-${{ github.run_id }}
+       path: playwright-report/
+       retention-days: 14
+   ```
+   - Người dùng giờ đây **chỉ thấy duy nhất 1 gói artifact** mang tên `playwright-report-merged-<run_id>`. Khi tải về và mở ra, toàn bộ kết quả của Chromium, Firefox, WebKit hiển thị trực quan trong một giao diện duy nhất!
+5. **Đánh giá Cổng Gác Chất Lượng Toàn Cục**:
+   ```bash
+   if [ "${{ needs.matrix-cross-browser.result }}" != "success" ]; then
+     echo "⚠️ CẢNH BÁO: Phát hiện có ít nhất 1 trình duyệt kiểm thử không đạt!"
+     exit 1
+   else
+     echo "🎉 CHÚC MỪNG: Cả 3 trình duyệt đã vượt qua Quality Gate xuất sắc 100%!"
+   fi
+   ```
+   - Kiểm tra kết quả thực tế của Job 1. Nếu bất kỳ trình duyệt nào bị fail, Job 2 sẽ phát cảnh báo đỏ và gọi `exit 1` để chặn đứng việc merge mã nguồn!
 
 ---
 
