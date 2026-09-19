@@ -1,0 +1,46 @@
+{
+  "runId": "run-1789808488889",
+  "timestamp": "2026-09-19T09:01:28.889Z",
+  "tests": {
+    "[chromium] 01-env-hierarchy-and-precedence.spec.ts::01 - [HIERARCHY PRECEDENCE] Thẩm định quy tắc ghi đè biến môi trường": {
+      "testId": "[chromium] 01-env-hierarchy-and-precedence.spec.ts::01 - [HIERARCHY PRECEDENCE] Thẩm định quy tắc ghi đè biến môi trường",
+      "title": "01 - [HIERARCHY PRECEDENCE] Thẩm định quy tắc ghi đè biến môi trường",
+      "file": "01-env-hierarchy-and-precedence.spec.ts",
+      "status": "passed",
+      "duration": 13,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [AUDIT] Trích xuất và đối soát các phân tầng biến môi trường",
+          "duration": 2,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [ASSERT] Thẩm định tính toàn vẹn và quy tắc ghi đè trên Runner",
+          "duration": 5,
+          "category": "test.step"
+        }
+      ]
+    },
+    "[chromium] 01-env-hierarchy-and-precedence.spec.ts::02 - [GITHUB CONTEXT] Trích xuất siêu dữ liệu (Metadata) máy ảo GitHub": {
+      "testId": "[chromium] 01-env-hierarchy-and-precedence.spec.ts::02 - [GITHUB CONTEXT] Trích xuất siêu dữ liệu (Metadata) máy ảo GitHub",
+      "title": "02 - [GITHUB CONTEXT] Trích xuất siêu dữ liệu (Metadata) máy ảo GitHub",
+      "file": "01-env-hierarchy-and-precedence.spec.ts",
+      "status": "passed",
+      "duration": 9,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [AUDIT] Trích xuất siêu dữ liệu (GitHub Context) từ máy ảo CI",
+          "duration": 3,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [ASSERT] Đối soát Run ID, Actor và quyền thực thi pipeline",
+          "duration": 3,
+          "category": "test.step"
+        }
+      ]
+    }
+  }
+}
