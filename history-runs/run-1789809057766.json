@@ -1,0 +1,82 @@
+{
+  "runId": "run-1789809057766",
+  "timestamp": "2026-09-19T09:10:57.766Z",
+  "tests": {
+    "[chromium] 08-headless-and-viewport-matrix.spec.ts::01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt": {
+      "testId": "[chromium] 08-headless-and-viewport-matrix.spec.ts::01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt",
+      "title": "01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt",
+      "file": "08-headless-and-viewport-matrix.spec.ts",
+      "status": "passed",
+      "duration": 254,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [AUDIT & ASSERT] Trích xuất User-Agent và dấu vân tay trình duyệt",
+          "duration": 20,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [VIEWPORT CHECK] Thẩm định kích thước Viewport máy ảo CI (1280x720)",
+          "duration": 3,
+          "category": "test.step"
+        },
+        {
+          "title": "3. [RENDER CSS GRID & ASSERT] Bơm HTML và đối soát layout hiển thị",
+          "duration": 64,
+          "category": "test.step"
+        }
+      ]
+    },
+    "[firefox] 08-headless-and-viewport-matrix.spec.ts::01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt": {
+      "testId": "[firefox] 08-headless-and-viewport-matrix.spec.ts::01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt",
+      "title": "01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt",
+      "file": "08-headless-and-viewport-matrix.spec.ts",
+      "status": "passed",
+      "duration": 1077,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [AUDIT & ASSERT] Trích xuất User-Agent và dấu vân tay trình duyệt",
+          "duration": 28,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [VIEWPORT CHECK] Thẩm định kích thước Viewport máy ảo CI (1280x720)",
+          "duration": 2,
+          "category": "test.step"
+        },
+        {
+          "title": "3. [RENDER CSS GRID & ASSERT] Bơm HTML và đối soát layout hiển thị",
+          "duration": 226,
+          "category": "test.step",
+          "isSlowest": true
+        }
+      ]
+    },
+    "[webkit] 08-headless-and-viewport-matrix.spec.ts::01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt": {
+      "testId": "[webkit] 08-headless-and-viewport-matrix.spec.ts::01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt",
+      "title": "01 - [HEADLESS & VIEWPORT] Thẩm định độ phân giải và dấu vân tay trình duyệt",
+      "file": "08-headless-and-viewport-matrix.spec.ts",
+      "status": "passed",
+      "duration": 4293,
+      "retry": 0,
+      "steps": [
+        {
+          "title": "1. [AUDIT & ASSERT] Trích xuất User-Agent và dấu vân tay trình duyệt",
+          "duration": 13,
+          "category": "test.step"
+        },
+        {
+          "title": "2. [VIEWPORT CHECK] Thẩm định kích thước Viewport máy ảo CI (1280x720)",
+          "duration": 7,
+          "category": "test.step"
+        },
+        {
+          "title": "3. [RENDER CSS GRID & ASSERT] Bơm HTML và đối soát layout hiển thị",
+          "duration": 98,
+          "category": "test.step"
+        }
+      ]
+    }
+  }
+}
